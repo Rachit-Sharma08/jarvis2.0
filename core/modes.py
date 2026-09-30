@@ -2,7 +2,14 @@ import re
 
 import config
 
-PREFIX_RE = re.compile(r"^\s*(sunday|prabh)\b[\s,.:!?-]*", re.IGNORECASE)
+PREFIX_RE = re.compile(
+    r"^\s*("
+    + "|".join(re.escape(a) for a in config.mode_aliases())
+    + r")(?![ऀ-ॿ\w])[\s,.:!?-]*",
+    re.IGNORECASE,
+)
+
+ALIASES = {a.lower(): m for m, names in config.MODE_ALIASES.items() for a in names}
 
 NAMES = {"sunday": "Sunday", "prabh": "Prabh"}
 
@@ -19,7 +26,7 @@ def detect_mode(text: str, current_mode: str) -> tuple:
     if not match:
         return current_mode, text
 
-    mode = match.group(1).lower()
+    mode = ALIASES[match.group(1).lower()]
     rest = text[match.end():].strip()
     return mode, rest or text.strip()
 

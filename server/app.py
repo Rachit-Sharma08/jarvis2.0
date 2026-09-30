@@ -7,12 +7,14 @@ import config
 from core.engine import Engine
 from log_setup import get_logger
 from server import security
+from server.voice_routes import router as voice_router
 
 log = get_logger("server")
 
 app = FastAPI(title="Prabh")
 engine = Engine()
 app.mount("/ui", StaticFiles(directory=str(config.UI_DIR)), name="ui")
+app.include_router(voice_router)
 
 
 class ChatIn(BaseModel):

@@ -1,4 +1,4 @@
-STATUS_VALUES = ("idle", "listening", "thinking", "speaking")
+STATUS_VALUES = ("idle", "listening", "transcribing", "thinking", "speaking")
 
 
 def status(value: str) -> dict:
