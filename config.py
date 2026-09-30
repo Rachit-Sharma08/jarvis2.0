@@ -52,6 +52,95 @@ VOICE_ENV = {
 }
 
 
+# ---- Phase 3: PC ke tools + gatekeeper ----
+
+SAFE, ASK, BLOCKED = "SAFE", "ASK", "BLOCKED"
+
+HOME = Path(os.path.expanduser("~"))
+WORKSPACE = Path(os.getenv("PRABH_WORKSPACE", r"D:\prabh_workspace"))
+READ_FOLDERS = (HOME / "Desktop", HOME / "Downloads", HOME / "Documents", WORKSPACE)
+
+# Har tool ka base risk. Gatekeeper args dekh ke ise aage badha sakta hai.
+TOOL_BASE_RISK = {
+    "get_time_date": SAFE,
+    "system_info": SAFE,
+    "list_dir": SAFE,
+    "read_file": SAFE,
+    "write_file": ASK,
+    "run_command": ASK,
+    "open_app": SAFE,
+    "open_website": SAFE,
+    "close_app": ASK,
+    "delete_to_trash": ASK,
+}
+
+# open_app sirf inhi me SAFE hai. Baaki sab poochhega.
+ALLOWED_APPS = {
+    "notepad": "notepad.exe",
+    "calculator": "calc.exe",
+    "calc": "calc.exe",
+    "explorer": "explorer.exe",
+    "file explorer": "explorer.exe",
+    "paint": "mspaint.exe",
+    "chrome": "chrome.exe",
+    "edge": "msedge.exe",
+    "vscode": "code",
+    "vs code": "code",
+    "wordpad": "write.exe",
+}
+
+# Yahan user aur patterns add kar sakta hai. Code me hard-coded nahi.
+EXTRA_BLOCKED_PATTERNS = (
+    "vssadmin delete shadows",
+    "bcdedit /set",
+    "cipher /w",
+    "wmic shadowcopy delete",
+)
+
+
+def _blocked_roots() -> tuple:
+    """Jahan delete/badlav kabhi nahi hoga."""
+    roots = []
+    for name in ("SystemRoot", "ProgramFiles", "ProgramFiles(x86)", "ProgramW6432"):
+        value = os.environ.get(name, "")
+        if value:
+            roots.append(Path(value))
+    roots += [Path(p) for p in (r"C:\Windows", r"C:\Program Files", r"C:\Program Files (x86)",
+                                r"C:\$Recycle.Bin", r"C:\Recovery", r"C:\System Volume Information")]
+    return tuple(dict.fromkeys(roots))
+
+
+BLOCKED_ROOTS = _blocked_roots()
+# Naam se bhi pakadna hai (D: drive par bhi), raw aur resolved dono me.
+PROTECTED_FOLDER_NAMES = (
+    "windows", "system32", "syswow64", "winsxs", "program files",
+    "program files (x86)", "programdata", "recovery", "boot", "driver",
+    "$recycle.bin", "system volume information",
+)
+SECRET_FILE_NAMES = (".env", ".env.local", "credentials", "secrets.json", "id_rsa", "id_ed25519")
+
+# Kill switch. Default OFF — user UI ka toggle daba kar ON kare.
+TOOLS_ENABLED_DEFAULT = os.getenv("PRABH_TOOLS_ON", "0") == "1"
+TOOL_MAX_STEPS = 5
+TOOL_MAX_CALLS_PER_MINUTE = 20
+TOOL_CONFIRM_TIMEOUT = 60
+TOOL_OUTPUT_LIMIT = 2000
+TOOL_ARG_LIMIT = 2000
+COMMAND_TIMEOUT_SECONDS = 30
+READ_FILE_MAX_BYTES = 20 * 1024
+ACTION_LOG = LOG_DIR / "actions.log"
+CSP = (
+    "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "
+    "media-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; "
+    "connect-src 'self' ws://localhost:8000 ws://127.0.0.1:8000"
+)
+
+
+def ensure_workspace() -> Path:
+    WORKSPACE.mkdir(parents=True, exist_ok=True)
+    return WORKSPACE
+
+
 def mode_aliases() -> list:
     return [a for names in MODE_ALIASES.values() for a in names]
 
