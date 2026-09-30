@@ -30,16 +30,27 @@ python -m venv .venv
 Copy-Item .env.example .env
 ```
 
-2. `.env` kholo aur dono key daalo:
+2. `.env` kholo aur keys daalo:
 
 ```
 GROQ_API_KEY=apni_groq_key
 GEMINI_API_KEY=apni_gemini_key
+
+ELEVENLABS_API_KEY=
+CARTESIA_API_KEY=
+ELEVENLABS_VOICE_SUNDAY=
+ELEVENLABS_VOICE_PRABH=
+CARTESIA_VOICE_SUNDAY=
+CARTESIA_VOICE_PRABH=
 ```
+
+Sirf `GROQ_API_KEY` zaruri hai (chat + mic dono). Baaki sab optional hain.
 
 Key kahan se milegi:
 - Groq: https://console.groq.com/keys
 - Gemini: https://aistudio.google.com/apikey
+- ElevenLabs: https://elevenlabs.io/app/developers/api-keys
+- Cartesia: https://cartesia.ai/dashboard
 
 > Key kabhi code ya chat me mat likho. `.env` git-ignore hai, wo kabhi commit nahi hoga.
 
@@ -64,9 +75,75 @@ Band karne ke liye terminal me `Ctrl + C`.
 cd D:\prabh
 .\.venv\Scripts\python.exe tests\test_basic.py
 .\.venv\Scripts\python.exe tests\test_security.py
+.\.venv\Scripts\python.exe tests\test_voice.py
 ```
 
 Aakhir me "Saare test pass." aana chahiye. Test me real API call nahi hota — key ki zarurat nahi.
+
+---
+
+## Voice (mic se baat)
+
+Mic aur speaker ka kaam **browser** me hota hai. Server sirf awaaz ko text me badalta hai
+aur text ko awaaz me.
+
+### Chalao
+
+1. Server chalu karo (`main.py`).
+2. Browser me **http://localhost:8000** kholo.
+3. Browser puchega **"Use microphone"** — **Allow** dabao. Mana kiya to MIC kaam
+   nahi karega aur screen par saaf message aayega.
+
+### Buttons
+
+| Button | Kaam |
+|---|---|
+`MIC` | Ek click par recording shuru, dobara click par band. 30 second par apne aap band. |
+`MUTE` | Mic poori tarah band. Phir se dabao to wapas on. |
+`STOP` | Chal rahi awaaz ya recording turant rok do. |
+`SEND` | Command box me likhi baat bhejo. |
+
+Recording me stage par **MIC ON** (peela) nishaan dikhta hai. Recording khatam hote hi
+mic turant chhod diya jaata hai (browser ka mic indicator band ho jaata hai).
+
+### Status kya matlab rakhta hai
+
+`IDLE` → `LISTENING` (mic on) → `TRANSCRIBING` (sun raha hai) → `THINKING` (soch raha hai)
+→ `SPEAKING` (bol raha hai) → `IDLE`
+
+### Kaun sa provider kab use hota hai
+
+| Provider | Kab | Free? |
+|---|---|---|
+**ElevenLabs** | Pehle try hota hai. Sabse achhi awaaz. `ELEVENLABS_API_KEY` chahiye. | Free quota **10,000 character / mahina**. Khatam hone par `402` deta hai. |
+**Cartesia** | ElevenLabs fail ho to. `CARTESIA_API_KEY` + voice id chahiye. | Free quota chhota. |
+**edge-tts** | Hamesha aakhri bharosa. Koi key nahi chahiye. | Bilkul free, unlimited. |
+
+- Voice ids na ho to wo provider skip ho jaata hai, agna try hota hai.
+- Teeno fail hon to screen par saaf error aata hai — chup nahi hota.
+- **Awaaz me sirf pehle 500 character** bolte hain (free quota bachaane ke liye).
+  Poora jawab chat me likha rahe hota hai.
+- Bolne se pehle link, emoji aur markdown (`*`, `#`, backtick, `_`, `>`) hata diye jate hain.
+
+### Har mode ki awaaz
+
+| Mode | ElevenLabs | edge-tts |
+|---|---|---|
+`Sunday` | `.env` me `ELEVENLABS_VOICE_SUNDAY` | `hi-IN-MadhurNeural` (professional) |
+`Prabh` | `.env` me `ELEVENLABS_VOICE_PRABH` | `hi-IN-SwaraNeural` (narm, pyaari) |
+
+### Mode bolke switch karo
+
+Whisper (sunne wala) Hindi + English dono samajhta hai, to naam bhi bol sakte ho:
+
+- `"Sunday..."`, `"संडे..."` → Sunday
+- `"Prabh..."`, `"Prabhu..."`, `"प्रभ..."`, `"प्रभु..."` → Prabh
+
+### Limit
+
+- Recording: **30 second** (server par 10 MB se bada audio reject).
+- Agar browser autoplay rok de to screen par likha aayega:
+  **"Awaaz chalane ke liye kahin click karo."** — kahin ek click kar dena kaafi hai.
 
 ---
 
@@ -132,10 +209,16 @@ Dayin taraf poori baat-chit rehti hai.
 `personas/sunday.txt` | Sunday ka character |
 `personas/prabh.txt` | Prabh ka character |
 `server/app.py` | `POST /chat` + `WebSocket /ws` |
-`server/security.py` | Origin / Host / token check |
+`server/security.py` | Host + Origin + token check |
+`voice/stt.py` | Audio → text (Groq Whisper) |
+`voice/tts.py` | Provider chain + text saaf karna |
+`voice/tts_elevenlabs.py`, `voice/tts_cartesia.py`, `voice/tts_edge.py` | Ek-ek provider |
+`server/voice_routes.py` | `POST /stt` + `POST /tts` |
+`ui/recorder.js`, `ui/speaker.js` | Mic record + audio playback |
 `ui/index.html`, `ui/style.css`, `ui/app.js` | Interface |
 `tests/test_basic.py` | Chat, mode aur brain ke tests |
 `tests/test_security.py` | Suraksha ke tests |
+`tests/test_voice.py` | Voice ke tests (chain, limit, naam, endpoints) |
 
 ---
 
