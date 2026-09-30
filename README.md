@@ -13,6 +13,7 @@ hai aur PC ke kaam bhi kar sakta hai (file, folder, app, command) — har kaam k
 screen par confirm card aata hai.
 
 - Awaaz ke liye → [VOICE.md](VOICE.md)
+- Brain (models, fallback, error) ke liye → [BRAIN.md](BRAIN.md)
 - PC ke kaam ke liye → [TOOLS.md](TOOLS.md)
 
 ---
@@ -166,7 +167,7 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 `core/events.py` | `status` / `message` / `log` / `activity` / `confirm` events |
 `core/modes.py` | Naam se mode + persona file |
 `core/engine.py` | Poora chat flow + tool loop (**sirf** `run_tool` raasta) |
-`brain/router.py` | Pehle Groq, phir Gemini |
+`brain/router.py` | Pehle Groq, phir Gemini — dono fail ho to ek hi message |
 `brain/prompt.py` | Persona + tool JSON rules + strict parser |
 `brain/groq_client.py`, `brain/gemini_client.py` | Brain API calls |
 `gatekeeper/keeper.py` | Har tool ka faisla + card ka intezaar |
@@ -188,7 +189,7 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 
 ## Error kahan dekhein?
 
-Sab kuch `logs/prabh.log` me likha jaata hai. Har tool ka hisaab `logs/actions.log` me.
+Sab kuch `logs/prabh.log` me likha jaata hai — har brain call ka timing bhi (`groq=1.4s total=1.5s`). Har tool ka hisaab `logs/actions.log` me.
 
 ```powershell
 Get-Content D:\prabh\logs\prabh.log -Tail 20
@@ -196,4 +197,4 @@ Get-Content D:\prabh\logs\actions.log -Tail 20
 ```
 
 Agar browser me sirf "Abhi koi brain jawab nahi de paya" dikh raha hai, to `.env` me key
-sahi hai ya nahi check karo.
+sahi hai ya nahi check karo — model list ka live check [BRAIN.md](BRAIN.md) me hai.

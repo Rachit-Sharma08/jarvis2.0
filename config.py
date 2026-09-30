@@ -16,9 +16,17 @@ GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "").strip()
 CARTESIA_API_KEY = os.getenv("CARTESIA_API_KEY", "").strip()
 
-GROQ_MODEL = "llama-3.3-70b-versatile"
+# Live list endpoint par verify hua (Sept 2026). Purane naam 404 de rahe the.
+GROQ_MODEL = "openai/gpt-oss-120b"
+GROQ_MODELS = (GROQ_MODEL, "openai/gpt-oss-20b")
 GROQ_STT_MODEL = "whisper-large-v3-turbo"
-GEMINI_MODEL = "gemini-2.5-flash"
+GEMINI_MODEL = "gemini-3.5-flash"
+GEMINI_MODELS = (GEMINI_MODEL, "gemini-flash-latest")
+# Kitni der wait: Groq 10s, Gemini 15s. 402/429/503 par 10 min araam.
+BRAIN_TIMEOUT_GROQ = 10.0
+BRAIN_TIMEOUT_GEMINI = 15.0
+GEMINI_RETRY_WAIT = 2.5
+PROVIDER_SKIP_SECONDS = 600
 
 DEFAULT_MODE = "sunday"
 
@@ -43,6 +51,10 @@ ELEVENLABS_MODEL = "eleven_multilingual_v2"
 ELEVENLABS_DEFAULT_VOICE = "JBFqnCBsd6RMkjVDRZzb"
 CARTESIA_MODEL = "sonic-2"
 CARTESIA_VERSION = "2025-04-16"
+
+# Prabh ki awaaz hamesha female. Is mode me default (male) voice kabhi use
+# nahi hoga — id na ho to seedha Cartesia/Edge par chala jayega.
+FEMALE_ONLY_MODES = ("prabh",)
 
 VOICE_ENV = {
     ("elevenlabs", "sunday"): "ELEVENLABS_VOICE_SUNDAY",
@@ -145,8 +157,18 @@ def mode_aliases() -> list:
     return [a for names in MODE_ALIASES.values() for a in names]
 
 
-def voice_id(provider: str, mode: str) -> str:
-    return os.getenv(VOICE_ENV.get((provider, mode), VOICE_ENV[(provider, DEFAULT_MODE)]), "").strip()
+def voice_for(provider: str, mode: str) -> str:
+    """Is provider+mode ki voice id. Female-only mode me male default kabhi nahi.
+
+    Edge hamesha apni built-in voice deta hai. Baaki me id na ho to '' — matlab
+    us provider ko chhod do (Prabh male awaaz par nahi ja sakta).
+    """
+    if provider == "edge":
+        return EDGE_VOICES.get(mode, EDGE_VOICES[DEFAULT_MODE])
+    vid = os.getenv(VOICE_ENV.get((provider, mode), ""), "").strip()
+    if not vid and provider == "elevenlabs" and mode not in FEMALE_ONLY_MODES:
+        return ELEVENLABS_DEFAULT_VOICE
+    return vid
 
 
 def is_local_only() -> bool:

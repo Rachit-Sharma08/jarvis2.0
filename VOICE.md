@@ -43,10 +43,30 @@ mic turant chhod diya jaata hai (browser ka mic indicator band ho jaata hai).
 
 ## Har mode ki awaaz
 
-| Mode | ElevenLabs | edge-tts |
-|---|---|---|
-`Sunday` | `.env` me `ELEVENLABS_VOICE_SUNDAY` | `hi-IN-MadhurNeural` (professional) |
-`Prabh` | `.env` me `ELEVENLABS_VOICE_PRABH` | `hi-IN-SwaraNeural` (narm, pyaari) |
+| Mode | ElevenLabs | Cartesia | edge-tts |
+|---|---|---|---|
+| `Sunday` | `JBFqnCBsd6RMkjVDRZzb` (George, male) `.env` me `ELEVENLABS_VOICE_SUNDAY` | khaali (skip) | `hi-IN-MadhurNeural` (professional) |
+| `Prabh` | `XrExE9yKIg1WjnnlVkGX` (Matilda, **female**) `.env` me `ELEVENLABS_VOICE_PRABH` | `3b554273-4299-48b9-9aaf-eefd438e3941` (Simi, feminine) `.env` me `CARTESIA_VOICE_PRABH` | `hi-IN-SwaraNeural` (narm, pyaari) |
+
+### Prabh ki awaaz hamesha female
+
+Prabh ke liye male awaaz **kabhi** use nahi hogi. Chain ye hai:
+
+`ElevenLabs (female id)` → `Cartesia (female id)` → `Edge hi-IN-SwaraNeural`
+
+- Prabh ka ElevenLabs id `.env` me nahi hai ya galat hai to wo provider **chhop** diya
+  jaata hai — default (male) awaaz par nahi jata.
+- Cartesia voice ki gender `/voices` endpoint se check karo (`feminine`/`masculine`).
+  Female nahi ho to wo id mat daalo.
+- Koi bhi provider 10 min ke liye fail ho jaye (402/429/503) to wo side me chhoda
+  jaata hai, agli baar turant agla try hota hai.
+
+### Cartesia ke do zaroori rules
+
+- `output_format` **object** hona chahiye: `{"container": "mp3", "sample_rate": 44100}`.
+  `"mp3"` string bhejne par API `400` deta hai.
+- `language` `voice.control.language` ke **andar** jaata hai, top-level par nahi
+  (top-level par API `"Model sunsetted"` bhejti hai). Hum `"hi"` bhejte hain.
 
 ## Mode bolke switch karo
 

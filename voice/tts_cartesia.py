@@ -15,7 +15,7 @@ async def speak(text: str, mode: str) -> bytes:
     if not config.has_cartesia():
         raise TtsError("CARTESIA_API_KEY missing")
 
-    voice = config.voice_id("cartesia", mode)
+    voice = config.voice_for("cartesia", mode)
     if not voice:
         raise TtsError("CARTESIA_VOICE id missing")
 
@@ -23,12 +23,14 @@ async def speak(text: str, mode: str) -> bytes:
         "X-API-Key": config.CARTESIA_API_KEY,
         "Cartesia-Version": config.CARTESIA_VERSION,
     }
+    # Do zaroori baatein (live test se pata chali):
+    # - output_format OBJECT hona chahiye, "mp3" string par API 400 deta hai.
+    # - language voice.control ke andar jaata hai, top-level par "Model sunsetted".
     payload = {
         "model_id": config.CARTESIA_MODEL,
         "transcript": text,
-        "language": "hi",
-        "output_format": "mp3",
-        "voice": {"mode": "id", "id": voice},
+        "output_format": {"container": "mp3", "sample_rate": 44100},
+        "voice": {"mode": "id", "id": voice, "control": {"language": "hi"}},
     }
 
     try:

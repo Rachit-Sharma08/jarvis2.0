@@ -77,14 +77,13 @@ def test_engine_events():
         def ask(self, history, persona):
             return "test jawab", "groq"
 
-    import brain.router as real_router
-    engine_module = __import__("core.engine", fromlist=["router"])
+    import brain.router as brain_router
+    import core.engine as engine_module
     engine_module.router = FakeRouter()
     try:
         out = list(engine.handle("Prabh, hello"))
     finally:
-        engine_module.router = real_router
-
+        engine_module.router = brain_router
     kinds = [e["type"] for e in out]
     statuses = [e["value"] for e in out if e["type"] == "status"]
     check("pehle listening", statuses[0], "listening")
@@ -94,7 +93,8 @@ def test_engine_events():
     check("user message bheja", any(e["type"] == "message" and e["role"] == "user" for e in out), True)
     check("assistant message aaya", kinds.count("message"), 2)
     check("pehle 3 events sahi", [e["type"] for e in out][:3], ["status", "log", "message"])
-    check("khaali message safe", list(engine.handle(""))[0], {"type": "status", "value": "listening"})
+    first = list(engine.handle(""))[0]
+    check("khaali message safe", [first["type"], first["value"]], ["status", "listening"])
     blocked = list(engine.run_tool("weather", {}))
     check("unknown tool block", [e["decision"] for e in blocked], ["deny"])
 

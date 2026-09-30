@@ -1,4 +1,5 @@
 import asyncio
+from html import escape
 
 from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse
@@ -6,6 +7,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import config
+from brain import checkup
 from core.engine import Engine
 from gatekeeper import keeper
 from log_setup import get_logger
@@ -44,6 +46,7 @@ async def drain(generator):
 
 class ChatIn(BaseModel):
     text: str
+    rid: str = ""
 
 
 @app.middleware("http")
@@ -63,7 +66,9 @@ async def index(request: Request):
 
     html = (config.UI_DIR / "index.html").read_text(encoding="utf-8")
     html = html.replace(security.TOKEN_PLACEHOLDER, security.token())
-    return HTMLResponse(html.replace("__PRABH_TOOLS_ON__", "1" if keeper.tools_on() else "0"))
+    html = html.replace("__PRABH_TOOLS_ON__", "1" if keeper.tools_on() else "0")
+    # Startup warning plain text hai — ise HTML me escape karke hi daalte hain.
+    return HTMLResponse(html.replace("__PRABH_BRAIN_WARN__", escape(checkup.banner())))
 
 
 @app.post("/chat")
@@ -77,7 +82,7 @@ async def chat(data: ChatIn, request: Request):
         raise HTTPException(*denied)
 
     events = []
-    async for event in drain(engine.handle(data.text)):
+    async for event in drain(engine.handle(data.text, data.rid)):
         events.append(event)
     return {"events": events, "mode": engine.mode}
 
@@ -99,7 +104,7 @@ async def ws(sock: WebSocket):
     try:
         while True:
             payload = await sock.receive_json()
-            async for event in drain(engine.handle(payload.get("text", ""))):
+            async for event in drain(engine.handle(payload.get("text", ""), payload.get("rid", ""))):
                 await sock.send_json(event)
     except WebSocketDisconnect:
         log.info("websocket disconnected")

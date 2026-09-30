@@ -36,10 +36,27 @@ function setStatus(value) {
 }
 
 const ws = new WebSocket(`ws://${location.host}/ws?token=${encodeURIComponent(TOKEN)}`);
-ws.onmessage = (e) => {
-  const ev = JSON.parse(e.data);
-  if (ev.type === "status") setStatus(ev.value);
-  else if (ev.type === "message") {
+const seenMessages = new Set();
+
+function newRid() {
+  return "r" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+// Ek hi request ka message sirf ek hi baar render hoga (duble delivery ka guard).
+function alreadyShown(ev) {
+  const key = (ev.rid || "n") + "|" + ev.role + "|" + ev.text;
+  if (seenMessages.has(key)) return true;
+  seenMessages.add(key);
+  if (seenMessages.size > 200) seenMessages.clear();
+  return false;
+}
+
+function handleEvent(ev) {
+  if (ev.type === "status") {
+    setStatus(ev.value);
+    if (ev.value === "idle") busy = false;
+  } else if (ev.type === "message") {
+    if (alreadyShown(ev)) return;
     addMessage(ev.role, ev.text);
     if (ev.role === "assistant") speakAnswer(ev.text);
   } else if (ev.type === "confirm" || ev.type === "activity") {
@@ -51,7 +68,9 @@ ws.onmessage = (e) => {
     }
     console.log("[prabh]", ev.level, ev.text);
   }
-};
+}
+
+ws.onmessage = (e) => handleEvent(JSON.parse(e.data));
 
 function send() {
   const text = inputEl.value.trim();
@@ -63,28 +82,23 @@ function send() {
 async function sendText(text) {
   busy = true;
   showNotice("");
+  const rid = newRid();
   if (ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ text }));
-  } else {
-    try {
-      const reply = await fetch("/chat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-prabh-token": TOKEN },
-        body: JSON.stringify({ text }),
-      });
-      const data = await reply.json();
-      (data.events || []).forEach((ev) => {
-        if (ev.type === "message") addMessage(ev.role, ev.text);
-        if (ev.type === "status") setStatus(ev.value);
-        if (ev.type === "confirm" || ev.type === "activity") tools.handle(ev);
-        if (ev.type === "log" && ev.data && ev.data.mode) {
-          currentMode = ev.data.mode.toUpperCase();
-          modeEl.textContent = "MODE: " + currentMode;
-        }
-      });
-    } catch (err) {
-      showNotice("Server se baat nahi ho payi.");
-    }
+    ws.send(JSON.stringify({ text, rid }));
+    return;
+  }
+  try {
+    const reply = await fetch("/chat", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-prabh-token": TOKEN },
+      body: JSON.stringify({ text, rid }),
+    });
+    if (!reply.ok) throw new Error("http " + reply.status);
+    const data = await reply.json();
+    (data.events || []).forEach(handleEvent);
+  } catch (err) {
+    showNotice("Server se baat nahi ho payi.");
+    setStatus("idle");
     busy = false;
   }
 }
@@ -119,36 +133,37 @@ function onAudioReady(blob) {
   setStatus("transcribing");
   transcribe(blob);
 }
+function stopEverything() {
+  speaker.stop();
+  tools.cancel();
+  micBtn.classList.remove("recording");
+  micFlag.classList.remove("on");
+  setStatus("idle");
+  setBusy(false);
+}
 
 async function transcribe(blob) {
   try {
     const reply = await fetch("/stt", {
       method: "POST",
-      headers: {
-        "Content-Type": blob.type || "audio/webm",
-        "x-prabh-token": TOKEN,
-      },
+      headers: { "Content-Type": blob.type || "audio/webm", "x-prabh-token": TOKEN },
       body: blob,
     });
+    const data = await reply.json().catch(() => ({}));
     if (!reply.ok) {
-      const data = await reply.json().catch(() => ({}));
       showNotice(data.detail || "Sun nahi paya.");
-      setStatus("idle");
-      setBusy(false);
+      stopEverything();
       return;
     }
-    const data = await reply.json();
     setStatus("listening");
     if (!data.text || !data.text.trim()) {
-      setStatus("idle");
-      setBusy(false);
+      stopEverything();
       return;
     }
     sendText(data.text);
   } catch (err) {
     showNotice("Sun nahi paya. Dobara try karo.");
-    setStatus("idle");
-    setBusy(false);
+    stopEverything();
   }
 }
 
@@ -173,22 +188,11 @@ muteBtn.addEventListener("click", () => {
   const muted = !recorder.muted;
   recorder.setMuted(muted);
   muteBtn.classList.toggle("active", muted);
-  micBtn.classList.remove("recording");
-  micFlag.classList.remove("on");
   showNotice(muted ? "Mic band hai. Bolna chahu to MUTE dabao." : "");
-  setStatus("idle");
-  setBusy(false);
+  stopEverything();
 });
 
-stopBtn.addEventListener("click", () => {
-  speaker.stop();
-  tools.cancel();
-  recorder.setMuted(recorder.muted);
-  micBtn.classList.remove("recording");
-  micFlag.classList.remove("on");
-  setStatus("idle");
-  setBusy(false);
-});
+stopBtn.addEventListener("click", stopEverything);
 
 document.getElementById("send").addEventListener("click", send);
 inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });

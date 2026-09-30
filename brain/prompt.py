@@ -27,7 +27,17 @@ Rules:
 """
 
 
-def build(persona: str) -> str:
+TOOLS_OFF_NOTE = """
+
+[Abhi PC tools BAND hain. Tool ki zaroorat na ho. User kuch aisa kahe jo sirf
+command se hoga, to seedha bata do ki tools band hain. Tool JSON mat likho.]
+"""
+
+
+def build(persona: str, tools_on: bool = True) -> str:
+    """Tools OFF par lamba tool-prompt LLM ko bhejte hi nahi — sirf persona."""
+    if not tools_on:
+        return persona + TOOLS_OFF_NOTE
     spec = "\n".join(f"- {name}({', '.join(TOOL_ARGS[name])}): {TOOL_SUMMARY[name]}" for name in TOOL_SUMMARY)
     return persona + RULES.format(spec=spec, steps=config.TOOL_MAX_STEPS)
 

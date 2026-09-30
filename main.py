@@ -1,6 +1,9 @@
+import time
+
 import uvicorn
 
 import config
+from brain import checkup
 from log_setup import get_logger
 
 log = get_logger("main")
@@ -26,6 +29,13 @@ def main() -> None:
     )
     if not config.has_groq() and not config.has_gemini():
         print("WARNING: .env me koi API key nahi hai. Jawab nahi aayenge.")
+    # Halki jaanch: sirf models-list, koi token nahi (aam taur par 2s). Server se PEHLE
+    # chalti hai, warna page load hone tak warning taiyaar na hota.
+    began = time.perf_counter()
+    problems = checkup.run()
+    log.info("startup jaanch %.1fs me hui", time.perf_counter() - began)
+    for problem in problems:
+        print(f"WARNING: {problem}")
     print(f"Prabh ready ->  http://localhost:{config.SERVER_PORT}")
     print("Ye ek local personal app hai, sirf is PC par chalta hai.")
     uvicorn.run(

@@ -1,6 +1,9 @@
 import re
+import time
 
 import config
+from brain import health
+from core.timing import Stopwatch
 from log_setup import get_logger
 from voice import tts_cartesia, tts_edge, tts_elevenlabs
 
@@ -54,17 +57,39 @@ async def speak(text: str, mode: str) -> tuple:
     if not spoken:
         raise TtsError("Bolne layak text nahi bacha.")
 
+    watch = Stopwatch("tts")
     problems = []
     for name in config.TTS_CHAIN:
+        rest = health.blocked_reason(name)
+        if rest:
+            log.info("tts %s skip: %s", name, rest)
+            problems.append(f"{name}: rest par")
+            continue
+        voice = config.voice_for(name, mode)
+        if name in ("elevenlabs", "cartesia") and not voice:
+            log.info("tts %s skip: %s ke liye voice id nahi hai", name, mode)
+            problems.append(f"{name}: voice id nahi")
+            continue
+        start = time.perf_counter()
         try:
             audio = await PROVIDERS[name].speak(spoken, mode)
-            log.info("tts provider: %s", name)
-            return audio, name
         except Exception as exc:
+            took = watch.stage(f"{name}-fail", start)
             problems.append(f"{name}: {exc}")
-            log.warning("%s fail, agla try kar rahe -> %s", name, exc)
+            log.warning("tts %s fail (%dms) -> %s", name, took, exc)
+            # Sirf exception text classify karo — voice id me "429" jaisa
+            # hissa aayega to 10 min ka galat rest na lage.
+            health.classify_and_skip(name, str(exc))
+            continue
+        took = watch.stage(name, start)
+        last4 = (voice or config.EDGE_VOICES.get(mode, ""))[-4:]
+        log.info("TIME tts: provider=%s mode=%s voice=..%s chars=%d bytes=%d %dms",
+                 name, mode, last4, len(spoken), len(audio), took)
+        watch.total()
+        return audio, name
 
     log.error("sab TTS providers fail -> %s", " | ".join(problems))
+    watch.total()
     raise TtsError(
         "Awaaz nahi ban paayi. Thodi der baad try karo. "
         "Details logs/prabh.log me hain."

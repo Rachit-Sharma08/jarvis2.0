@@ -1,3 +1,5 @@
+import time
+
 import config
 from brain import prompt, router
 from core import events, modes
@@ -64,8 +66,21 @@ class Engine:
         yield events.activity(name, "allow", _one_line(output) or "(khaali output)")
         return output
 
-    def handle(self, text: str):
-        """Message aaya -> mode chuna -> brain -> (tool loop) -> events."""
+    def handle(self, text: str, rid: str = ""):
+        """Message aaya -> mode chuna -> brain -> (tool loop) -> events.
+
+        `rid` = browser ka request id. Har event me jaata hai taaki UI duplicate
+        message na dikhaye (ek hi baar bheja request sirf ek hi baar render ho).
+        """
+        started = time.perf_counter()
+        log.info("chat rid=%s text=%r", rid or "-", _one_line(text))
+        for event in self._handle(text):
+            event["rid"] = rid
+            yield event
+        log.info("TIME chat: rid=%s total %dms", rid or "-",
+                 int((time.perf_counter() - started) * 1000))
+
+    def _handle(self, text: str):
         yield events.status("listening")
 
         if not text or not text.strip():
@@ -90,10 +105,10 @@ class Engine:
             yield events.status("thinking")
             try:
                 answer, brain_name = router.ask(
-                    self.history, prompt.build(modes.persona_for(self.mode))
+                    self.history, prompt.build(modes.persona_for(self.mode), keeper.tools_on())
                 )
             except Exception as exc:
-                log.error("engine: brain crash: %s: %s", type(exc).__name__, exc)
+                log.error("engine: brain crash: %s: %s", type(exc).__name__, exc, exc_info=True)
                 answer, brain_name = "Kuch gadbad ho gayi. Dobara try karo.", "none"
 
             kind, payload = prompt.parse_action(answer)

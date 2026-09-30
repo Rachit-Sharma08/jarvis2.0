@@ -1,5 +1,6 @@
 import asyncio
 import io
+import time
 
 from groq import Groq
 
@@ -14,7 +15,7 @@ class SttError(Exception):
 
 
 def _transcribe(audio: bytes) -> str:
-    client = Groq(api_key=config.GROQ_API_KEY)
+    client = Groq(api_key=config.GROQ_API_KEY, timeout=config.BRAIN_TIMEOUT_GROQ)
     reply = client.audio.transcriptions.create(
         file=("mic.webm", io.BytesIO(audio)),
         model=config.GROQ_STT_MODEL,
@@ -29,15 +30,18 @@ async def transcribe(audio: bytes) -> str:
     if not audio:
         raise SttError("Recording khaali aayi.")
 
+    start = time.perf_counter()
     try:
         text = await asyncio.to_thread(_transcribe, audio)
     except Exception as exc:
-        log.error("stt failed: %s: %s", type(exc).__name__, exc)
+        log.error("stt failed (%dms): %s: %s", int((time.perf_counter() - start) * 1000),
+                  type(exc).__name__, exc)
         raise SttError(f"Sun nahi paya ({exc}).") from exc
 
     if not text:
         log.warning("stt ne khaali text diya")
         raise SttError("Sun nahi paya. Thoda loud bolke try karo.")
 
-    log.info("stt ok: %d chars", len(text))
+    log.info("TIME stt: %s %dms | %d chars", config.GROQ_STT_MODEL,
+             int((time.perf_counter() - start) * 1000), len(text))
     return text

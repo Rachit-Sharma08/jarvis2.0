@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, Request, Response
 from pydantic import BaseModel
 
 import config
+from core.timing import Stopwatch
 from log_setup import get_logger
 from server import security
 from voice import stt as stt_voice
@@ -40,11 +41,14 @@ async def stt(request: Request):
     if not audio:
         raise HTTPException(400, "Koi audio nahi mila.")
 
+    watch = Stopwatch("route")
     try:
         text = await stt_voice.transcribe(audio)
     except stt_voice.SttError as exc:
+        watch.total()
         raise HTTPException(502, str(exc)) from exc
 
+    watch.total()
     return {"text": text}
 
 
@@ -55,12 +59,15 @@ async def tts(data: TtsIn, request: Request):
     if not data.text.strip():
         raise HTTPException(400, "Bolone layak text nahi hai.")
 
+    watch = Stopwatch("route")
     try:
         audio, provider = await tts_voice.speak(data.text, data.mode)
     except tts_voice.TtsError as exc:
+        watch.total()
         raise HTTPException(502, str(exc)) from exc
 
     log.info("tts %s -> %d bytes", provider, len(audio))
+    watch.total()
     return Response(
         content=audio,
         media_type="audio/mpeg",

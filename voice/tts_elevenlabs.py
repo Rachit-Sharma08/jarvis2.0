@@ -15,7 +15,10 @@ async def speak(text: str, mode: str) -> bytes:
     if not config.has_elevenlabs():
         raise TtsError("ELEVENLABS_API_KEY missing")
 
-    voice = config.voice_id("elevenlabs", mode) or config.ELEVENLABS_DEFAULT_VOICE
+    voice = config.voice_for("elevenlabs", mode)
+    if not voice:
+        # Female-only mode me id nahi hai — default male voice KABHI use nahi hoga.
+        raise TtsError(f"{mode} ke liye ElevenLabs voice id missing")
     payload = {"text": text, "model_id": config.ELEVENLABS_MODEL}
     headers = {"xi-api-key": config.ELEVENLABS_API_KEY}
 
