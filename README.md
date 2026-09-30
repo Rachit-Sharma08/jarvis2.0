@@ -1,5 +1,8 @@
 # Prabh
 
+> **Ye ek local personal app hai, sirf is PC par chalta hai.** Ye web app nahi hai —
+> doosre PC, phone ya internet se koi ise khol nahi sakta.
+
 Do naam wala AI assistant:
 
 - **Sunday** (public mode) — halka professional, chhote aur saaf jawab.
@@ -60,9 +63,41 @@ Band karne ke liye terminal me `Ctrl + C`.
 ```powershell
 cd D:\prabh
 .\.venv\Scripts\python.exe tests\test_basic.py
+.\.venv\Scripts\python.exe tests\test_security.py
 ```
 
-Saare "OK" aa jaye to test pass. Test me real API call nahi hota — key ki zarurat nahi.
+Aakhir me "Saare test pass." aana chahiye. Test me real API call nahi hota — key ki zarurat nahi.
+
+---
+
+## Suraksha (sirf local)
+
+Ye app bahar se bilkul band hai:
+
+1. **Sirf 127.0.0.1 par suna** — `0.0.0.0` par server chalu hi nahi hoga
+   (`main.py` me guard hai).
+2. **Origin check** — sirf `http://localhost:8000` aur `http://127.0.0.1:8000` se aane
+   wale request chalenge. Koi doosri website (`https://evil.com`) se kuch nahi hoga.
+3. **Host header check** — sirf `localhost:8000` / `127.0.0.1:8000`. Isse koi fake
+   domain (DNS rebinding) app ko apna nahi dikha sakta.
+4. **Token** — server har baar start hone par ek naya random token banata hai.
+   Token khud app ke page (`/`) me daal diya jaata hai, aur UI har `/chat` aur `/ws`
+   request ke saath bhejta hai. Token galat ya missing ho to request 401 ho jaati hai.
+5. **CORS band** — koi `access-control-allow-origin` header nahi jaata.
+
+Sabse aasan: **token har restart par badal jaata hai**, isliye server band karke dobara
+chalao aur page dobara kholo — token apne aap refresh ho jaayega.
+
+### Command line se test karna ho
+
+```powershell
+cd D:\prabh
+$page = Invoke-WebRequest http://localhost:8000 -UseBasicParsing
+$token = [regex]::Match($page.Content, 'PRABH_TOKEN = "([^"]+)"').Groups[1].Value
+Invoke-RestMethod http://localhost:8000/chat -Method Post `
+  -Headers @{ Origin = "http://localhost:8000"; "x-prabh-token" = $token } `
+  -ContentType "application/json" -Body '{"text":"Sunday, hi"}'
+```
 
 ---
 
@@ -97,8 +132,10 @@ Dayin taraf poori baat-chit rehti hai.
 `personas/sunday.txt` | Sunday ka character |
 `personas/prabh.txt` | Prabh ka character |
 `server/app.py` | `POST /chat` + `WebSocket /ws` |
+`server/security.py` | Origin / Host / token check |
 `ui/index.html`, `ui/style.css`, `ui/app.js` | Interface |
-`tests/test_basic.py` | Tests |
+`tests/test_basic.py` | Chat, mode aur brain ke tests |
+`tests/test_security.py` | Suraksha ke tests |
 
 ---
 

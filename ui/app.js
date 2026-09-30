@@ -21,7 +21,8 @@ function setStatus(value) {
   orbEl.classList.toggle("thinking", value === "thinking");
 }
 
-const ws = new WebSocket(`ws://${location.host}/ws`);
+const TOKEN = window.PRABH_TOKEN || "";
+const ws = new WebSocket(`ws://${location.host}/ws?token=${encodeURIComponent(TOKEN)}`);
 ws.onmessage = (e) => {
   const ev = JSON.parse(e.data);
   if (ev.type === "status") setStatus(ev.value);
@@ -37,7 +38,11 @@ function send() {
   if (!text) return;
   inputEl.value = "";
   if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ text }));
-  else fetch("/chat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text }) });
+  else fetch("/chat", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "x-prabh-token": TOKEN },
+    body: JSON.stringify({ text }),
+  });
 }
 
 document.getElementById("send").addEventListener("click", send);

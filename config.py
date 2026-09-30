@@ -18,8 +18,24 @@ GROQ_MODEL = "llama-3.3-70b-versatile"
 GEMINI_MODEL = "gemini-2.5-flash"
 
 DEFAULT_MODE = "sunday"
+
+# Ye app sirf is PC par chalti hai. 0.0.0.0 kabhi allowed nahi.
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8000
+LOCAL_NAMES = ("localhost", "127.0.0.1")
+TOKEN_BYTES = 32
+
+
+def is_local_only() -> bool:
+    return SERVER_HOST in LOCAL_NAMES
+
+
+def allowed_hosts() -> set:
+    return {f"{name}:{SERVER_PORT}" for name in LOCAL_NAMES}
+
+
+def allowed_origins() -> set:
+    return {f"http://{name}:{SERVER_PORT}" for name in LOCAL_NAMES}
 
 
 def has_groq() -> bool:
