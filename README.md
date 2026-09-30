@@ -8,7 +8,12 @@ Do naam wala AI assistant:
 - **Sunday** (public mode) — halka professional, chhote aur saaf jawab.
 - **Prabh** (private mode) — pyaar se, dostana, khula Hinglish.
 
-Browser me chalta hai, Windows 10/11 par, sab kuch free tools se.
+Browser me chalta hai, Windows 10/11 par, sab kuch free tools se. Mic se baat kar sakta
+hai aur PC ke kaam bhi kar sakta hai (file, folder, app, command) — har kaam ke pehle
+screen par confirm card aata hai.
+
+- Awaaz ke liye → [VOICE.md](VOICE.md)
+- PC ke kaam ke liye → [TOOLS.md](TOOLS.md)
 
 ---
 
@@ -45,12 +50,10 @@ CARTESIA_VOICE_PRABH=
 ```
 
 Sirf `GROQ_API_KEY` zaruri hai (chat + mic dono). Baaki sab optional hain.
-
-Key kahan se milegi:
-- Groq: https://console.groq.com/keys
-- Gemini: https://aistudio.google.com/apikey
-- ElevenLabs: https://elevenlabs.io/app/developers/api-keys
-- Cartesia: https://cartesia.ai/dashboard
+Key kahan se milegi: Groq https://console.groq.com/keys ·
+Gemini https://aistudio.google.com/apikey ·
+ElevenLabs https://elevenlabs.io/app/developers/api-keys ·
+Cartesia https://cartesia.ai/dashboard
 
 > Key kabhi code ya chat me mat likho. `.env` git-ignore hai, wo kabhi commit nahi hoga.
 
@@ -71,79 +74,36 @@ Band karne ke liye terminal me `Ctrl + C`.
 
 ## 3. Test
 
+Saare suites ek loop me:
+
 ```powershell
 cd D:\prabh
-.\.venv\Scripts\python.exe tests\test_basic.py
-.\.venv\Scripts\python.exe tests\test_security.py
-.\.venv\Scripts\python.exe tests\test_voice.py
+Get-ChildItem tests\test_*.py | ForEach-Object { .\.venv\Scripts\python.exe $_.FullName }
 ```
 
-Aakhir me "Saare test pass." aana chahiye. Test me real API call nahi hota — key ki zarurat nahi.
+Ek-ek karke bhi chal sakte ho:
 
----
+```powershell
+.\.venv\Scripts\python.exe tests\test_gatekeeper.py
+.\.venv\Scripts\python.exe tests\test_tools.py
+.\.venv\Scripts\python.exe tests\test_tool_routes.py
+```
 
-## Voice (mic se baat)
-
-Mic aur speaker ka kaam **browser** me hota hai. Server sirf awaaz ko text me badalta hai
-aur text ko awaaz me.
-
-### Chalao
-
-1. Server chalu karo (`main.py`).
-2. Browser me **http://localhost:8000** kholo.
-3. Browser puchega **"Use microphone"** — **Allow** dabao. Mana kiya to MIC kaam
-   nahi karega aur screen par saaf message aayega.
-
-### Buttons
-
-| Button | Kaam |
+| Test file | Kya check karta hai |
 |---|---|
-`MIC` | Ek click par recording shuru, dobara click par band. 30 second par apne aap band. |
-`MUTE` | Mic poori tarah band. Phir se dabao to wapas on. |
-`STOP` | Chal rahi awaaz ya recording turant rok do. |
-`SEND` | Command box me likhi baat bhejo. |
-
-Recording me stage par **MIC ON** (peela) nishaan dikhta hai. Recording khatam hote hi
-mic turant chhod diya jaata hai (browser ka mic indicator band ho jaata hai).
-
-### Status kya matlab rakhta hai
-
-`IDLE` → `LISTENING` (mic on) → `TRANSCRIBING` (sun raha hai) → `THINKING` (soch raha hai)
-→ `SPEAKING` (bol raha hai) → `IDLE`
-
-### Kaun sa provider kab use hota hai
-
-| Provider | Kab | Free? |
-|---|---|---|
-**ElevenLabs** | Pehle try hota hai. Sabse achhi awaaz. `ELEVENLABS_API_KEY` chahiye. | Free quota **10,000 character / mahina**. Khatam hone par `402` deta hai. |
-**Cartesia** | ElevenLabs fail ho to. `CARTESIA_API_KEY` + voice id chahiye. | Free quota chhota. |
-**edge-tts** | Hamesha aakhri bharosa. Koi key nahi chahiye. | Bilkul free, unlimited. |
-
-- Voice ids na ho to wo provider skip ho jaata hai, agna try hota hai.
-- Teeno fail hon to screen par saaf error aata hai — chup nahi hota.
-- **Awaaz me sirf pehle 500 character** bolte hain (free quota bachaane ke liye).
-  Poora jawab chat me likha rahe hota hai.
-- Bolne se pehle link, emoji aur markdown (`*`, `#`, backtick, `_`, `>`) hata diye jate hain.
-
-### Har mode ki awaaz
-
-| Mode | ElevenLabs | edge-tts |
-|---|---|---|
-`Sunday` | `.env` me `ELEVENLABS_VOICE_SUNDAY` | `hi-IN-MadhurNeural` (professional) |
-`Prabh` | `.env` me `ELEVENLABS_VOICE_PRABH` | `hi-IN-SwaraNeural` (narm, pyaari) |
-
-### Mode bolke switch karo
-
-Whisper (sunne wala) Hindi + English dono samajhta hai, to naam bhi bol sakte ho:
-
-- `"Sunday..."`, `"संडे..."` → Sunday
-- `"Prabh..."`, `"Prabhu..."`, `"प्रभ..."`, `"प्रभु..."` → Prabh
-
-### Limit
-
-- Recording: **30 second** (server par 10 MB se bada audio reject).
-- Agar browser autoplay rok de to screen par likha aayega:
-  **"Awaaz chalane ke liye kahin click karo."** — kahin ek click kar dena kaafi hai.
+`test_basic.py` | Chat, mode switching, brain, logging |
+`test_security.py` | Token, origin, host, dangerous endpoints |
+`test_voice.py` | Voice chain, limit, mode naam, `/stt` `/tts` |
+`test_gatekeeper.py` | 40+ SAFE/ASK/BLOCKED cases, path tricks, mode parity |
+`test_gatekeeper_approval.py` | Card hash, single use, 60s timeout, kill switch, rate limit, log masking |
+`test_paths.py` | Traversal, case, 8.3 naam, junction, drive root |
+`test_tools.py` | 10 tools (temp folder me), 20 KB limit, scrubbed env, timeout |
+`test_prompt_strict.py` | LLM JSON strict validation + duplicate key reject |
+`test_engine_tools.py` | 5-step loop, ASK/BLOCKED, kill switch, mode parity |
+`test_engine_detail.py` | Tool output aur confirm card ki masking |
+`test_tool_routes.py` | Tool endpoints, CSP, UI source safety |
+Aakhir me "OK" / "Saare test pass." aana chahiye. Test me real API call nahi hota aur koi
+khatarna command bhi nahi chalti — key ki zarurat nahi.
 
 ---
 
@@ -158,9 +118,12 @@ Ye app bahar se bilkul band hai:
 3. **Host header check** — sirf `localhost:8000` / `127.0.0.1:8000`. Isse koi fake
    domain (DNS rebinding) app ko apna nahi dikha sakta.
 4. **Token** — server har baar start hone par ek naya random token banata hai.
-   Token khud app ke page (`/`) me daal diya jaata hai, aur UI har `/chat` aur `/ws`
-   request ke saath bhejta hai. Token galat ya missing ho to request 401 ho jaati hai.
+   Token page ke `<meta name="prabh-token">` me daal diya jaata hai, aur UI har request
+   ke saath bhejta hai. Token galat ya missing ho to request 401 ho jaati hai.
 5. **CORS band** — koi `access-control-allow-origin` header nahi jaata.
+6. **CSP header** — page par sirf apna hi code chal sakta hai (inline script band).
+7. **PC tools** — har tool gatekeeper se guzarta hai; badlav-wale kaam bina ALLOW ke
+   nahi hote, aur `.env`/key files hamesha BLOCKED. Details [TOOLS.md](TOOLS.md) me.
 
 Sabse aasan: **token har restart par badal jaata hai**, isliye server band karke dobara
 chalao aur page dobara kholo — token apne aap refresh ho jaayega.
@@ -170,7 +133,7 @@ chalao aur page dobara kholo — token apne aap refresh ho jaayega.
 ```powershell
 cd D:\prabh
 $page = Invoke-WebRequest http://localhost:8000 -UseBasicParsing
-$token = [regex]::Match($page.Content, 'PRABH_TOKEN = "([^"]+)"').Groups[1].Value
+$token = [regex]::Match($page.Content, 'name="prabh-token" content="([^"]+)"').Groups[1].Value
 Invoke-RestMethod http://localhost:8000/chat -Method Post `
   -Headers @{ Origin = "http://localhost:8000"; "x-prabh-token" = $token } `
   -ContentType "application/json" -Body '{"text":"Sunday, hi"}'
@@ -189,7 +152,7 @@ Command box me likho aur **SEND** dabao (ya Enter).
 - Default mode **Sunday** hai.
 
 Beeche me gol orb aur uske neeche status dikhta hai: `IDLE` -> `THINKING` -> `SPEAKING` -> `IDLE`.
-Dayin taraf poori baat-chit rehti hai.
+Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hisaab.
 
 ---
 
@@ -198,44 +161,39 @@ Dayin taraf poori baat-chit rehti hai.
 | File | Kaam |
 |---|---|
 `main.py` | Server chalu karta hai |
-`config.py` | `.env` aur settings |
+`config.py` | `.env`, settings, tool risk, allowed folders, blocked patterns |
 `log_setup.py` | `logs/prabh.log` banata hai |
-`core/events.py` | `status` / `message` / `log` events |
+`core/events.py` | `status` / `message` / `log` / `activity` / `confirm` events |
 `core/modes.py` | Naam se mode + persona file |
-`core/engine.py` | Poora chat flow |
+`core/engine.py` | Poora chat flow + tool loop (**sirf** `run_tool` raasta) |
 `brain/router.py` | Pehle Groq, phir Gemini |
-`brain/groq_client.py` | Groq call |
-`brain/gemini_client.py` | Gemini call |
-`personas/sunday.txt` | Sunday ka character |
-`personas/prabh.txt` | Prabh ka character |
-`server/app.py` | `POST /chat` + `WebSocket /ws` |
+`brain/prompt.py` | Persona + tool JSON rules + strict parser |
+`brain/groq_client.py`, `brain/gemini_client.py` | Brain API calls |
+`gatekeeper/keeper.py` | Har tool ka faisla + card ka intezaar |
+`gatekeeper/rules.py`, `patterns.py` | Risk + khatarna command regex |
+`gatekeeper/paths.py` | Traversal, symlink, 8.3, protected root jaanch |
+`gatekeeper/approvals.py`, `limiter.py`, `audit.py` | Card hash, kill switch, masked log |
+`tools/*.py` | 10 tools ka asal kaam |
+`server/app.py` | `POST /chat` + `WebSocket /ws` + CSP |
 `server/security.py` | Host + Origin + token check |
-`voice/stt.py` | Audio → text (Groq Whisper) |
-`voice/tts.py` | Provider chain + text saaf karna |
-`voice/tts_elevenlabs.py`, `voice/tts_cartesia.py`, `voice/tts_edge.py` | Ek-ek provider |
+`server/tool_routes.py` | `/tool/confirm`, `/tools/toggle`, `/tools/cancel`, `/tools/status` |
 `server/voice_routes.py` | `POST /stt` + `POST /tts` |
-`ui/recorder.js`, `ui/speaker.js` | Mic record + audio playback |
+`voice/*.py` | STT/TTS providers (details [VOICE.md](VOICE.md)) |
 `ui/index.html`, `ui/style.css`, `ui/app.js` | Interface |
-`tests/test_basic.py` | Chat, mode aur brain ke tests |
-`tests/test_security.py` | Suraksha ke tests |
-`tests/test_voice.py` | Voice ke tests (chain, limit, naam, endpoints) |
+`ui/tools.js`, `ui/tools.css` | ACTIVITY panel, confirm card, kill switch |
+`ui/recorder.js`, `ui/speaker.js` | Mic record + audio playback |
+`personas/sunday.txt`, `personas/prabh.txt` | Dono ka character |
 
 ---
 
 ## Error kahan dekhein?
 
-Sab kuch `logs/prabh.log` me likha jaata hai.
+Sab kuch `logs/prabh.log` me likha jaata hai. Har tool ka hisaab `logs/actions.log` me.
 
 ```powershell
 Get-Content D:\prabh\logs\prabh.log -Tail 20
+Get-Content D:\prabh\logs\actions.log -Tail 20
 ```
 
 Agar browser me sirf "Abhi koi brain jawab nahi de paya" dikh raha hai, to `.env` me key
 sahi hai ya nahi check karo.
-
----
-
-## Baad me aane wala kaam (abhi nahi banaya)
-
-`engine.run_tool()` ek hi raasta hai jahan har PC-kaam wala tool chalega. Baad me
-usi jagah gatekeeper lagega — engine me badlav nahi hoga.
