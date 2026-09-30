@@ -12,6 +12,8 @@
     <div class="orb" id="orb"></div>
     <p class="status" id="status">IDLE</p>
     <p class="mode" id="mode">MODE: SUNDAY</p>
+    <p class="micflag" id="micflag">MIC ON</p>
+    <p class="notice" id="notice"></p>
   </section>
 
   <aside class="log">
@@ -20,12 +22,17 @@
   </aside>
 
   <footer class="bar">
+    <button id="mic" class="tool" title="Mic on/off">MIC</button>
+    <button id="mute" class="tool" title="Mic ko poori tarah band karo">MUTE</button>
+    <button id="stop" class="tool" title="Bolana rok do">STOP</button>
     <input id="cmd" type="text" autocomplete="off"
            placeholder="Sunday, ya Prabh se shuru karke likho..." />
     <button id="send">SEND</button>
   </footer>
 </main>
 <script>window.PRABH_TOKEN = "__PRABH_TOKEN__";</script>
+<script src="/ui/recorder.js"></script>
+<script src="/ui/speaker.js"></script>
 <script src="/ui/app.js"></script>
 </body>
 </html>
