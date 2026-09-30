@@ -94,7 +94,8 @@ def test_engine_events():
     check("assistant message aaya", kinds.count("message"), 2)
     check("pehle 3 events sahi", [e["type"] for e in out][:3], ["status", "log", "message"])
     check("khaali message safe", list(engine.handle(""))[0], {"type": "status", "value": "listening"})
-    check("tool abhi nahi hai", engine.run_tool("weather", {}), "Abhi koi tool available nahi hai.")
+    blocked = list(engine.run_tool("weather", {}))
+    check("unknown tool block", [e["decision"] for e in blocked], ["deny"])
 
 
 def test_events_module():

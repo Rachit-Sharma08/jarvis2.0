@@ -16,3 +16,20 @@ def log(text: str, level: str = "info", data: dict = None) -> dict:
     if data:
         event["data"] = data
     return event
+
+
+def confirm(request_id: str, tool: str, detail: str, timeout: int, approval_hash: str) -> dict:
+    """UI ka Allow/Deny card. Hash ke bina koi approve nahi ho sakta."""
+    return {
+        "type": "confirm",
+        "id": request_id,
+        "tool": tool,
+        "detail": detail,
+        "timeout": timeout,
+        "hash": approval_hash,
+    }
+
+
+def activity(tool: str, decision: str, text: str) -> dict:
+    """ACTIVITY panel ki ek line."""
+    return {"type": "activity", "tool": tool, "decision": decision, "text": text}
