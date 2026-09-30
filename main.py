@@ -17,7 +17,13 @@ def ensure_local_only() -> None:
 
 def main() -> None:
     ensure_local_only()
+    config.ensure_workspace()
     log.info("Prabh starting on %s:%s", config.SERVER_HOST, config.SERVER_PORT)
+    log.info(
+        "workspace=%s | tools=%s (UI toggle se ON karo)",
+        config.WORKSPACE,
+        "ON" if config.TOOLS_ENABLED_DEFAULT else "OFF",
+    )
     if not config.has_groq() and not config.has_gemini():
         print("WARNING: .env me koi API key nahi hai. Jawab nahi aayenge.")
     print(f"Prabh ready ->  http://localhost:{config.SERVER_PORT}")

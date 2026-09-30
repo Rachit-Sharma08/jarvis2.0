@@ -3,8 +3,11 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="prabh-token" content="__PRABH_TOKEN__" />
+<meta name="prabh-tools" content="__PRABH_TOOLS_ON__" />
 <title>Prabh</title>
 <link rel="stylesheet" href="/ui/style.css" />
+<link rel="stylesheet" href="/ui/tools.css" />
 </head>
 <body>
 <main class="hud">
@@ -16,23 +19,42 @@
     <p class="notice" id="notice"></p>
   </section>
 
-  <aside class="log">
-    <h2>CONVERSATION</h2>
-    <div id="messages"></div>
+  <aside class="side">
+    <section class="log">
+      <h2>CONVERSATION</h2>
+      <div id="messages"></div>
+    </section>
+    <section class="activity">
+      <h2>ACTIVITY</h2>
+      <div id="activity"></div>
+    </section>
   </aside>
 
   <footer class="bar">
     <button id="mic" class="tool" title="Mic on/off">MIC</button>
     <button id="mute" class="tool" title="Mic ko poori tarah band karo">MUTE</button>
-    <button id="stop" class="tool" title="Bolana rok do">STOP</button>
+    <button id="stop" class="tool" title="Bolana aur tool rok do">STOP</button>
+    <button id="kill" class="tool kill" title="Saare tools ek click me band">TOOLS OFF</button>
     <input id="cmd" type="text" autocomplete="off"
            placeholder="Sunday, ya Prabh se shuru karke likho..." />
     <button id="send">SEND</button>
   </footer>
 </main>
-<script>window.PRABH_TOKEN = "__PRABH_TOKEN__";</script>
+
+<div class="card" id="confirmcard" hidden>
+  <h3>ALLOW YA DENY?</h3>
+  <p id="cardtool"></p>
+  <pre id="carddetail"></pre>
+  <div class="row">
+    <button id="deny">DENY</button>
+    <button id="allow">ALLOW</button>
+    <span class="count" id="cardcount">60s</span>
+  </div>
+</div>
+
 <script src="/ui/recorder.js"></script>
 <script src="/ui/speaker.js"></script>
+<script src="/ui/tools.js"></script>
 <script src="/ui/app.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const TOKEN = window.PRABH_TOKEN || "";
+const TOKEN = (document.querySelector('meta[name="prabh-token"]') || {}).content || "";
 const statusEl = document.getElementById("status");
 const modeEl = document.getElementById("mode");
 const orbEl = document.getElementById("orb");
@@ -42,6 +42,8 @@ ws.onmessage = (e) => {
   else if (ev.type === "message") {
     addMessage(ev.role, ev.text);
     if (ev.role === "assistant") speakAnswer(ev.text);
+  } else if (ev.type === "confirm" || ev.type === "activity") {
+    tools.handle(ev);
   } else if (ev.type === "log") {
     if (ev.data && ev.data.mode) {
       currentMode = ev.data.mode.toUpperCase();
@@ -74,6 +76,7 @@ async function sendText(text) {
       (data.events || []).forEach((ev) => {
         if (ev.type === "message") addMessage(ev.role, ev.text);
         if (ev.type === "status") setStatus(ev.value);
+        if (ev.type === "confirm" || ev.type === "activity") tools.handle(ev);
         if (ev.type === "log" && ev.data && ev.data.mode) {
           currentMode = ev.data.mode.toUpperCase();
           modeEl.textContent = "MODE: " + currentMode;
@@ -85,6 +88,8 @@ async function sendText(text) {
     busy = false;
   }
 }
+
+const tools = new ToolsPanel(TOKEN, (err) => showNotice(err));
 
 const speaker = new Speaker(
   TOKEN,
@@ -177,6 +182,7 @@ muteBtn.addEventListener("click", () => {
 
 stopBtn.addEventListener("click", () => {
   speaker.stop();
+  tools.cancel();
   recorder.setMuted(recorder.muted);
   micBtn.classList.remove("recording");
   micFlag.classList.remove("on");
