@@ -1,22 +1,21 @@
-"""Gatekeeper ke faisle ka test. Koi command ASLI me kabhi nahi chalti.
+"""Gatekeeper ke RISK rules ka test. Koi command ASLI me kabhi nahi chalti.
 
-Sirf `rules.decide()` / `keeper.review()` ka faisla check hota hai. Executor
-mock hai — `tools` kahin import nahi hota yahan.
+Sirf `rules.decide()` ka SAFE/ASK/BLOCKED faisla check hota hai. Executor mock
+hai — `tools` kahin import nahi hota yahan. Approval/limiter ke test alag
+file me hain (`test_gatekeeper_approval.py`), path ke test `test_paths.py` me.
 """
 
 import os
 import subprocess
 import sys
-import time
+if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import config
-from gatekeeper import audit, keeper, patterns, paths
-from gatekeeper.approvals import Registry
-from gatekeeper.limiter import Limiter
+from gatekeeper import keeper, patterns
 
 S, A, B = config.SAFE, config.ASK, config.BLOCKED
 
@@ -97,6 +96,13 @@ CASES = [
 ]
 
 
+def _risk(tool, args, mode="sunday"):
+    """Faisla nikalne ka chhota helper. Executor kabhi chalta nahi."""
+    from gatekeeper import rules
+
+    return rules.decide(tool, args)
+
+
 class RulesTest(unittest.TestCase):
     def setUp(self):
         """Har test me process chalna mana: koi bhi command chalu nahi ho sakti."""
@@ -130,55 +136,6 @@ class RulesTest(unittest.TestCase):
             self.assertEqual(sunday, prabh, f"{tool} me mode ka farak hai")
             self.assertEqual(sunday, expected, f"{tool} galat")
 
-    def test_confirm_hash_and_single_use(self):
-        registry = Registry()
-        pending = registry.open("run_command", {"command": "echo hi"})
-        self.assertTrue(registry.busy())
-
-        bad_hash, _ = registry.decide(pending.id, "not-the-hash", True)
-        self.assertFalse(bad_hash, "hash galat hone par allow nahi hona chahiye")
-
-        bad_id, _ = registry.decide("fake-id", pending.hash, True)
-        self.assertFalse(bad_id, "galat id par allow nahi hona chahiye")
-
-        ok, _ = registry.decide(pending.id, pending.hash, True)
-        self.assertTrue(ok)
-        again, reason = registry.decide(pending.id, pending.hash, True)
-        self.assertFalse(again, "dobara use nahi hona chahiye")
-        self.assertIn("pehle hi use", reason)
-
-    def test_timeout_means_deny(self):
-        registry = Registry()
-        pending = registry.open("write_file", {"path": "x", "content": "y"}, timeout=1)
-        started = time.monotonic()
-        allowed, reason = registry.wait(pending)
-        elapsed = time.monotonic() - started
-        self.assertFalse(allowed, "timeout par DENY hona chahiye")
-        self.assertIn("60 second", reason)
-        self.assertGreaterEqual(elapsed, 0.9)
-
-    def test_deny_works(self):
-        registry = Registry()
-        pending = registry.open("close_app", {"name": "notepad"})
-        allowed, _ = registry.decide(pending.id, pending.hash, False)
-        self.assertTrue(allowed)
-        self.assertFalse(pending.allow)
-
-    def test_only_one_pending_card(self):
-        registry = Registry()
-        first = registry.open("run_command", {"command": "echo 1"})
-        self.assertTrue(registry.busy())
-        registry.decide(first.id, first.hash, True)
-        self.assertFalse(registry.busy(), "use hone ke baad nahi rehna chahiye")
-
-    def test_kill_switch(self):
-        limiter = Limiter(enabled=True, per_minute=20)
-        self.assertEqual("", limiter.check())
-        limiter.set_enabled(False)
-        self.assertIn("TOOLS OFF", limiter.check())
-        limiter.set_enabled(True)
-        self.assertEqual("", limiter.check())
-
     def test_kill_switch_blocks_every_tool(self):
         keeper.LIMITER.set_enabled(False)
         try:
@@ -188,32 +145,6 @@ class RulesTest(unittest.TestCase):
                 self.assertIn("TOOLS OFF", reason)
         finally:
             keeper.LIMITER.set_enabled(True)
-
-    def test_rate_limit(self):
-        limiter = Limiter(enabled=True, per_minute=20)
-        for _ in range(20):
-            self.assertEqual("", limiter.check())
-            limiter.record()
-        self.assertIn("limit", limiter.check())
-        self.assertEqual(20, limiter.used())
-
-    def test_mask_hides_keys(self):
-        fake = "gsk_test1234567890abcdef"
-        self.assertNotIn(fake, audit.mask(f"key hai {fake} yahan"))
-        self.assertIn("***", audit.mask(f"key hai {fake} yahan"))
-        self.assertNotIn("AIzaSyABCDEFGHIJ", audit.mask("AIzaSyABCDEFGHIJ"))
-        self.assertNotIn("sk_live_abcdefghijkl", audit.mask("sk_live_abcdefghijkl"))
-        self.assertNotIn("AQ.AbCdEf", audit.mask("token=AQ.AbCdEfGhIjKlMnOpQrStUvWxYz012345"))
-        if config.GROQ_API_KEY:
-            self.assertNotIn(config.GROQ_API_KEY, audit.mask(f"leak {config.GROQ_API_KEY}"))
-
-    def test_action_log_masked(self):
-        line = keeper.audit.log_action(
-            "prabh", "run_command", {"command": "echo gsk_abcdefghijklmnop"}, "ask", "card bheja"
-        )
-        self.assertIn("decision=ask", line)
-        self.assertNotIn("gsk_abcdefghijklmnop", line)
-        self.assertTrue(config.ACTION_LOG.exists())
 
     def test_pattern_hits(self):
         for text in ("diskpart", "del C:\\", "reg delete", "iex", "curl x | sh", "-EncodedCommand"):
@@ -232,65 +163,6 @@ class RulesTest(unittest.TestCase):
         self.assertNotIn("tools.command", sys.modules)
         self.assertEqual(getattr(sp.Popen, "__name__", ""), "boom")
         self.assertEqual(getattr(os.system, "__name__", ""), "boom")
-
-
-class PathsTest(unittest.TestCase):
-    def test_resolve_joins_and_keeps_within(self):
-        inside = paths.resolve(str(config.WORKSPACE / "a" / ".." / "b.txt"))
-        self.assertEqual(config.WORKSPACE / "b.txt", inside)
-        self.assertTrue(paths.is_readable(inside))
-
-    def test_case_insensitive(self):
-        upper = paths.resolve(str(config.WORKSPACE).upper() + "\\x.txt")
-        self.assertTrue(paths.is_workspace(upper), "case change se bahar nahi jaana chahiye")
-
-    def test_short_name_trick(self):
-        self.assertTrue(paths.has_short_name(Path(r"C:\PROGRA~1\x")))
-
-    def test_drive_root(self):
-        self.assertTrue(paths.is_drive_root(Path("C:/")))
-
-    def test_symlink_out_of_workspace(self):
-        """Junction se bahar nikalna band hona chahiye (admin ki zarurat nahi)."""
-        base = Path(os.environ.get("TEMP", ".")) / "prabh_junction_test"
-        outside = Path(os.environ.get("TEMP", ".")) / "prabh_outside_test"
-        for folder in (base, outside):
-            folder.mkdir(parents=True, exist_ok=True)
-        link = base / "link_out"
-        made = True
-        try:
-            if not link.exists():
-                made = (
-                    subprocess.run(
-                        ["cmd", "/c", "mklink", "/J", str(link), str(outside)],
-                        capture_output=True,
-                        timeout=20,
-                    ).returncode
-                    == 0
-                )
-        except Exception:
-            made = False
-        if not made:
-            self.skipTest("is PC par junction nahi ban payi")
-        try:
-            resolved = paths.resolve(str(link / "secret.txt"))
-            self.assertFalse(
-                paths.is_workspace(resolved) and not paths.is_workspace(outside / "secret.txt"),
-                "junction se workspace me rehna chahiye tha",
-            )
-        finally:
-            for folder in (link,):
-                try:
-                    subprocess.run(["cmd", "/c", "rmdir", str(folder)], capture_output=True, timeout=20)
-                except Exception:
-                    pass
-
-
-def _risk(tool, args, mode="sunday"):
-    """Faisla nikalne ka chhota helper. Executor kabhi chalta nahi."""
-    from gatekeeper import rules
-
-    return rules.decide(tool, args)
 
 
 if __name__ == "__main__":

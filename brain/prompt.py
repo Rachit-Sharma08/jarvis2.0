@@ -44,6 +44,16 @@ def _unfence(text: str) -> str:
     return out.strip()
 
 
+def _no_duplicate_keys(pairs):
+    """JSON me ek hi key do baar? Reject — warna aakhri wali chhup kar action badal sakta hai."""
+    seen = {}
+    for key, value in pairs:
+        if key in seen:
+            raise ValueError(f"duplicate key: {key}")
+        seen[key] = value
+    return seen
+
+
 def parse_action(reply: str) -> tuple:
     """-> ('none', None) | ('tool', (name, args)) | ('bad', reason)"""
     text = _unfence(reply or "")
@@ -53,7 +63,7 @@ def parse_action(reply: str) -> tuple:
         return "bad", "JSON bahut bada hai"
 
     try:
-        data = json.loads(text)
+        data = json.loads(text, object_pairs_hook=_no_duplicate_keys)
     except Exception as exc:
         return "bad", f"JSON galat hai: {exc}"
 

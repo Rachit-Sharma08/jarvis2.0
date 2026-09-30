@@ -4,6 +4,7 @@ Koi khatarnak command yahan nahi hai: sirf `Write-Output`, `Start-Sleep`.
 """
 
 import sys
+if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import tempfile
 import unittest
 from pathlib import Path

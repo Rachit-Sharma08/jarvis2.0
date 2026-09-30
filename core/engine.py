@@ -17,14 +17,18 @@ def _one_line(text: str) -> str:
 
 
 def _detail(name: str, args: dict) -> str:
-    """Card par poori command/file dikhani hai — kuch chhupa nahi."""
+    """Card par poori command/file dikhani hai — kuch chhupa nahi.
+
+    Sirf .env ki asli key values / key jaise patterns chhupate hain, warna
+    user ko confirm karne layak command dikhta hi nahi.
+    """
     if name == "run_command":
-        return args.get("command", "")
+        return mask(args.get("command", ""))
     if name == "write_file":
         content = args.get("content", "")
         preview = content if len(content) <= 200 else content[:200] + " ..."
-        return f"{args.get('path', '')}\n--- likha jayega ---\n{preview}"
-    return " ".join(f"{key}={value}" for key, value in args.items())
+        return f"{mask(args.get('path', ''))}\n--- likha jayega ---\n{mask(preview)}"
+    return mask(" ".join(f"{key}={value}" for key, value in args.items()))
 
 
 class Engine:

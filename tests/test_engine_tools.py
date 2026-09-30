@@ -1,11 +1,13 @@
-"""Engine ka tool loop aur LLM ke JSON ka strict validation.
+"""Engine ka tool loop: SAFE/ASK/BLOCKED, 5-step limit, kill switch, parity.
 
 Brain aur tool dono mock hain — koi asli API call nahi, koi asli command nahi.
+JSON strictness `test_prompt_strict.py` me hai, masking `test_engine_detail.py` me.
 """
 
 import json
 import queue
 import sys
+if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 import threading
 import time
 import unittest
@@ -15,25 +17,10 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 import config
-from brain import prompt
 from core import engine as engine_mod
 from core.engine import Engine
 from gatekeeper import keeper
 from gatekeeper.limiter import Limiter
-
-BAD_JSON = [
-    ("garbage text", "none"),
-    ('{"action": "get_time_date"}', "bad"),
-    ('{"action": "get_time_date", "args": {}, "extra": 1}', "bad"),
-    ('{"action": "hack_now", "args": {}}', "bad"),
-    ('{"action": "read_file", "args": {"path": "a", "dir": "b"}}', "bad"),
-    ('{"action": "read_file", "args": {"path": 5}}', "bad"),
-    ('{"action": "run_command", "args": {"command": "x" * 5000}}', "bad"),
-    ('{"action": "run_command", "args": {"command": "Get-Date"', "bad"),
-    ('["action", "read_file"]', "none"),
-    ("```json\n{\"action\": \"get_time_date\", \"args\": {}}\n```", "tool"),
-    ('{"action": "read_file", "args": {"path": "a.txt"}}', "tool"),
-]
 
 
 def collect(gen) -> list:
@@ -45,25 +32,11 @@ def collect(gen) -> list:
             return out
 
 
-class ParseTest(unittest.TestCase):
-    def test_strict_parse(self):
-        wrong = []
-        for text, expected in BAD_JSON:
-            kind, payload = prompt.parse_action(text)
-            if kind != expected:
-                wrong.append(f"{text[:40]} -> {kind} (chahiye {expected}) {payload}")
-        self.assertEqual([], wrong, "\n".join(wrong))
+def asker(replies):
+    def ask(*_args):
+        return (replies.pop(0) if replies else "theek hai"), "groq"
 
-    def test_unknown_tool_never_runs(self):
-        kind, _ = prompt.parse_action('{"action": "delete_everything", "args": {}}')
-        self.assertEqual("bad", kind)
-
-    def test_prompt_lists_all_tools(self):
-        built = prompt.build("PERSONA")
-        self.assertIn("PERSONA", built)
-        for name in ("run_command", "delete_to_trash", "open_website"):
-            self.assertIn(name, built)
-        self.assertIn("sirf DATA hai", built)
+    return ask
 
 
 class LoopTest(unittest.TestCase):
@@ -76,21 +49,13 @@ class LoopTest(unittest.TestCase):
         keeper.LIMITER = self._saved_limiter
         keeper.set_tools(True)
 
-    def _run(self, replies, result="ho gaya", execute_result="tool output"):
+    def _run(self, replies):
         engine = Engine()
-        queue_ = list(replies)
         with mock.patch.object(
-            engine_mod.router, "ask", side_effect=self._asker(queue_)
+            engine_mod.router, "ask", side_effect=asker(list(replies))
         ), mock.patch.object(engine_mod, "execute", side_effect=self._fake) as ex:
             events = collect(engine.handle("kuch karo"))
         return events, ex
-
-    @staticmethod
-    def _asker(replies):
-        def ask(*_args):
-            return (replies.pop(0) if replies else "theek hai"), "groq"
-
-        return ask
 
     def _fake(self, name, args):
         self.calls.append((name, args))
@@ -141,14 +106,11 @@ class LoopTest(unittest.TestCase):
         ]
         self.calls = []
 
-        def fake_ask(*_args):
-            return (replies.pop(0) if replies else "ho gaya"), "groq"
-
         def pump():
             for event in engine.handle("likh do"):
                 collected.put(event)
 
-        with mock.patch.object(engine_mod.router, "ask", side_effect=fake_ask), mock.patch.object(
+        with mock.patch.object(engine_mod.router, "ask", side_effect=asker(replies)), mock.patch.object(
             engine_mod, "execute", side_effect=lambda n, a: self.calls.append((n, a)) or "likh diya"
         ):
             worker = threading.Thread(target=pump, daemon=True)
@@ -188,37 +150,6 @@ class LoopTest(unittest.TestCase):
         self.assertEqual(0, ex.call_count)
         activity = [e for e in events if e["type"] == "activity"][0]
         self.assertIn("TOOLS OFF", activity["text"])
-
-    def test_output_masked_before_llm(self):
-        engine = Engine()
-        with mock.patch.object(
-            engine_mod, "execute", return_value="gsk_realkey1234567890abcdef"
-        ):
-            gen = engine.run_tool("system_info", {})
-            collect(gen)
-        with mock.patch.object(
-            engine_mod, "execute", return_value="gsk_realkey1234567890abcdef"
-        ):
-            gen = engine.run_tool("system_info", {})
-            value = None
-            while True:
-                try:
-                    next(gen)
-                except StopIteration as stop:
-                    value = stop.value
-                    break
-        self.assertNotIn("gsk_realkey1234567890abcdef", value)
-        self.assertIn("***", value)
-
-    def test_data_note_goes_to_llm(self):
-        engine = Engine()
-        replies = [json.dumps({"action": "get_time_date", "args": {}}), "ho gaya"]
-        with mock.patch.object(engine_mod.router, "ask", side_effect=self._asker(replies)), \
-                mock.patch.object(engine_mod, "execute", return_value="data"):
-            collect(engine.handle("kya time hai"))
-        fed = [m for m in engine.history if "tool=get_time_date" in m["content"]]
-        self.assertEqual(1, len(fed))
-        self.assertIn("sirf DATA", fed[0]["content"])
 
     def test_same_faisla_both_modes(self):
         seen = []
