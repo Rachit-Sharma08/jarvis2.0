@@ -1,4 +1,4 @@
-# Tests (22 suites)
+# Tests (23 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -19,6 +19,19 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 }
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
+
+> **Dhyan do:** 23 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> isliye sabse aasan raasta — background me chala kar result file padho:
+>
+> ```powershell
+> $r = "$env:TEMP\prabh_suite.txt"; Remove-Item $r -ErrorAction SilentlyContinue
+> Start-Job { $f=@(); Get-ChildItem D:\prabh\tests\test_*.py | ForEach-Object {
+>     & D:\prabh\.venv\Scripts\python.exe $_.FullName *> $null
+>     if ($LASTEXITCODE -ne 0) { $f += $_.Name } }
+>   if ($f) { "FAILED: $($f -join ', ')" } else { "SUITE GREEN" } } | Tee-Object -FilePath $r
+> ```
+>
+> Job chal jaye to `Get-Content $r` se pata chal jayega.
 
 Ek-ek karke:
 
@@ -53,6 +66,21 @@ Ek-ek karke:
 | `test_fixes_r1_brain2.py` | Brain fallback + health rules |
 | `test_fixes_r1_ui.py` | UI fixes, dedupe, labels |
 | `test_fixes_r1_voice.py` | Cartesia payload, female chain, khaali text block |
+| `test_hud.py` | Phase 4 HUD — ye khud se 4 helper file me phaila hai (neeche dekho) |
+
+### `test_hud.py` ke helpers
+
+Runner sirf hai; saare checks char helper me hain (har file `<200` lines):
+
+| Helper | Kya check karta hai |
+|---|---|
+| `hud_common.py` | `check()` / `read()` / `headers()` + UI file list (sab yahin se import) |
+| `hud_check_ui.py` | XSS guard (innerHTML/eval nahi), HTML ids, `<200` line, fonts, clock, orb SVG+animation, activity tags, STOP wiring, 1366x768 grid |
+| `hud_check_get.py` | same-origin GET ka rule — Referer / `Sec-Fetch-Site` proof, cross-site reject, `origin_from_referer()` |
+| `hud_check_api.py` | weather `_parse` mock + crash-safe, stats shape/cache, `/hud/*` security + CSP, `/hud/quick` extra-field 422, gatekeeper no-bypass, **ek shared Engine** |
+
+Naya test is file me daalna ho to sahi helper chune — nayi file banane se pehle
+socho, `hud_check_ui.py` UI ke liye hai aur `hud_check_api.py` server ke liye.
 
 ## Naya test likhte waqt
 

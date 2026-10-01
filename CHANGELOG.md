@@ -6,6 +6,56 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Phase 4 (1-2 Oct 2026) — 3-column HUD
+
+**Reference photo** — `D:\Pictures\sunday.jpg` se `design/reference.png` copy ki.
+4080x2416, gehra navy, beech me bright cyan orb, cream-white bright text. Programmatic
+analysis se mila (is model me image vision nahi). Amber (`#f5a623`) reference me nahi
+mila, wo sirf listening-state ke liye rakha gaya.
+
+**Server (commit `5536a6d`)**
+- `config_hud.py` — HUD rang, Delhi coords, 15 min weather cache, WMO labels, 6 quick button.
+- `core/sysstats.py` — `psutil` se CPU/RAM/battery/disk/network, 1.5s cache + `prime()`.
+  `requirements.txt` me `psutil` add.
+- `server/weather.py` — Open-Meteo fetch, 15 min cache, crash-safe parse, `"No data"`.
+- `server/hub.py` + `server/drain.py` — thread-safe event hub + async engine drain.
+- `server/ws_routes.py` — `/ws` chat + har ~2s `"stats"` WebSocket event.
+- `server/hud_routes.py` — `GET /hud/stats`, `GET /hud/weather`, `POST /hud/quick`.
+
+**UI (commit `65fbf53`)**
+- `ui/index.html` — 3-column HUD: LEFT (chronometer + SYSTEM + ACTIVITY),
+  CENTER (orb + conversation), RIGHT (weather + chat log). Quick buttons bottom me.
+- CSS 6 file me split: `hud_base/panel/left/center/right/bottom.css`.
+  Purane `style.css` + `tools.css` delete.
+- 7 naye JS: `hud_clock`, `hud_stats`, `hud_activity`, `hud_status`, `hud_orb`,
+  `hud_weather`, `hud_quick`. `app.js` sirf chat + WebSocket glue raha.
+- Local fonts (Orbitron / Rajdhani / Share Tech Mono) `ui/fonts/` me + OFL license.
+
+**Live browser me pakde gaye asli bug**
+1. **Same-origin GET 403** — browser GET par `Origin` header bhejta hi nahi, to
+   `/brain/status` aur `/hud/weather` browser me kabhi chalti hi nahi thi. Ab
+   `security.same_origin_proof()` Referer ya `Sec-Fetch-Site: same-origin` maangta
+   hai, aur `Referrer-Policy` `no-referrer` se `same-origin` kiya gaya (warna
+   Referer aata hi nahi). Test: `hud_check_get.py`.
+2. **Grid overflow** — `24% 50% 26%` + `gap` + padding = 1366 par 1372px (scroll bar).
+   Ab `minmax(0, 24fr) minmax(0, 50fr) minmax(0, 26fr)`.
+3. **Teen alag Engine** — `app.py`, `ws_routes.py`, `hud_routes.py` teenon apna
+   `Engine()` bana rahe the (mode drift). Ab `server/state.py` me ek.
+4. **Orb core** — CSS `fill: radial-gradient()` SVG me invalid hai, circle kaali thi.
+   Ab index.html me `<radialGradient id="coreGrad">`.
+5. **SYSTEM pill** — startup par `active_tier: null` se OFFLINE dikhta tha. Ab ready
+   provider (key + cooldown nahi) hone par ONLINE.
+6. **STOP button** — sirf awaaz rokta tha, pending tool card nahi. Ab dono.
+7. `/hud/quick` ka `QuickIn` extra fields ignore kar raha tha → ab `extra="forbid"`.
+8. Network `MB` → `MB/s`, activity tag `DENY` → `DENIED`.
+
+**Verify**
+- 23/23 suite green, sab file `<200` lines.
+- Live Chrome 1366x768: 0 failed request, 0 page error, koi scroll nahi,
+  teenon column apni jagah, teen fonts loaded, weather + stats + brain reply live.
+
+---
+
 ## Round 2 (1-2 Oct 2026) — brain pool, suraksha, voice
 
 | Kya bana | File |

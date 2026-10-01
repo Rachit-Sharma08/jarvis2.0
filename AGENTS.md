@@ -44,11 +44,13 @@ prabh/
   config.py          -> .env + settings + tool risk + allowed folders + blocked patterns
   config_brain.py    -> provider keys, models, token, timeout (config.py re-export)
   config_voice.py    -> voice/TTS/STT constants + voice_for() (config.py re-export)
+  config_hud.py      -> HUD rang, weather (Delhi/15min cache), stats interval, 6 quick button
   log_setup.py       -> logs/prabh.log
   core/engine.py     -> message -> mode -> brain -> (tool loop) -> events
   core/events.py     -> status/message/log/activity/confirm
   core/modes.py      -> naam se mode + persona + label (SUNDAY/PRABH)
   core/timing.py     -> Stopwatch (stage + total ms)
+  core/sysstats.py   -> psutil: CPU/RAM/battery/disk/network (1.5s cache, prime())
   brain/pool.py + pool_config.py -> POOL order (sirf yahin brain ka raasta)
   brain/openai_pool.py -> OpenAI-compatible adapter (chat + GET models_list)
   brain/limiter.py   -> NVIDIA pool-wide 30/min sliding window
@@ -59,17 +61,36 @@ prabh/
   personas/sunday.txt, personas/prabh.txt
   gatekeeper/keeper.py, rules.py, patterns.py, paths.py, approvals.py, limiter.py, audit.py
   tools/__init__.py, command.py, files.py, apps.py, system.py
-  server/app.py      -> POST /chat, WebSocket /ws, CSP
-  server/security.py -> token + Origin + Host check
+  server/app.py      -> GET /, POST /chat, CSP headers + Referrer-Policy
+  server/security.py -> token + Origin + Host check + same-origin GET ka proof
+  server/state.py    -> POORA server ka ek shared Engine (sab yahin se)
   server/brain_routes.py   -> GET /brain/status
   server/tool_routes.py    -> /tool/confirm, /tools/toggle|cancel|status
   server/voice_routes.py   -> POST /stt, POST /tts
+  server/hud_routes.py     -> GET /hud/stats, GET /hud/weather, POST /hud/quick
+  server/ws_routes.py      -> WebSocket /ws (chat + har ~2s "stats" event)
+  server/hub.py + drain.py -> thread-safe event hub + async generator drain
+  server/weather.py        -> Open-Meteo fetch + 15 min cache + WMO labels
   voice/stt.py + stt_guard.py, voice/tts.py + tts_female.py + tts_*.py
-  ui/index.html, style.css, app.js (chat+ws), voice_ui.js (mic+speaker)
-  ui/recorder.js, speaker.js, tools.js, tools.css
-  tests/ (22 suite + poolhelp.py — poori list TESTS.md me)
+  ui/index.html, app.js (chat+ws glue), voice_ui.js (mic+speaker)
+  ui/hud_base.css, hud_panel.css, hud_left.css, hud_center.css, hud_right.css, hud_bottom.css
+  ui/hud_clock.js, hud_stats.js, hud_activity.js, hud_status.js, hud_orb.js,
+  ui/hud_weather.js, hud_quick.js
+  ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
+  ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
+  tests/ (23 suite + poolhelp.py + hud_*.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
+
+### 3.1 Phase 4 HUD ke do naye pakkaurey niyam
+
+- **Ek hi Engine.** `server/state.py` se lo. Kahin bhi naya `Engine()` mat
+  banao — warna mode ek jagah lagega aur quick button doosri jagah se chalega.
+- **Same-origin GET.** Browser GET par `Origin` header NAHI bhejta. Naya GET
+  endpoint banao to `security.verify_request()` use karo (wo Referer ya
+  `Sec-Fetch-Site: same-origin` proof maangta hai). Iske bina wo endpoint
+  browser me hamesha 403 dega — jo `test_hud.py` ke `hud_check_get.py` me pakda
+  gaya tha.
 
 - **Tool ka ek hi raasta**: `engine.run_tool()` → `keeper.review()` → `tools.execute()`. Sunday aur Prabh
 dono isi se guzarte hain. Engine me doosra raasta kabhi mat banao.
@@ -137,9 +158,13 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 22 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 23 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
+- Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
+  diye background wale tarike se chalao (Start-Job + result file).
 - Pool test ke helpers `tests/poolhelp.py` me hain — naya pool test wahin se import kare.
+- HUD test 4 helper me phaila hai (`hud_common`, `hud_check_ui`, `hud_check_get`,
+  `hud_check_api`) — nayi assertion sahi helper me daalo, nayi file nahi.
 ---
 
 ## 7. AGENTS.md KHUD UPDATE KARO
@@ -162,12 +187,15 @@ uska behaviour. OpenAI-compatible provider **ek hi adapter** se chale (`brain/op
 endpoint mat likho.
 - Voice id gender check karke hi daalo. Female-only mode me male default fallback mat rakho.
 - File 200 se badi ho to use **split** karo (config/UI/test) — compress karke chhoda mat chhodo.
+- Naya HUD endpoint banao to `server/security.py` ka `verify_request()` use kar, aur Grid layout
+  me `%` ki jagah `minmax(0, Nfr)` likh (gap + padding ke saath `%` overflow karta hai).
 
 ---
 
 ## ABHI KYA BAAKI HAI
 
 - Round 2 poora ho gaya (1-2 Oct 2026). Plan/record `ROUND2.md` me padh sakte ho.
+- **Phase 4 HUD poora ho gaya (1-2 Oct 2026).** Plan/record `CHANGELOG.md` me.
 - Ek hi cheez baaki hai: **Cartesia ki female voice id** (`CARTESIA_VOICE_*`). Na mile to Cartesia skip hoti
 hai — koi problem nahi, Edge Swara chalti hai.
 - Aage ka kaam user se pucho; koi chhupi hui task nahi hai.
@@ -189,3 +217,8 @@ brain error message, `rid` + UI dedupe, Prabh female voice. 15 suite.
 `probe.py` + `checkup.py`, `/brain/status`, dynamic `.env` masking, dono mode female (`tts_female`), STT
 guard, SUNDAY/PRABH label, `config_brain`/ `config_voice` + `ui/voice_ui.js` split, `TESTS.md` — **22 suite
 green**, sab file `<200`.
+- **Phase 4 (1-2 Oct 2026)** — 3-column HUD: `config_hud`/`sysstats`/`weather`, `hub`/`drain`/`ws_routes`,
+  `hud_routes`, 7 naye `hud_*.js`, CSS 6 me split, local fonts (Orbitron/Rajdhani/Share Tech Mono),
+  shared Engine (`server/state.py`), same-origin GET fix (Referer/`Sec-Fetch-Site`),
+  grid `%` → `fr` overflow fix, SVG radialGradient, SYSTEM pill startup fix — **23 suite green**,
+  live Chrome par 0 error, sab file `<200`.

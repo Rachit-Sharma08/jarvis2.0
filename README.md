@@ -86,7 +86,7 @@ Band karne ke liye terminal me `Ctrl + C`.
 
 ## 3. Test
 
-Saare 22 suites ek loop me:
+Saare 23 suites ek loop me:
 
 ```powershell
 cd D:\prabh
@@ -175,14 +175,28 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `gatekeeper/rules.py`, `patterns.py`, `paths.py` | Risk, khatarna command regex, traversal/8.3/junction jaanch |
 | `gatekeeper/approvals.py`, `limiter.py`, `audit.py` | Card hash, kill switch, masked log |
 | `tools/*.py` | 10 tools ka asal kaam |
-| `server/app.py` | `POST /chat` + `WebSocket /ws` + CSP |
-| `server/security.py` | Host + Origin + token check |
+| `config_hud.py` | HUD ke rang, weather ki jagah/timeout, stats interval, 6 quick button ki list |
+| `server/app.py` | `POST /chat` + `WebSocket /ws` + CSP + `GET /` |
+| `server/security.py` | Host → Origin → token (aur same-origin GET ka proof) |
+| `server/state.py` | Poore server ka **ek** shared Engine |
 | `server/brain_routes.py` | `GET /brain/status` (pool ka live haal) |
+| `server/hud_routes.py` | `GET /hud/stats`, `GET /hud/weather`, `POST /hud/quick` |
+| `server/ws_routes.py` | `/ws` chat + har 2s `"stats"` WebSocket event |
+| `server/hub.py`, `drain.py` | Thread-safe event hub + async engine generator |
+| `core/sysstats.py` | `psutil` se CPU/RAM/battery/disk/network |
+| `server/weather.py` | Open-Meteo fetch + 15 minute cache |
 | `server/tool_routes.py`, `server/voice_routes.py` | `/tool/confirm`, `/tools/*`, `POST /stt`, `POST /tts` |
 | `voice/*.py` | STT/TTS providers (details [VOICE.md](VOICE.md)) |
-| `ui/index.html`, `ui/style.css`, `ui/app.js` | Interface + chat/WebSocket |
-| `ui/voice_ui.js` | Mic + speaker wiring |
-| `ui/tools.js`, `ui/tools.css`, `ui/recorder.js`, `ui/speaker.js` | ACTIVITY panel, confirm card, mic record, audio play |
+| `ui/index.html`, `ui/app.js` | 3-column HUD markup + chat/WebSocket glue |
+| `ui/hud_base.css`, `hud_left.css`, `hud_center.css`, `hud_right.css`, `hud_bottom.css` | HUD ka look, har file ka ek kaam |
+| `ui/hud_panel.css` | Panel ka common border + tab (`.ptab`) |
+| `ui/hud_clock.js`, `hud_stats.js` | Chronometer + CPU/RAM/battery gauge, disk/network bar |
+| `ui/hud_orb.js` | Orb SVG, tick-marks, state animation |
+| `ui/hud_weather.js` | Weather panel (sirf `/hud/weather` se) |
+| `ui/hud_activity.js`, `hud_status.js` | ACTIVITY list + SYSTEM/provider pill |
+| `ui/hud_quick.js` | 6 quick button (TOOLS OFF par disabled) |
+| `ui/tools.js`, `ui/recorder.js`, `ui/speaker.js` | Confirm card, ACTIVITY jodi, mic record, audio play |
+| `ui/fonts/` | Local woff2 fonts + OFL license |
 | `personas/sunday.txt`, `personas/prabh.txt` | Dono ka character |
 
 ---
