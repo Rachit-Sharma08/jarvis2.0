@@ -32,41 +32,42 @@ def test_mode_switch():
 
 def test_brain_fallback():
     print("BRAIN FALLBACK")
+    import brain.pool as pool
+    import brain.pool_config as pc
 
-    class Boom:
-        def ask(self, history, persona):
+    saved_pool, saved_ask = pc.POOL, pool._ask_with_retry
+
+    def fake_ask(provider, history, persona, model):
+        if provider["name"] == "groq":
             raise RuntimeError("limit khatam")
-
-    def fake_gemini(history, persona):
         return "gemini se jawab"
 
-    class GoodGemini:
-        ask = staticmethod(fake_gemini)
-
-    order = router.ORDER
-    router.ORDER = [("groq", Boom()), ("gemini", GoodGemini())]
+    fake = (
+        pc._p(name="groq", tier=pc.TIER1, key="k", models=("g-120b",)),
+        pc._p(name="gemini", tier=pc.TIER2, key="k", models=("gem-flash",)),
+    )
+    pc.POOL, pool._ask_with_retry = fake, fake_ask
     try:
-        answer, name = router.ask([{"role": "user", "content": "hi"}], "persona")
+        pool.reset()
+        answer, name = pool.ask([{"role": "user", "content": "hi"}], "persona")
         check("groq fail par gemini", name, "gemini")
         check("gemini ka jawab", answer, "gemini se jawab")
     finally:
-        router.ORDER = order
+        pc.POOL, pool._ask_with_retry = saved_pool, saved_ask
 
-    class DeadGroq:
-        def ask(self, history, persona):
-            raise RuntimeError("401")
+    def all_dead(provider, history, persona, model):
+        raise RuntimeError("500 server error")
 
-    class DeadGemini:
-        def ask(self, history, persona):
-            raise RuntimeError("500")
-
-    router.ORDER = [("groq", DeadGroq()), ("gemini", DeadGemini())]
+    pc.POOL, pool._ask_with_retry = fake, all_dead
     try:
-        answer, name = router.ask([{"role": "user", "content": "hi"}], "persona")
+        pool.reset()
+        answer, name = pool.ask([{"role": "user", "content": "hi"}], "persona")
         check("dono fail par brain=none", name, "none")
         check("dono fail par jawaab mila", answer != "", True)
+        check("reason bhi bataya", "groq" in answer and "gemini" in answer, True)
     finally:
-        router.ORDER = order
+        pc.POOL, pool._ask_with_retry = saved_pool, saved_ask
+        pool.reset()
 
 
 def test_engine_events():

@@ -15,6 +15,17 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "").strip()
 CARTESIA_API_KEY = os.getenv("CARTESIA_API_KEY", "").strip()
+NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "").strip()
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
+
+# NVIDIA NIM — OpenAI-compatible. Key 'nvapi-' se shuru hoti hai.
+# Free trial: 1000 credits (5000 business email se). Per-key 40 RPM.
+# Credits khatam -> HTTP 402 "Cloud credits expired" (public balance endpoint nahi hai).
+NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
+NVIDIA_MODEL = "nvidia/nemotron-3-super-120b-a12b"
+# Pool-wide limiter: saare NVIDIA models milake 30/min (40 RPM limit se safe).
+NVIDIA_MAX_CALLS_PER_MINUTE = 30
+OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 
 # Live list endpoint par verify hua (Sept 2026). Purane naam 404 de rahe the.
 GROQ_MODEL = "openai/gpt-oss-120b"
@@ -27,6 +38,12 @@ BRAIN_TIMEOUT_GROQ = 10.0
 BRAIN_TIMEOUT_GEMINI = 15.0
 GEMINI_RETRY_WAIT = 2.5
 PROVIDER_SKIP_SECONDS = 600
+
+# Round 2: pehle 800 tha. Reasoning model (gpt-oss) me reasoning tokens sab
+# kha jate the aur content empty aata tha. Ab 2500, retry par 5000.
+BRAIN_MAX_TOKENS = 2500
+BRAIN_MAX_TOKENS_RETRY = 5000
+BRAIN_REASONING_EFFORT = "low"
 
 DEFAULT_MODE = "sunday"
 
@@ -189,6 +206,14 @@ def has_groq() -> bool:
 
 def has_gemini() -> bool:
     return bool(GEMINI_API_KEY)
+
+
+def has_nvidia() -> bool:
+    return bool(NVIDIA_API_KEY)
+
+
+def has_openrouter() -> bool:
+    return bool(OPENROUTER_API_KEY)
 
 
 def has_elevenlabs() -> bool:

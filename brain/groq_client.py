@@ -35,7 +35,7 @@ def ask(history: list, persona: str) -> str:
                 model=model,
                 messages=messages,
                 temperature=0.7,
-                max_tokens=800,
+                max_tokens=config.BRAIN_MAX_TOKENS,
             )
             text = (reply.choices[0].message.content or "").strip()
         except Exception as exc:

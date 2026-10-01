@@ -26,7 +26,7 @@ def _call(model: str, prompt: str, persona: str) -> str:
         contents=prompt,
         config=types.GenerateContentConfig(
             system_instruction=persona,
-            max_output_tokens=800,
+            max_output_tokens=config.BRAIN_MAX_TOKENS,
             http_options=types.HttpOptions(timeout=int(config.BRAIN_TIMEOUT_GEMINI * 1000)),
         ),
     )

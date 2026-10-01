@@ -109,7 +109,8 @@ def test_client_wiring():
     check("groq timeout set", "timeout=config.BRAIN_TIMEOUT_GROQ" in read("brain/groq_client.py"), True)
     check("gemini http timeout set", "HttpOptions(timeout" in read("brain/gemini_client.py"), True)
     check("gemini 1 retry", "for attempt in (1, 2)" in read("brain/gemini_client.py"), True)
-    check("router traceback", "exc_info=True" in read("brain/router.py"), True)
+    # Round 2: brain logic brain/pool.py me chala gaya, router sirf wrapper hai.
+    check("pool traceback", "exc_info=True" in read("brain/pool.py"), True)
     tts_src = read("voice/tts.py")
     check("tts voice last4 log", "voice=..%s" in tts_src, True)
     check("tts chars log", "chars=%d" in tts_src, True)

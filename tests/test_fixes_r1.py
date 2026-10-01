@@ -8,7 +8,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import config
-from brain import health, router
+from brain import health, pool, router
 from brain.prompt import build
 
 FAILED = []
@@ -21,9 +21,8 @@ def check(name, got, want):
         print(f"  FAIL {name} -> got {got!r}, want {want!r}")
 
 def reset():
-    health.GONE.clear()
-    health.UNTIL.clear()
-    health.LAST.clear()
+    # Round 2: pool + health ke saare state (NEXT_DAY, HUMAN bhi) saaf karo.
+    pool.reset()
 
 def test_models_configured():
     print("MODELS")
@@ -39,7 +38,9 @@ def test_classify():
     print("ERROR CLASSIFY")
     check("groq 404 = gone", health.classify(Exception("404 model_not_found x")), "gone")
     check("gemini 404 = gone", health.classify(Exception("404 NOT_FOUND no longer available")), "gone")
-    check("402 = busy", health.classify(Exception("402 payment_required")), "busy")
+    check("402 payment_required = busy", health.classify(Exception("402 payment_required")), "busy")
+    check("insufficient_credit = billing", health.classify(
+        Exception("insufficient_credits")), "billing")
     check("429 = busy", health.classify(Exception("429 Rate Limit Error")), "busy")
     check("503 = busy", health.classify(Exception("503 overloaded")), "busy")
     check("timeout = other", health.classify(Exception("APITimeoutError")), "other")
@@ -95,7 +96,8 @@ def test_ten_min_skip():
     health.skip("gemini", "503 overloaded")
     reason = health.blocked_reason("gemini")
     check("skip shuru hua", "rest par" in reason, True)
-    check("~600s dikha", "59" in reason or "60" in reason, True)
+    # Round 2: cooldown ab '10 min baad' jaisa human-readable (600s nahi).
+    check("~10 min dikha", "10 min" in reason, True)
     health.UNTIL["gemini"] -= 601
     check("time guzarne par free", health.blocked_reason("gemini"), "")
     health.skip("tts_x", "402", seconds=10)
@@ -104,8 +106,9 @@ def test_ten_min_skip():
     health.UNTIL["tts_x"] -= 11
     check("custom seconds guzre", health.blocked_reason("tts_x"), "")
     reset()
-    check("402 TTS par skip", health.classify_and_skip("elevenlabs", "402 paid_plan_required"), "busy")
-    check("elevenlabs rest par", "rest par" in health.blocked_reason("elevenlabs"), True)
+    # Round 2: paid_plan/billing word = 'billing' category, provider BAND.
+    check("402 paid_plan = billing", health.classify_and_skip("elevenlabs", "402 paid_plan_required"), "billing")
+    check("elevenlabs BAND", "BAND" in health.blocked_reason("elevenlabs"), True)
     check("khaali error skip nahi", health.classify_and_skip("edge", "weird failure"), "other")
     check("edge chalta rahe", health.blocked_reason("edge"), "")
     reset()
@@ -125,17 +128,20 @@ def test_tools_off_prompt():
 def test_one_combined_message():
     print("EK MESSAGE, DONO ERRORS")
     reset()
-    order = router.ORDER
+    import brain.pool_config as pc
+    saved_pool, saved_ask = pc.POOL, pool._ask_with_retry
+    fake = (pc._p(name="groq", tier=pc.TIER1, key="k", models=("g1",)),
+            pc._p(name="gemini", tier=pc.TIER2, key="k", models=("gem1",)))
 
-    class Dead:
-        def __init__(self, name): self.name = name
-        def ask(self, h, p): raise RuntimeError(f"{self.name} ka error")
+    def dead(provider, history, persona, model):
+        raise RuntimeError(f"{provider['name']} ka error")
 
-    router.ORDER = [("groq", Dead("groq")), ("gemini", Dead("gemini"))]
+    pc.POOL, pool._ask_with_retry = fake, dead
     try:
         answer, name = router.ask([{"role": "user", "content": "hi"}], "p")
     finally:
-        router.ORDER = order
+        pc.POOL, pool._ask_with_retry = saved_pool, saved_ask
+        reset()
     check("brain = none", name, "none")
     check("ek hi message", answer.count("Abhi koi brain"), 1)
     check("groq ka error hai", "groq ka error" in answer, True)
@@ -144,23 +150,25 @@ def test_one_combined_message():
 def test_router_skips_resting():
     print("ROUTER REST")
     reset()
-    health.skip("groq", "429")
-    order = router.ORDER
+    import brain.pool_config as pc
+    saved_pool, saved_ask = pc.POOL, pool._ask_with_retry
+    fake = (pc._p(name="groq", tier=pc.TIER1, key="k", models=("g1",)),
+            pc._p(name="gemini", tier=pc.TIER2, key="k", models=("gem1",)))
     called = []
 
-    class Good:
-        def ask(self, h, p):
-            called.append(1)
-            return "gemini se", "gemini"
+    def good(provider, history, persona, model):
+        called.append(provider["name"])
+        return "gemini se"
 
-    router.ORDER = [("groq", Good()), ("gemini", Good())]
+    health.skip("groq", "429")
+    pc.POOL, pool._ask_with_retry = fake, good
     try:
         answer, name = router.ask([{"role": "user", "content": "hi"}], "p")
     finally:
-        router.ORDER = order
+        pc.POOL, pool._ask_with_retry = saved_pool, saved_ask
         reset()
     check("rest wala skip hua", name, "gemini")
-    check("sirf ek call", len(called), 1)
+    check("sirf ek call", called, ["gemini"])
 
 def test_stopwatch():
     print("STAGE TIMING")
