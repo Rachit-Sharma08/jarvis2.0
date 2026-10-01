@@ -1,0 +1,61 @@
+/* RIGHT column: WEATHER (ardh-gol gauge) + CONVERSATION (scroll, custom bar). */
+
+/* ---- WEATHER ---- */
+.wxrow { display: flex; align-items: center; gap: 12px; }
+.tempdial { width: 96px; flex: 0 0 96px; overflow: visible; }
+.t-track { fill: none; stroke: rgba(46, 168, 255, 0.15); stroke-width: 6; stroke-linecap: round; }
+.t-fg {
+  fill: none;
+  stroke: var(--cyan);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-dasharray: 151;          /* ardh-gol ki perimeter */
+  stroke-dashoffset: 151;
+  transition: stroke-dashoffset 0.7s ease, stroke 0.4s ease;
+  filter: drop-shadow(0 0 5px rgba(46, 168, 255, 0.8));
+}
+.t-fg.warm { stroke: var(--amber); }
+.t-fg.cold { stroke: var(--cyan-bright); }
+
+.wxtext { min-width: 0; }
+.wxtemp {
+  font-family: var(--font-head);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: var(--ink);
+  line-height: 1.05;
+  font-variant-numeric: tabular-nums;
+}
+.wxcond { font-size: 13px; color: var(--cyan-bright); margin: 2px 0 3px; }
+
+/* ---- CONVERSATION ---- */
+.chatlog {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-right: 3px;
+}
+
+/* har message ke upar chhota UPPERCASE label */
+.msg { display: flex; flex-direction: column; gap: 2px; }
+.msg .who {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+.msg .body {
+  font-size: 14px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  padding: 5px 8px;
+  background: rgba(46, 168, 255, 0.05);
+  border-left: 2px solid transparent;
+}
+.msg.user .who { color: var(--amber); }
+.msg.user .body { color: #e8f1ff; border-left-color: rgba(245, 166, 35, 0.5); background: rgba(245, 166, 35, 0.05); }
+.msg.assistant .who { color: var(--cyan-bright); }
+.msg.assistant .body { color: var(--ink); border-left-color: var(--cyan); }

@@ -119,7 +119,8 @@ def test_banner():
     index = (config.UI_DIR / "index.html").read_text(encoding="utf-8")
     check("index me placeholder", "__PRABH_BRAIN_WARN__" in index, True)
     check("banner div hai", 'id="brainwarn"' in index, True)
-    css = (config.UI_DIR / "style.css").read_text(encoding="utf-8")
+    # Phase 4 me style.css hud_*.css me split ho gaya — brainwarn ab hud_panel.css me hai.
+    css = (config.UI_DIR / "hud_panel.css").read_text(encoding="utf-8")
     check("css me .brainwarn", ".brainwarn" in css, True)
     reset()
 

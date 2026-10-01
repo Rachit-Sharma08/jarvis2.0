@@ -52,6 +52,9 @@ DEFAULT_MODE = "sunday"
 # Ye app sirf is PC par chalti hai. 0.0.0.0 kabhi allowed nahi.
 SERVER_HOST = "127.0.0.1"
 SERVER_PORT = 8000
+# Apna hi origin. Tab use hota hai jab browser same-origin GET par Origin
+# header nahi bhejta (see server/security.py same_origin_proof).
+SERVER_ORIGIN = f"http://{SERVER_HOST}:{SERVER_PORT}"
 LOCAL_NAMES = ("localhost", "127.0.0.1")
 TOKEN_BYTES = 32
 

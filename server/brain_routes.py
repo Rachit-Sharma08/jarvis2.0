@@ -35,11 +35,7 @@ def _clean(row: dict) -> dict:
 @router.get("/brain/status")
 async def brain_status(request: Request):
     """active_tier, provider, model, cooldowns, last_fail_reasons — sab masked."""
-    denied = security.verify(
-        request.headers.get("origin", ""),
-        request.headers.get("host", ""),
-        request.headers.get(security.TOKEN_HEADER, ""),
-    )
+    denied = security.verify_request(request, request.headers.get(security.TOKEN_HEADER, ""))
     if denied:
         raise HTTPException(*denied)
 

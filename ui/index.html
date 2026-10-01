@@ -5,56 +5,161 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="prabh-token" content="__PRABH_TOKEN__" />
 <meta name="prabh-tools" content="__PRABH_TOOLS_ON__" />
-<title>Prabh</title>
-<link rel="stylesheet" href="/ui/style.css" />
-<link rel="stylesheet" href="/ui/tools.css" />
+<title>Prabh HUD</title>
+<link rel="stylesheet" href="/ui/fonts.css" />
+<link rel="stylesheet" href="/ui/hud_base.css" />
+<link rel="stylesheet" href="/ui/hud_panel.css" />
+<link rel="stylesheet" href="/ui/hud_left.css" />
+<link rel="stylesheet" href="/ui/hud_center.css" />
+<link rel="stylesheet" href="/ui/hud_right.css" />
+<link rel="stylesheet" href="/ui/hud_bottom.css" />
 </head>
 <body>
-<main class="hud">
-  <section class="stage">
-    <div class="orb" id="orb"></div>
-    <p class="status" id="status">IDLE</p>
-    <p class="mode" id="mode">MODE: SUNDAY</p>
-    <p class="micflag" id="micflag">MIC ON</p>
-    <p class="notice" id="notice"></p>
-    <p class="brainwarn" id="brainwarn">__PRABH_BRAIN_WARN__</p>
-  </section>
+<div class="gridbg" aria-hidden="true"></div>
 
-  <aside class="side">
-    <section class="log">
-      <h2>CONVERSATION</h2>
-      <div id="messages"></div>
+<main class="hud">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="tb-left">
+      <h1 class="brand" id="brand">S.U.N.D.A.Y</h1>
+      <span class="pill st-idle" id="status">● IDLE</span>
+    </div>
+    <div class="tb-mid" aria-hidden="true"><div class="ruler" id="ruler"></div></div>
+    <div class="tb-right">
+      <span class="pill sys" id="sysstate">SYSTEM …</span>
+      <span class="prov" id="provider"></span>
+      <button class="mini" id="mute" type="button">MUTE</button>
+      <button class="mini" id="stop" type="button">STOP</button>
+      <button class="mini" id="kill" type="button">TOOLS OFF</button>
+    </div>
+  </header>
+
+  <!-- ============ LEFT COLUMN ============ -->
+  <aside class="col-left">
+    <section class="panel" id="p-clock">
+      <h2 class="ptab">CHRONOMETER</h2>
+      <div class="clockrow">
+        <div class="dial">
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <circle class="dial-bg" cx="50" cy="50" r="44" />
+            <circle class="dial-fg" id="dialSec" cx="50" cy="50" r="44" />
+          </svg>
+          <span class="dial-num" id="clockSec">00</span>
+        </div>
+        <div class="clocktext">
+          <p class="bigtime" id="clockTime">--:--</p>
+          <p class="tiny" id="clockDate">…</p>
+        </div>
+      </div>
     </section>
-    <section class="activity">
-      <h2>ACTIVITY</h2>
-      <div id="activity"></div>
+
+    <section class="panel" id="p-system">
+      <h2 class="ptab">SYSTEM</h2><span class="tag">LIVE</span>
+      <div class="gauges" id="gauges"></div>
+      <div class="bars" id="bars"></div>
+    </section>
+
+    <section class="panel grow" id="p-activity">
+      <h2 class="ptab">ACTIVITY</h2>
+      <div class="actlist" id="activity"></div>
     </section>
   </aside>
 
-  <footer class="bar">
-    <button id="mic" class="tool" title="Mic on/off">MIC</button>
-    <button id="mute" class="tool" title="Mic ko poori tarah band karo">MUTE</button>
-    <button id="stop" class="tool" title="Bolana aur tool rok do">STOP</button>
-    <button id="kill" class="tool kill" title="Saare tools ek click me band">TOOLS OFF</button>
-    <input id="cmd" type="text" autocomplete="off"
-           placeholder="Sunday, ya Prabh se shuru karke likho..." />
-    <button id="send">SEND</button>
+  <!-- ============ CENTER ============ -->
+  <section class="col-center">
+    <div class="orbwrap" id="orbwrap">
+      <svg class="orb" viewBox="0 0 320 320" role="img" aria-label="Prabh orb">
+        <defs>
+          <!-- core circle ka asli radial gradient. SVG me CSS radial-gradient
+               nahi chalta, isliye yahan define karna padta hai. -->
+          <radialGradient id="coreGrad" cx="50%" cy="42%" r="60%">
+            <stop offset="0%" stop-color="rgba(76,195,255,0.55)" />
+            <stop offset="60%" stop-color="rgba(10,28,70,0.85)" />
+            <stop offset="100%" stop-color="rgba(3,6,15,0.95)" />
+          </radialGradient>
+        </defs>
+        <g id="ringOuter"></g>
+        <circle class="segtrack" cx="160" cy="160" r="132" />
+        <circle class="seg" id="ringSeg" cx="160" cy="160" r="132" />
+        <circle class="progtrack" cx="160" cy="160" r="104" />
+        <circle class="prog" id="ringProg" cx="160" cy="160" r="104" />
+        <circle class="dotted" id="ringDot" cx="160" cy="160" r="76" />
+        <circle class="core" id="ringCore" cx="160" cy="160" r="58" />
+      </svg>
+      <div class="orbtext">
+        <p class="orbmode" id="orbMode">SUNDAY</p>
+        <p class="orbstate" id="orbState">READY</p>
+      </div>
+    </div>
+    <p class="orbline" id="orbLine"></p>
+  </section>
+
+  <!-- ============ RIGHT COLUMN ============ -->
+  <aside class="col-right">
+    <section class="panel" id="p-weather">
+      <h2 class="ptab">WEATHER</h2>
+      <div class="wxrow">
+        <svg class="tempdial" viewBox="0 0 120 66" aria-hidden="true">
+          <path class="t-track" d="M12 60 A48 48 0 0 1 108 60" />
+          <path class="t-fg" id="tempArc" d="M12 60 A48 48 0 0 1 108 60" />
+        </svg>
+        <div class="wxtext">
+          <p class="wxtemp" id="wxTemp">--°</p>
+          <p class="wxcond" id="wxCond">No data</p>
+          <p class="tiny" id="wxCity">Delhi</p>
+        </div>
+      </div>
+      <p class="hint" id="wxHint"></p>
+    </section>
+
+    <section class="panel grow" id="p-chat">
+      <h2 class="ptab">CONVERSATION</h2>
+      <div class="chatlog" id="messages"></div>
+    </section>
+  </aside>
+
+  <!-- ============ BOTTOM BAR ============ -->
+  <footer class="bottombar">
+    <div class="qgroup" id="qLeft"></div>
+    <div class="composer">
+      <button class="mic" id="mic" type="button" title="Mic on/off">
+        <span class="micdot"></span><span class="mictx">MIC</span>
+      </button>
+      <input id="cmd" type="text" autocomplete="off" maxlength="2000"
+             placeholder="Command likhiye, sir..." />
+      <button id="send" type="button">SEND</button>
+    </div>
+    <div class="qgroup" id="qRight"></div>
   </footer>
 </main>
 
-<div class="card" id="confirmcard" hidden>
-  <h3>ALLOW YA DENY?</h3>
-  <p id="cardtool"></p>
-  <pre id="carddetail"></pre>
-  <div class="row">
-    <button id="deny">DENY</button>
-    <button id="allow">ALLOW</button>
-    <span class="count" id="cardcount">60s</span>
+<p class="notice" id="notice"></p>
+<p class="micflag" id="micflag">MIC ON</p>
+<p class="brainwarn" id="brainwarn">__PRABH_BRAIN_WARN__</p>
+
+<div class="overlay" id="confirmcard" hidden>
+  <div class="card">
+    <h3>ALLOW YA DENY?</h3>
+    <p class="cardtool" id="cardtool"></p>
+    <pre class="carddetail" id="carddetail"></pre>
+    <div class="cardrow">
+      <button id="deny" type="button">DENY</button>
+      <button id="allow" type="button">ALLOW</button>
+      <span class="count" id="cardcount">60s</span>
+    </div>
   </div>
 </div>
 
 <script src="/ui/recorder.js"></script>
 <script src="/ui/speaker.js"></script>
+<script src="/ui/hud_clock.js"></script>
+<script src="/ui/hud_stats.js"></script>
+<script src="/ui/hud_activity.js"></script>
+<script src="/ui/hud_status.js"></script>
+<script src="/ui/hud_orb.js"></script>
+<script src="/ui/hud_weather.js"></script>
+<script src="/ui/hud_quick.js"></script>
 <script src="/ui/tools.js"></script>
 <script src="/ui/voice_ui.js"></script>
 <script src="/ui/app.js"></script>

@@ -28,11 +28,7 @@ class ToggleIn(BaseModel):
 
 
 def _guard(request: Request) -> None:
-    denied = security.verify(
-        request.headers.get("origin", ""),
-        request.headers.get("host", ""),
-        request.headers.get(security.TOKEN_HEADER, ""),
-    )
+    denied = security.verify_request(request, request.headers.get(security.TOKEN_HEADER, ""))
     if denied:
         raise HTTPException(*denied)
 

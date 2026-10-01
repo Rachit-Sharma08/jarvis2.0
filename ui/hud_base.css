@@ -1,0 +1,124 @@
+/* HUD ka base: reset, gehra background + neeli grid, 3-column grid, top bar.
+ * Sirf yahan `body`/`html`/`grid`/`topbar` — baaki har file me apna kaam.
+ * Rang: config_hud.py ke constants se match karte hain (CYAN #2ea8ff, AMBER #f5a623).
+ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --cyan: #2ea8ff;
+  --cyan-bright: #4cc3ff;
+  --cyan-dim: #1c5f9e;
+  --amber: #f5a623;
+  --ink: #cfe4ff;
+  --ink-dim: #5f7fa8;
+  --bg: #04070f;
+  --panel: rgba(8, 20, 38, 0.55);
+  --border: rgba(46, 168, 255, 0.28);
+  --font-head: "Orbitron", "Rajdhani", "Segoe UI", sans-serif;
+  --font-body: "Rajdhani", "Segoe UI", sans-serif;
+  --font-mono: "Share Tech Mono", "Consolas", monospace;
+}
+
+html, body { height: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  overflow: hidden;               /* page kabhi scroll na ho */
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Halki neeli grid + beech ka glow. Reference photo jaisa. */
+.gridbg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 55% 45% at 50% 42%, rgba(46, 168, 255, 0.16), transparent 70%),
+    linear-gradient(rgba(46, 168, 255, 0.05) 1px, transparent 1px) 0 0 / 100% 44px,
+    linear-gradient(90deg, rgba(46, 168, 255, 0.05) 1px, transparent 1px) 0 0 / 44px 100%,
+    var(--bg);
+}
+
+/* ---- 3 column grid: 24 / 50 / 26 ka santulan, top bar aur bottom alag ----
+ * Raw `%` (24% 50% 26%) yahan kaam nahi karta: teen percent column poori grid
+ * ka 100% le lete hain, phir `gap` bhi jud jaata hai aur grid padding se
+ * bahar nikal jaati hai (1366 par 6px scroll bar). `fr` + `minmax(0, …)`
+ * gap ko pehle hi alag kar deta hai, isliye asli pariman 24:50:26 rehta hai
+ * aur kuch bhi overflow nahi hota.
+ */
+.hud {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: minmax(0, 24fr) minmax(0, 50fr) minmax(0, 26fr);
+  grid-template-rows: auto 1fr auto;
+  height: 100vh;
+  gap: 10px;
+  padding: 10px 14px 12px;
+}
+
+.topbar    { grid-column: 1 / -1; grid-row: 1; }
+.col-left  { grid-column: 1; grid-row: 2; }
+.col-center{ grid-column: 2; grid-row: 2; }
+.col-right { grid-column: 3; grid-row: 2; }
+.bottombar { grid-column: 1 / -1; grid-row: 3; }
+
+.col-left, .col-center, .col-right {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 0;
+  min-width: 0;
+}
+
+/* ---- TOP BAR ---- */
+.topbar {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 2px 8px;
+  border-bottom: 1px solid var(--border);
+}
+
+.tb-left  { display: flex; align-items: center; gap: 12px; }
+.tb-mid   { min-width: 0; }
+.tb-right { display: flex; align-items: center; gap: 8px; }
+
+.brand {
+  font-family: var(--font-head);
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 4px;
+  color: var(--cyan-bright);
+  text-shadow: 0 0 14px rgba(46, 168, 255, 0.6);
+  white-space: nowrap;
+}
+
+/* lambi ruler line, tick-marks ke saath (top bar ka beech wala hissa) */
+.ruler {
+  height: 22px;
+  width: 100%;
+  background-repeat: repeat-x;
+  background-position: bottom;
+  opacity: 0.7;
+  background-image:
+    linear-gradient(var(--cyan-dim), var(--cyan-dim)),
+    repeating-linear-gradient(90deg, var(--cyan) 0 1px, transparent 1px 12px);
+  background-size: 100% 1px, 100% 7px;
+}
+
+.prov {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 1px;
+  color: var(--ink-dim);
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

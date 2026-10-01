@@ -15,7 +15,7 @@ ka 60 second ka wait HTTP request ko rok na de.
 import asyncio
 
 from fastapi import APIRouter, HTTPException, Request
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 import config
 from core import sysstats
@@ -23,21 +23,24 @@ from log_setup import get_logger
 from server import security, weather
 from server.drain import drain
 from server.hub import HUB
+from server.state import engine as shared_engine
 
 log = get_logger("hud_routes")
 router = APIRouter()
 
 
 class QuickIn(BaseModel):
+    # `extra="forbid"` zaroori hai: UI sirf `id` bhejta hai. Iske bina koi
+    # browser `{"id": "scan", "tool": "run_command"}` bhej de to pydantic
+    # extra field chupa deta aur request chal jaati. Args hamesha config se
+    # aate hain, par extra ko mana karna saaf aur saarega hai.
+    model_config = ConfigDict(extra="forbid")
+
     id: str
 
 
 def _guard(request: Request) -> None:
-    denied = security.verify(
-        request.headers.get("origin", ""),
-        request.headers.get("host", ""),
-        request.headers.get(security.TOKEN_HEADER, ""),
-    )
+    denied = security.verify_request(request, request.headers.get(security.TOKEN_HEADER, ""))
     if denied:
         raise HTTPException(*denied)
 
@@ -62,11 +65,10 @@ async def _run_quick(tool: str, args: dict) -> None:
     Gatekeeper ke andar hi rehta hai — kill switch OFF ho to confirm/deny
     activity hi aayegi, aur rate limit 20/min yahin ginti hai.
     """
-    from core.engine import Engine       # ghoomta import: engine ke cycle se bachao
-
-    engine = Engine()
     try:
-        async for event in drain(engine.run_tool(tool, args)):
+        # Shared engine (server/state.py) — isse user ke current mode aur
+        # gatekeeper state ke saath hi chalega, alag instance nahi.
+        async for event in drain(shared_engine().run_tool(tool, args)):
             HUB.publish(event)
     except Exception as exc:
         log.error("quick tool %s: %s: %s", tool, type(exc).__name__, exc)

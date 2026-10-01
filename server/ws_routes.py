@@ -18,15 +18,14 @@ from fastapi import APIRouter, WebSocket, WebSocketDisconnect
 
 import config
 from core import sysstats
-from core.engine import Engine
 from log_setup import get_logger
 from server import security
 from server.drain import drain
 from server.hub import HUB
+from server.state import engine as shared_engine
 
 log = get_logger("ws")
 router = APIRouter()
-engine = Engine()
 
 
 async def stats_pump() -> None:
@@ -44,11 +43,7 @@ async def stats_pump() -> None:
 
 @router.websocket("/ws")
 async def ws(sock: WebSocket) -> None:
-    denied = security.verify(
-        sock.headers.get("origin", ""),
-        sock.headers.get("host", ""),
-        sock.query_params.get("token", ""),
-    )
+    denied = security.verify_request(sock, sock.query_params.get("token", ""))
     if denied:
         await sock.close(code=1008)
         return
@@ -79,7 +74,8 @@ async def ws(sock: WebSocket) -> None:
             payload = heard.result()               # browser → server
             text = str(payload.get("text", ""))
             rid = str(payload.get("rid", ""))
-            async for event in drain(engine.handle(text, rid)):
+            # Shared engine — /chat aur /hud/quick ke saath wahi mode/state.
+            async for event in drain(shared_engine().handle(text, rid)):
                 await sock.send_json(event)
 
     except WebSocketDisconnect:

@@ -1,7 +1,11 @@
+// app.js — sirf chat + WebSocket ka glue. Baaki sab apni file me hai:
+//   hud_clock / hud_stats / hud_activity / hud_status / hud_orb /
+//   hud_weather / hud_quick / tools / voice_ui
+//
+// Is file me koi panel ka DOM nahi banaya jaata — sab `#id` se uthaya jaata
+// hai jo index.html me pehle se hai. Ye chhota rakhne ka reason yahi hai.
+
 const TOKEN = (document.querySelector('meta[name="prabh-token"]') || {}).content || "";
-const statusEl = document.getElementById("status");
-const modeEl = document.getElementById("mode");
-const orbEl = document.getElementById("orb");
 const logEl = document.getElementById("messages");
 const inputEl = document.getElementById("cmd");
 const micBtn = document.getElementById("mic");
@@ -9,6 +13,8 @@ const muteBtn = document.getElementById("mute");
 const stopBtn = document.getElementById("stop");
 const micFlag = document.getElementById("micflag");
 const noticeEl = document.getElementById("notice");
+const status = window.PRABH_STATUS;
+const orb = window.PRABH_ORB;
 
 let currentMode = "SUNDAY";
 let busy = false;
@@ -16,17 +22,20 @@ let busy = false;
 function addMessage(role, text, label) {
   const row = document.createElement("div");
   row.className = "msg " + role;
+
   const who = document.createElement("span");
   who.className = "who";
-  if (role === "user") {
-    who.textContent = "YOU";
-  } else {
-    who.textContent = label || "PRABH";
-  }
+  who.textContent = role === "user" ? "YOU" : (label || "PRABH");
   row.appendChild(who);
-  row.appendChild(document.createTextNode(text));
+
+  const body = document.createElement("div");
+  body.className = "body";
+  // textContent hi — markdown symbols orb.js ke cleanText() ne pehle hataye
+  body.textContent = orb.cleanText(text);
+  row.appendChild(body);
+
   logEl.appendChild(row);
-  logEl.parentElement.scrollTop = logEl.parentElement.scrollHeight;
+  logEl.scrollTop = logEl.scrollHeight;
 }
 
 function showNotice(text) {
@@ -34,9 +43,25 @@ function showNotice(text) {
 }
 
 function setStatus(value) {
-  statusEl.textContent = value.toUpperCase();
-  orbEl.classList.remove("listening", "thinking", "speaking");
-  if (value !== "idle") orbEl.classList.add(value);
+  const key = String(value || "idle").toLowerCase();
+  status.setStatus(key);
+  orb.setState(key);
+  if (key === "idle") busy = false;
+}
+
+// ---- /brain/status: SYSTEM ONLINE/DEGRADED + provider/model ----
+let brainTimer = null;
+async function loadBrain() {
+  try {
+    const reply = await fetch("/brain/status", {
+      headers: { "x-prabh-token": TOKEN },
+      cache: "no-store"
+    });
+    if (!reply.ok) throw new Error("http " + reply.status);
+    status.render(await reply.json());
+  } catch (err) {
+    status.clearProvider();
+  }
 }
 
 const ws = new WebSocket(`ws://${location.host}/ws?token=${encodeURIComponent(TOKEN)}`);
@@ -58,23 +83,29 @@ function alreadyShown(ev) {
 function handleEvent(ev) {
   if (ev.type === "status") {
     setStatus(ev.value);
-    if (ev.value === "idle") busy = false;
   } else if (ev.type === "message") {
     if (alreadyShown(ev)) return;
     addMessage(ev.role, ev.text, ev.label);
-    if (ev.role === "assistant") voice.speak(ev.text, currentMode);
+    if (ev.role === "assistant") {
+      orb.setLine(ev.text);
+      voice.speak(ev.text, currentMode);
+    }
   } else if (ev.type === "confirm" || ev.type === "activity") {
     tools.handle(ev);
+  } else if (ev.type === "stats") {
+    if (window.PRABH_STATS) window.PRABH_STATS.render(ev.data);
   } else if (ev.type === "log") {
     if (ev.data && ev.data.mode) {
       currentMode = ev.data.mode.toUpperCase();
-      modeEl.textContent = "MODE: " + currentMode;
+      orb.setMode(currentMode);
+      status.setMode(currentMode);
     }
     console.log("[prabh]", ev.level, ev.text);
   }
 }
 
 ws.onmessage = (e) => handleEvent(JSON.parse(e.data));
+ws.onclose = () => showNotice("Server se connection toot gaya. Page dobara kholo.");
 
 function send() {
   const text = inputEl.value.trim();
@@ -119,9 +150,20 @@ const voice = new VoiceUI({
 });
 
 function stopEverything() {
+  // VoiceUI apne listener se sirf speaker/recorder rokta hai. Pending tool
+  // card alag se cancel karna padta hai, warna card UI par atak jaayega.
   tools.cancel();
   voice.stop();
 }
 
+// STOP button dono kaam kare: awaaz + pending confirm card.
+stopBtn.addEventListener("click", stopEverything);
+
 document.getElementById("send").addEventListener("click", send);
 inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+
+// Mode + brain pill load; brain har 15s refresh (pool badal sakta hai).
+status.setMode(currentMode);
+orb.setMode(currentMode);
+loadBrain();
+brainTimer = setInterval(loadBrain, 15000);

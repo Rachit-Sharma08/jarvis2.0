@@ -2,7 +2,6 @@ class ToolsPanel {
   constructor(token, onNotice) {
     this.token = token;
     this.onNotice = onNotice;
-    this.listEl = document.getElementById("activity");
     this.cardEl = document.getElementById("confirmcard");
     this.toolEl = document.getElementById("cardtool");
     this.detailEl = document.getElementById("carddetail");
@@ -22,17 +21,23 @@ class ToolsPanel {
     this.killBtn.addEventListener("click", (e) => this.toggleKill(e));
   }
 
+  // ACTIVITY list ab hud_activity.js me hai (Phase 4) — yahan se bhi wahi use karo.
   addLine(text, kind) {
-    const row = document.createElement("div");
-    row.className = "act " + kind;
-    row.textContent = text;
-    this.listEl.appendChild(row);
-    this.listEl.scrollTop = this.listEl.scrollHeight;
+    if (window.PRABH_ACTIVITY) window.PRABH_ACTIVITY.addLine(text, kind);
+  }
+
+  addNote(text, kind) {
+    if (window.PRABH_ACTIVITY) window.PRABH_ACTIVITY.addNote(text, kind);
   }
 
   handle(ev) {
     if (ev.type === "activity") {
-      this.addLine(ev.tool + " | " + ev.decision + " | " + ev.text, ev.decision);
+      // Quick buttons aur normal tool dono yahin se activity me aate hain.
+      if (window.PRABH_ACTIVITY) {
+        window.PRABH_ACTIVITY.addActivity({
+          tool: ev.tool, decision: ev.decision, text: ev.text
+        });
+      }
     } else if (ev.type === "confirm") {
       this.showCard(ev);
     }
@@ -94,6 +99,8 @@ class ToolsPanel {
     this.toolsOn = on;
     this.killBtn.classList.toggle("on", on);
     this.killBtn.textContent = on ? "TOOLS ON" : "TOOLS OFF";
+    // Quick buttons bhi usi switch ke saath enable/disable honge.
+    if (window.PRABH_QUICK) window.PRABH_QUICK.setTools(on);
   }
 
   async toggleKill(event) {
