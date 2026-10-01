@@ -25,7 +25,8 @@ mila, wo sirf listening-state ke liye rakha gaya.
 **UI (commit `65fbf53`)**
 - `ui/index.html` — 3-column HUD: LEFT (chronometer + SYSTEM + ACTIVITY),
   CENTER (orb + conversation), RIGHT (weather + chat log). Quick buttons bottom me.
-- CSS 6 file me split: `hud_base/panel/left/center/right/bottom.css`.
+- CSS 6 file me split: `hud_base.css`, `hud_panel.css`, `hud_left.css`,
+  `hud_center.css`, `hud_right.css`, `hud_bottom.css`.
   Purane `style.css` + `tools.css` delete.
 - 7 naye JS: `hud_clock`, `hud_stats`, `hud_activity`, `hud_status`, `hud_orb`,
   `hud_weather`, `hud_quick`. `app.js` sirf chat + WebSocket glue raha.

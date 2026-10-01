@@ -92,6 +92,37 @@ prabh/
   browser me hamesha 403 dega — jo `test_hud.py` ke `hud_check_get.py` me pakda
   gaya tha.
 
+### 3.2 Phase 4 me live browser se pakde gaye 8 asli bug
+
+Ye **sirf test se nahi**, asli Chrome (Playwright + system Chrome, 1366x768) khol kar
+pakde gaye. Lesson: naya endpoint/UI bana kar sirf source-check mat karo — page
+kholo aur `getBoundingClientRect` + computed style + network log dekho.
+
+1. **Same-origin GET hamesha 403** — browser GET par `Origin` header bhejta hi nahi
+   (sirf POST/PUT/DELETE + cross-origin par bhejta hai). Is liye `/brain/status` aur
+   weather browser me **kabhi chalti hi nahi thi** (Phase 3/4 dono me chhupi hui thi).
+2. **Grid overflow** — `grid-template-columns: 24% 50% 26%` + `gap` + `padding` =
+   1366 viewport par 1372px (scroll bar). Ab `minmax(0, 24fr) minmax(0, 50fr) minmax(0, 26fr)`.
+3. **Teen alag `Engine()`** — `app.py`, `ws_routes.py`, `hud_routes.py` — mode drift
+   (`/chat` me PRABH, quick button SUNDAY). Ab ek `server/state.py`.
+4. **Orb core kaali thi** — CSS `fill: radial-gradient()` SVG me valid NAHI hai.
+   Ab `index.html` me `<radialGradient id="coreGrad">`.
+5. **SYSTEM pill startup par OFFLINE** — `active_tier: null` (abhi koi message nahi).
+   Ab ready provider (key hai + cooldown nahi) ho to ONLINE.
+6. **STOP sirf awaaz** rokta tha — pending tool card nahi. Ab dono.
+7. **`/hud/quick` extra fields ignore** — `{"id":"scan","tool":"run_command"}` chalti
+   thi. Ab `QuickIn.model_config = ConfigDict(extra="forbid")` → 422.
+8. **Chhote label bug** — network `MB` → `MB/s`, activity tag `DENY` → `DENIED`.
+
+- Test: `tests/hud_check_get.py` (same-origin GET), `hud_check_api.py` (shared Engine).
+- Tooling: Playwright/Pillow sirf verification ke liye the, venv se hata diye —
+  `requirements.txt` me kuch nahi add hua. `psutil` hi naya dependency hai.
+- **Reference photo ka comparison aankhon se nahi hua** (is model me image vision
+  nahi). Sirf programmatic analysis + live measurements. Colour claim
+  (navy/cyan/cream, amber nahi mila) ko ek naye test se dobara check karna hai —
+  `tests/verify_image_assets.py` **abhi likha nahi gaya**, ye baaki kaam hai.
+  Guess par bharosa na karna.
+
 - **Tool ka ek hi raasta**: `engine.run_tool()` → `keeper.review()` → `tools.execute()`. Sunday aur Prabh
 dono isi se guzarte hain. Engine me doosra raasta kabhi mat banao.
 - **Brain ka ek hi raasta**: `engine` → `brain.pool.ask()`. Provider list sirf `brain/pool_config.py` me
