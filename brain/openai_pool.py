@@ -7,7 +7,7 @@ client se chalta hai. Yahan sirf raw HTTP + dict, taaki test me easy mock ho.
 Fail reasons yahi module decide karta hai:
   - 404 -> 'gone' (session me permanent skip)
   - 429/402/503 -> 'busy' (Retry-After, warna 10 min)
-  - billing/credit word -> 'billing' (free-only provider band)
+  - billing/credit word -> 'billing' (free-only provider band, nayi key tak)
   - khaali ya finish_reason='length' -> 'empty' (retry, phir agla provider)
   - ghalat JSON -> 'json'
 """
@@ -17,7 +17,7 @@ import time
 import urllib.error
 import urllib.request
 
-from brain import limiter
+from brain import limiter, pool_config
 from log_setup import get_logger
 
 log = get_logger("openai_pool")
@@ -68,11 +68,13 @@ def _classify_status(code: int, body: str) -> tuple:
     return "other", f"{code} {body[:160]}"
 
 
-def _post(url: str, key: str, payload: dict, headers: dict = None, timeout: float = 30.0):
+def _post(url: str, key: str, payload: dict, headers: dict = None, timeout: float = 30.0,
+          method: str = "POST"):
     hdrs = {"Content-Type": "application/json", "Authorization": "Bearer " + key}
     if headers:
         hdrs.update(headers)
-    req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers=hdrs)
+    body = json.dumps(payload).encode() if method == "POST" else None
+    req = urllib.request.Request(url, data=body, headers=hdrs, method=method)
     try:
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode()), dict(resp.headers)
@@ -127,11 +129,18 @@ def chat(provider: dict, history: list, persona: str, model: str,
         if finish == "length":
             raise CallError("empty", f"{model}: token khatam (length), content khaali")
         raise CallError("empty", f"{model}: khaali jawab")
+
+    # Kuch free providers 200 par bhi "payment required" bhej dete hain. Chhota
+    # response + billing word = free-only provider ko turant band karna hai.
+    if provider["name"] in pool_config.FREE_ONLY:
+        word = pool_config.billing_hit(content)
+        if word:
+            raise CallError("billing", f"{model}: '{word}' — credit/payment chahiye")
     return content
 
 
 def models_list(provider: dict) -> list:
-    """Sirf /models — free, credits nahi lagte. Startup check ke liye."""
+    """Sirf /models — free, credits nahi lagte. Startup check ke liye. GET, POST nahi."""
     url = provider["base_url"].rstrip("/") + "/models"
-    data, _ = _post(url, provider["key"], {"limit": 200}, timeout=provider["timeout"])
+    data, _ = _post(url, provider["key"], {}, timeout=provider["timeout"], method="GET")
     return [m.get("id") for m in data.get("data", []) if m.get("id")]

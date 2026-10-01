@@ -38,3 +38,8 @@ def persona_for(mode: str) -> str:
 
 def display_name(mode: str) -> str:
     return NAMES.get(mode, NAMES[config.DEFAULT_MODE])
+
+
+def label(mode: str) -> str:
+    """Jawab ke upar dikhne wala label: SUNDAY ya PRABH."""
+    return display_name(mode).upper()

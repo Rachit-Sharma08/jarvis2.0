@@ -1,3 +1,14 @@
+"""Saare settings ek jagah se. `import config` hi sab jagah chalta hai.
+
+Bade hisse alag file me hain (ek file, ek kaam):
+  - config_brain.py  → brain provider keys, models, tokens, timeouts
+  - config_voice.py  → TTS/STT constants + voice id ka faisla
+Yahan woh sab re-export hote hain, isliye `config.GROQ_API_KEY` aur
+`config.TTS_CHAIN` dono pehle jaise hi kaam karte hain.
+
+Rules: key sirf `.env` se, kabhi code me nahi. Ye app sirf 127.0.0.1 par.
+"""
+
 import os
 from pathlib import Path
 
@@ -11,39 +22,23 @@ LOG_FILE = LOG_DIR / "prabh.log"
 
 load_dotenv(BASE_DIR / ".env")
 
-GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
-ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "").strip()
-CARTESIA_API_KEY = os.getenv("CARTESIA_API_KEY", "").strip()
-NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "").strip()
-OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
+# ---- Brain + voice constants yahan se aate hain ----
 
-# NVIDIA NIM — OpenAI-compatible. Key 'nvapi-' se shuru hoti hai.
-# Free trial: 1000 credits (5000 business email se). Per-key 40 RPM.
-# Credits khatam -> HTTP 402 "Cloud credits expired" (public balance endpoint nahi hai).
-NVIDIA_BASE_URL = "https://integrate.api.nvidia.com/v1"
-NVIDIA_MODEL = "nvidia/nemotron-3-super-120b-a12b"
-# Pool-wide limiter: saare NVIDIA models milake 30/min (40 RPM limit se safe).
-NVIDIA_MAX_CALLS_PER_MINUTE = 30
-OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-
-# Live list endpoint par verify hua (Sept 2026). Purane naam 404 de rahe the.
-GROQ_MODEL = "openai/gpt-oss-120b"
-GROQ_MODELS = (GROQ_MODEL, "openai/gpt-oss-20b")
-GROQ_STT_MODEL = "whisper-large-v3-turbo"
-GEMINI_MODEL = "gemini-3.5-flash"
-GEMINI_MODELS = (GEMINI_MODEL, "gemini-flash-latest")
-# Kitni der wait: Groq 10s, Gemini 15s. 402/429/503 par 10 min araam.
-BRAIN_TIMEOUT_GROQ = 10.0
-BRAIN_TIMEOUT_GEMINI = 15.0
-GEMINI_RETRY_WAIT = 2.5
-PROVIDER_SKIP_SECONDS = 600
-
-# Round 2: pehle 800 tha. Reasoning model (gpt-oss) me reasoning tokens sab
-# kha jate the aur content empty aata tha. Ab 2500, retry par 5000.
-BRAIN_MAX_TOKENS = 2500
-BRAIN_MAX_TOKENS_RETRY = 5000
-BRAIN_REASONING_EFFORT = "low"
+from config_brain import (  # noqa: E402
+    BRAIN_MAX_TOKENS, BRAIN_MAX_TOKENS_RETRY, BRAIN_REASONING_EFFORT,
+    BRAIN_TIMEOUT_GEMINI, BRAIN_TIMEOUT_GROQ, GEMINI_API_KEY, GEMINI_MODELS,
+    GEMINI_MODEL, GEMINI_RETRY_WAIT, GROQ_API_KEY, GROQ_MODELS, GROQ_MODEL,
+    GROQ_STT_MODEL, NVIDIA_API_KEY, NVIDIA_BASE_URL,
+    NVIDIA_MAX_CALLS_PER_MINUTE, NVIDIA_MODELS, NVIDIA_MODEL,
+    OPENROUTER_API_KEY, OPENROUTER_BASE_URL, OPENROUTER_MODELS,
+    PROVIDER_SKIP_SECONDS, has_gemini, has_groq, has_nvidia, has_openrouter,
+)
+from config_voice import (  # noqa: E402
+    AUDIO_MAX_BYTES, CARTESIA_API_KEY, CARTESIA_DEFAULT_MODEL, CARTESIA_MODEL,
+    CARTESIA_VERSION, ELEVENLABS_API_KEY, ELEVENLABS_MODEL, EDGE_VOICES,
+    FEMALE_ONLY_MODES, RECORD_MAX_SECONDS, STT_MIN_DURATION_MS, TTS_CHAIN,
+    TTS_MAX_CHARS, VOICE_ENV, has_cartesia, has_elevenlabs, voice_for,
+)
 
 DEFAULT_MODE = "sunday"
 
@@ -57,29 +52,6 @@ MODE_ALIASES = {
     "sunday": ("Sunday", "संडे"),
     "prabh": ("Prabh", "Prabhu", "प्रभ", "प्रभु"),
 }
-
-TTS_CHAIN = ("elevenlabs", "cartesia", "edge")
-TTS_MAX_CHARS = 500
-AUDIO_MAX_BYTES = 10 * 1024 * 1024
-RECORD_MAX_SECONDS = 30
-
-EDGE_VOICES = {"sunday": "hi-IN-MadhurNeural", "prabh": "hi-IN-SwaraNeural"}
-ELEVENLABS_MODEL = "eleven_multilingual_v2"
-ELEVENLABS_DEFAULT_VOICE = "JBFqnCBsd6RMkjVDRZzb"
-CARTESIA_MODEL = "sonic-2"
-CARTESIA_VERSION = "2025-04-16"
-
-# Prabh ki awaaz hamesha female. Is mode me default (male) voice kabhi use
-# nahi hoga — id na ho to seedha Cartesia/Edge par chala jayega.
-FEMALE_ONLY_MODES = ("prabh",)
-
-VOICE_ENV = {
-    ("elevenlabs", "sunday"): "ELEVENLABS_VOICE_SUNDAY",
-    ("elevenlabs", "prabh"): "ELEVENLABS_VOICE_PRABH",
-    ("cartesia", "sunday"): "CARTESIA_VOICE_SUNDAY",
-    ("cartesia", "prabh"): "CARTESIA_VOICE_PRABH",
-}
-
 
 # ---- Phase 3: PC ke tools + gatekeeper ----
 
@@ -174,20 +146,6 @@ def mode_aliases() -> list:
     return [a for names in MODE_ALIASES.values() for a in names]
 
 
-def voice_for(provider: str, mode: str) -> str:
-    """Is provider+mode ki voice id. Female-only mode me male default kabhi nahi.
-
-    Edge hamesha apni built-in voice deta hai. Baaki me id na ho to '' — matlab
-    us provider ko chhod do (Prabh male awaaz par nahi ja sakta).
-    """
-    if provider == "edge":
-        return EDGE_VOICES.get(mode, EDGE_VOICES[DEFAULT_MODE])
-    vid = os.getenv(VOICE_ENV.get((provider, mode), ""), "").strip()
-    if not vid and provider == "elevenlabs" and mode not in FEMALE_ONLY_MODES:
-        return ELEVENLABS_DEFAULT_VOICE
-    return vid
-
-
 def is_local_only() -> bool:
     return SERVER_HOST in LOCAL_NAMES
 
@@ -198,27 +156,3 @@ def allowed_hosts() -> set:
 
 def allowed_origins() -> set:
     return {f"http://{name}:{SERVER_PORT}" for name in LOCAL_NAMES}
-
-
-def has_groq() -> bool:
-    return bool(GROQ_API_KEY)
-
-
-def has_gemini() -> bool:
-    return bool(GEMINI_API_KEY)
-
-
-def has_nvidia() -> bool:
-    return bool(NVIDIA_API_KEY)
-
-
-def has_openrouter() -> bool:
-    return bool(OPENROUTER_API_KEY)
-
-
-def has_elevenlabs() -> bool:
-    return bool(ELEVENLABS_API_KEY)
-
-
-def has_cartesia() -> bool:
-    return bool(CARTESIA_API_KEY)

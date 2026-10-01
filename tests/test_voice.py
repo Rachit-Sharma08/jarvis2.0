@@ -1,3 +1,8 @@
+﻿"""Voice side: STT guard, mode aliases aur /stt + /tts endpoints ka security.
+
+TTS chain aur female allowlist ke test alag file me hain (test_voice_tts.py).
+"""
+
 import asyncio
 import sys
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -12,7 +17,7 @@ import core.modes as modes
 from core import events
 from server import security
 from server.app import app
-from voice import stt, tts
+from voice import stt
 
 FAILED = []
 GOOD_HOST = f"localhost:{config.SERVER_PORT}"
@@ -27,84 +32,6 @@ def check(name, got, want):
         print(f"  FAIL {name} -> got {got!r}, want {want!r}")
 
 
-class Boom:
-    def __init__(self):
-        self.calls = []
-
-    async def speak(self, text, mode):
-        self.calls.append((text, mode))
-        raise RuntimeError("limit khatam")
-
-
-class Good:
-    def __init__(self, audio=b"AUDIO", name="good"):
-        self.audio = audio
-        self.name = name
-        self.calls = []
-
-    async def speak(self, text, mode):
-        self.calls.append((text, mode))
-        return self.audio
-
-
-def test_chain_order():
-    print("TTS PROVIDER CHAIN")
-    check("chain ka order", config.TTS_CHAIN, ("elevenlabs", "cartesia", "edge"))
-    check("edge aakhri hai", config.TTS_CHAIN[-1], "edge")
-
-    eleven, cart, edge = Boom(), Boom(), Good(b"EDGE")
-    saved = dict(tts.PROVIDERS)
-    tts.PROVIDERS.update(elevenlabs=eleven, cartesia=cart, edge=edge)
-    try:
-        audio, name = asyncio.run(tts.speak("Namaste", "sunday"))
-        check("do fail hone par edge bola", name, "edge")
-        check("edge ka audio mila", audio, b"EDGE")
-
-        only = Good(b"ELEVEN")
-        cart.calls.clear()
-        tts.PROVIDERS["elevenlabs"] = only
-        _, name = asyncio.run(tts.speak("hi", "sunday"))
-        check("pehla provider chala", name, "elevenlabs")
-        check("baaki provider nahi chala", cart.calls, [])
-
-        tts.PROVIDERS.update(elevenlabs=Boom(), cartesia=Good(b"CART"))
-        _, name = asyncio.run(tts.speak("hi", "prabh"))
-        check("eleven fail par cartesia", name, "cartesia")
-    finally:
-        tts.PROVIDERS.update(saved)
-
-    tts.PROVIDERS.update(elevenlabs=Boom(), cartesia=Boom(), edge=Boom())
-    try:
-        asyncio.run(tts.speak("hi", "sunday"))
-        check("sab fail par saaf error", "error nahi mila", "error mila")
-    except tts.TtsError as exc:
-        check("sab fail par saaf error", "Awaaz nahi ban paayi" in str(exc), True)
-    finally:
-        tts.PROVIDERS.update(saved)
-
-
-def test_text_cleaning():
-    print("TEXT CLEANING (awaz se pehle)")
-    check("markdown hat gaya", tts.clean("*bold* #tag `code` _x_ >y"), "bold tag code x y")
-    check("URL hat gaya", tts.clean("Ye dekho https://x.com/a?b=1 aur phir"), "Ye dekho aur phir")
-    check("www hat gaya", tts.clean("Ye dekho www.example.com"), "Ye dekho")
-    check("emoji hat gaya", tts.clean("accha laga \U0001F600✨"), "accha laga")
-    check("tir nahi bacha", "✔" in tts.clean("sab theek -> ✔"), False)
-    check("kitna bhi lamba", len(tts.clean("**a**" * 400)), len("a" * 400 + " " * 399))
-
-
-def test_char_limit():
-    print("500 CHARACTER LIMIT")
-    check("limit 500 hai", config.TTS_MAX_CHARS, 500)
-    check("chhota text pura", tts.clip("chhota jawab"), "chhota jawab")
-    long = "word " * 400
-    cut = tts.clip(long)
-    check("500 se kam bola", len(cut) <= 500, True)
-    check("500 se zyada nahi", len(cut) >= 400, True)
-    check("sentence pura nahi kata", cut.endswith("word"), True)
-    check("limit badal sakte ho", len(tts.clip(long, 50)) <= 50, True)
-
-
 def test_mode_aliases():
     print("MODE NAME VARIANTS")
     cases = [
@@ -114,7 +41,8 @@ def test_mode_aliases():
         ("प्रभ namaste", "prabh"), ("प्रभु namaste", "prabh"),
     ]
     for text, want in cases:
-        check(f"'{text[:12]}' -> {want}", modes.detect_mode(text, "prabh" if want == "sunday" else "sunday")[0], want)
+        other = "prabh" if want == "sunday" else "sunday"
+        check(f"'{text[:12]}' -> {want}", modes.detect_mode(text, other)[0], want)
     check("bina naam wahi mode", modes.detect_mode("kya haal", "prabh")[0], "prabh")
     check("aadha naam nahi maana", modes.detect_mode("sundaya kya", "sunday")[0], "sunday")
     check("6 naam config me", len(config.mode_aliases()), 6)
@@ -150,13 +78,14 @@ def test_voice_endpoints():
 
     stt_voice_mod = __import__("server.voice_routes", fromlist=["stt_voice"])
 
-    async def fake_transcribe(audio):
+    async def fake_transcribe(audio, *a, **kw):
         return "sunaa"
 
     async def fake_speak(text, mode):
         return b"MP3DATA", "edge"
 
-    saved_stt, saved_tts = stt_voice_mod.stt_voice.transcribe, stt_voice_mod.tts_voice.speak
+    saved_stt = stt_voice_mod.stt_voice.transcribe
+    saved_tts = stt_voice_mod.tts_voice.speak
     stt_voice_mod.stt_voice.transcribe = fake_transcribe
     stt_voice_mod.tts_voice.speak = fake_speak
     try:
@@ -185,9 +114,6 @@ def test_voice_endpoints():
         stt_voice_mod.tts_voice.speak = saved_tts
 
 
-test_chain_order()
-test_text_cleaning()
-test_char_limit()
 test_mode_aliases()
 test_transcribing_status()
 test_stt_limits()

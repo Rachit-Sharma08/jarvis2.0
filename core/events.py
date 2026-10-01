@@ -7,8 +7,12 @@ def status(value: str) -> dict:
     return {"type": "status", "value": value}
 
 
-def message(role: str, text: str) -> dict:
-    return {"type": "message", "role": role, "text": text}
+def message(role: str, text: str, label: str = "") -> dict:
+    """Role ke saath message. `label` = SUNDAY / PRABH (jawab ke upar dikhta hai)."""
+    event = {"type": "message", "role": role, "text": text}
+    if label:
+        event["label"] = label
+    return event
 
 
 def log(text: str, level: str = "info", data: dict = None) -> dict:

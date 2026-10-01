@@ -41,9 +41,14 @@ async def stt(request: Request):
     if not audio:
         raise HTTPException(400, "Koi audio nahi mila.")
 
+    # Browser recording ki asli length (ms) bhejta hai. Timer server par nahi —
+    # wahan network latency jod kar galat value aati thi. 600ms se chhoti
+    # recording STT tak jane se pehle hi rok di jaati hai.
+    duration_ms = request.headers.get("x-audio-ms") or request.query_params.get("ms")
+
     watch = Stopwatch("route")
     try:
-        text = await stt_voice.transcribe(audio)
+        text = await stt_voice.transcribe(audio, duration_ms=duration_ms)
     except stt_voice.SttError as exc:
         watch.total()
         raise HTTPException(502, str(exc)) from exc

@@ -1,25 +1,24 @@
-"""Brain/TTS doctor: kaunsa provider abhi use karna safe hai.
+"""Brain/TTS doctor: kaunsa provider abhi safe hai.
 
-Categories:
-  - gone    -> 404. Model hata diya gaya. Poore session me dobara try nahi.
-  - busy    -> 429/402/503/timeout. Cooldown: Retry-After header, warna 10 min.
-  - billing -> payment/credit word ya 402. DIN BHAR BAND (agle 00:00 tak).
-  - auth    -> 401. Key galat/missing. Session me band.
-  - empty   -> khaali jawab. Chhota rest (45s) — agli request me phir chance.
-  - other   -> baaki sab. 10 min rest.
+gone=404 (permanent) · busy=429/503/timeout (Retry-After, warna 10 min) ·
+quota=limit khatam (agle 00:00) · billing=credits khatam (nayi key tak) ·
+auth=401 · empty=khaali jawab (45s) · other=10 min.
 
-Ek hi source — brain/pool.py, brain/checkup.py, voice/tts.py aur /brain/status
-sab yahi padhte hain. Do jagah cooldown mat likho.
+Category ke word/pattern `health_words.py` me hain; yahan sirf state + cooldown.
+Ek hi source — pool.py, checkup.py, tts.py aur /brain/status sab yahi padhte hain.
 """
 
 import datetime
-import re
 import time
 
-import config
+from brain import health_words
 from log_setup import get_logger
 
 log = get_logger("health")
+
+# Word/pattern yahan se bhi nikaal sakte hain (purana import na toote).
+CODE_RE, GONE_MARKERS, BUSY_WORDS = health_words.CODE_RE, health_words.GONE_MARKERS, health_words.BUSY_WORDS
+BILLING_RE, CREDIT_RE, QUOTA_RE = health_words.BILLING_RE, health_words.CREDIT_RE, health_words.QUOTA_RE
 
 GONE = {}       # model -> reason (permanent, is session me)
 UNTIL = {}      # provider -> monotonic deadline
@@ -30,35 +29,14 @@ HUMAN = {}      # provider -> "12 min baad" jaisa text
 DEFAULT_COOLDOWN = 600     # 10 min
 EMPTY_COOLDOWN = 45        # khaali jawab — jaldi phir try
 
-# Word-boundary se. Bina boundary "4299" (voice id me) bhi 429 ban jata.
-CODE_RE = re.compile(r"\b(402|429|503|500|502)\b")
-GONE_MARKERS = ("model_not_found", "does not exist", "no longer available",
-                "not found for api version", "model not found")
-BUSY_WORDS = ("payment_required", "rate limit", "rate_limit", "resource_exhausted",
-              "unavailable", "overloaded", "quota")
-BILLING_WORDS = ("insufficient_credit", "insufficient credit", "insufficient credits",
-                 "insufficient funds", "credits expired", "cloud credits",
-                 "payment required", "add credits", "credit balance is too low",
-                 "billing", "paid_plan", "upgrade your plan")
-
 
 def classify(exc) -> str:
-    """Groq/Gemini SDK ya TTS exception -> category."""
-    text = f"{type(exc).__name__}: {exc}".lower()
-    if any(m in text for m in GONE_MARKERS):
-        return "gone"
-    if any(w in text for w in BILLING_WORDS):
-        return "billing"
-    if CODE_RE.search(text) or any(w in text for w in BUSY_WORDS):
-        return "busy"
-    if "khaali" in text or "empty" in text:
-        return "empty"
-    return "other"
+    """Exception -> category (pattern health_words me)."""
+    return health_words.classify(exc)
 
 
 def is_503(exc) -> bool:
-    """Sirf 503 (overloaded) par retry — 429/402 par retry bekaar hai."""
-    return bool(re.search(r"\b503\b", f"{type(exc).__name__}: {exc}"))
+    return health_words.is_503(exc)
 
 
 def _human(seconds: float) -> str:
@@ -82,6 +60,24 @@ def model_gone(provider: str, model: str, reason: str) -> None:
     log.warning("model %s hata diya gaya (%s) — is session me dobara try nahi", model, provider)
 
 
+def is_gone(model: str) -> bool:
+    """Ye model 404 ho chuka hai? (key me model naam, provider se alag)"""
+    return model in GONE
+
+
+def _lock(provider: str, reason: str, human: str) -> None:
+    """Seedha BAND — koi deadline nahi. Sirf reset_provider (nayi key) khol sakta hai."""
+    UNTIL[provider] = float("inf")
+    LAST[provider] = " ".join(str(reason).split())[:200]
+    HUMAN[provider] = human
+    log.error("%s BAND — %s (nayi key/session tak nahi chalega)", provider, reason)
+
+
+def lock_credits(provider: str, reason: str) -> None:
+    """Cloud credits khatam / payment required — nayi key tak, agle din tak NAHI."""
+    _lock(provider, reason, "credits khatam — nayi key chahiye")
+
+
 def skip(provider: str, reason: str, seconds: int = None) -> None:
     rest = seconds if seconds else DEFAULT_COOLDOWN
     UNTIL[provider] = time.monotonic() + rest
@@ -91,33 +87,35 @@ def skip(provider: str, reason: str, seconds: int = None) -> None:
 
 
 def till_next_day(provider: str, reason: str) -> None:
-    """Din ki limit (billing/credit khatam). Agle 00:00 tak band."""
+    """Din/maah ki limit. Agle 00:00 tak band."""
     NEXT_DAY[provider] = (_midnight(), " ".join(str(reason).split())[:200])
     LAST[provider] = NEXT_DAY[provider][1]
-    HUMAN[provider] = "agle din tak (credits/payment)"
+    HUMAN[provider] = "agle din tak (quota)"
     log.error("%s BAND — %s (agle 00:00 tak nahi chalega)", provider, reason)
 
 
 def lock_auth(provider: str, reason: str) -> None:
     """401 — key galat/missing. Is session me band."""
-    UNTIL[provider] = float("inf")
-    LAST[provider] = " ".join(str(reason).split())[:200]
-    HUMAN[provider] = "key galat — nayi key chahiye"
-    log.error("%s BAND — %s", provider, reason)
+    _lock(provider, reason, "key galat — nayi key chahiye")
 
 
 def fail(provider: str, kind: str, reason: str, retry_after: int = 0) -> str:
     """Ek fail register karo, sahi category ka cooldown. Wapas: kind."""
     if kind == "gone":
         return kind
-    if kind == "billing":
-        till_next_day(provider, reason)
+    text = str(reason)
+    # 4 alag rules: credits = nayi key tak, quota = agle din, auth = session,
+    # khaali = 45s, baaki = Retry-After ya 10 min.
+    if CREDIT_RE.search(text) or kind == "credits":
+        lock_credits(provider, text)
+    elif kind in ("quota", "billing") or QUOTA_RE.search(text):
+        till_next_day(provider, text)
     elif kind == "auth":
-        lock_auth(provider, reason)
+        lock_auth(provider, text)
     elif kind == "empty":
-        skip(provider, reason, EMPTY_COOLDOWN)
+        skip(provider, text, EMPTY_COOLDOWN)
     else:
-        skip(provider, reason, retry_after or None)
+        skip(provider, text, retry_after or None)
     return kind
 
 
@@ -135,10 +133,15 @@ def blocked_reason(provider: str) -> str:
         deadline, reason = NEXT_DAY[provider]
         if time.monotonic() < deadline:
             return f"{provider} BAND — {reason} (agle din tak)"
-        NEXT_DAY.pop(provider, None)   # naya din — dubara try ho sakta hai
+        # Naya din — purana record saaf, warna UI me stale cooldown dikhega.
+        NEXT_DAY.pop(provider, None)
+        HUMAN.pop(provider, None)
     until = UNTIL.get(provider)
     if until is None:
         return ""
+    if until == float("inf"):
+        # credits khatam ya key galat — inf tak band.
+        return f"{provider} BAND — {LAST.get(provider, 'credits/auth')} ({HUMAN.get(provider, 'nayi key chahiye')})"
     if time.monotonic() < until:
         return f"{provider} {_human(until - time.monotonic())} rest par ({LAST.get(provider, '')})"
     UNTIL.pop(provider, None)
@@ -151,6 +154,9 @@ def last_fail(provider: str) -> str:
 
 
 def cooldowns() -> dict:
+    """Sirf ABHI band providers. Expired hua entry yahin se saaf hota hai."""
+    for name in list(UNTIL) + list(NEXT_DAY):
+        blocked_reason(name)
     out = dict(HUMAN)
     for name in NEXT_DAY:
         out[name] = "agle din tak (credits/payment)"
@@ -172,11 +178,8 @@ def reset_all() -> None:
 def warnings() -> list:
     """Startup log aur UI banner ke liye ek line per problem."""
     out = [f"model {model} hata diya gaya" for model in GONE]
-    for name, (_d, reason) in NEXT_DAY.items():
-        out.append(f"{name} BAND — {reason}")
-    for name, until in list(UNTIL.items()):
-        if until == float("inf"):
-            out.append(f"{name} BAND — {LAST.get(name, 'auth')}")
-        elif time.monotonic() < until:
-            out.append(f"{name} {_human(until - time.monotonic())} rest par")
+    for name in list(UNTIL) + list(NEXT_DAY):
+        reason = blocked_reason(name)
+        if reason:
+            out.append(reason)
     return out

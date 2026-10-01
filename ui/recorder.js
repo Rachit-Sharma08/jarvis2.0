@@ -1,4 +1,5 @@
 const MAX_SECONDS = 30;
+const MIN_MS = 600;
 
 class Recorder {
   constructor(onDone, onError) {
@@ -9,6 +10,9 @@ class Recorder {
     this.chunks = [];
     this.timer = null;
     this.muted = false;
+    // Round 2: recording ki asli length yahan gino. Server par timer nahi —
+    // wahan network latency jud kar galat ms aata tha. <600ms wahi dab dab hai.
+    this.startedAt = 0;
   }
 
   get active() {
@@ -45,13 +49,24 @@ class Recorder {
     this.recorder.ondataavailable = (e) => { if (e.data.size) this.chunks.push(e.data); };
     this.recorder.onstop = () => {
       const type = this.recorder ? this.recorder.mimeType : "";
+      const ms = this.elapsedMs();
       const blob = new Blob(this.chunks, { type: type || "audio/webm" });
       this.release();
-      if (blob.size) this.onDone(blob);
+      if (!blob.size) return;
+      if (ms < MIN_MS) {
+        this.onError("Bahut chhoti recording. Thodi der bolke try karo.");
+        return;
+      }
+      this.onDone(blob, ms);
     };
 
     this.recorder.start();
+    this.startedAt = Date.now();
     this.timer = setTimeout(() => this.stop(), MAX_SECONDS * 1000);
+  }
+
+  elapsedMs() {
+    return this.startedAt ? Date.now() - this.startedAt : 0;
   }
 
   stop() {
@@ -76,5 +91,6 @@ class Recorder {
       this.stream = null;
     }
     this.recorder = null;
+    this.startedAt = 0;
   }
 }

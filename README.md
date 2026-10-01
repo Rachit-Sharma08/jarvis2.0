@@ -12,6 +12,12 @@ Browser me chalta hai, Windows 10/11 par, sab kuch free tools se. Mic se baat ka
 hai aur PC ke kaam bhi kar sakta hai (file, folder, app, command) — har kaam ke pehle
 screen par confirm card aata hai.
 
+> **Privacy:** brain aur tools **free providers** (Groq, Gemini, OpenRouter, NVIDIA) par
+> chalti hain, to message aur padhi hui file ka text unke paas jaata hai. Personal ya
+> confidential file ka content mat pucho, aur private kaam ke liye tools OFF rakho.
+> Poori baat [BRAIN.md](BRAIN.md) aur [TOOLS.md](TOOLS.md) me.
+
+- Test detail ke liye → [TESTS.md](TESTS.md)
 - Awaaz ke liye → [VOICE.md](VOICE.md)
 - Brain (models, fallback, error) ke liye → [BRAIN.md](BRAIN.md)
 - PC ke kaam ke liye → [TOOLS.md](TOOLS.md)
@@ -41,6 +47,8 @@ Copy-Item .env.example .env
 ```
 GROQ_API_KEY=apni_groq_key
 GEMINI_API_KEY=apni_gemini_key
+NVIDIA_API_KEY=apni_nvidia_key
+OPENROUTER_API_KEY=apni_openrouter_key
 
 ELEVENLABS_API_KEY=
 CARTESIA_API_KEY=
@@ -50,9 +58,12 @@ CARTESIA_VOICE_SUNDAY=
 CARTESIA_VOICE_PRABH=
 ```
 
-Sirf `GROQ_API_KEY` zaruri hai (chat + mic dono). Baaki sab optional hain.
+Sirf `GROQ_API_KEY` zaruri hai (chat + mic dono). Baaki sab optional hain — jitni
+keys doge, utne hi providers fail hone par agle par chal jayenge.
 Key kahan se milegi: Groq https://console.groq.com/keys ·
 Gemini https://aistudio.google.com/apikey ·
+NVIDIA https://build.nvidia.com (1000 free credits) ·
+OpenRouter https://openrouter.ai/keys (sirf `:free` model use hota hai) ·
 ElevenLabs https://elevenlabs.io/app/developers/api-keys ·
 Cartesia https://cartesia.ai/dashboard
 
@@ -75,36 +86,24 @@ Band karne ke liye terminal me `Ctrl + C`.
 
 ## 3. Test
 
-Saare suites ek loop me:
+Saare 22 suites ek loop me:
 
 ```powershell
 cd D:\prabh
-Get-ChildItem tests\test_*.py | ForEach-Object { .\.venv\Scripts\python.exe $_.FullName }
+$fail = @()
+Get-ChildItem tests\test_*.py | ForEach-Object {
+  .\.venv\Scripts\python.exe $_.FullName
+  if ($LASTEXITCODE -ne 0) { $fail += $_.Name }
+}
+if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-Ek-ek karke bhi chal sakte ho:
+Ek-ek karke bhi: `.\.venv\Scripts\python.exe tests\test_gatekeeper.py`
 
-```powershell
-.\.venv\Scripts\python.exe tests\test_gatekeeper.py
-.\.venv\Scripts\python.exe tests\test_tools.py
-.\.venv\Scripts\python.exe tests\test_tool_routes.py
-```
+Har suite ka detail (kya check karta hai, naya test kaise likhein) →
+**[TESTS.md](TESTS.md)**. Test me real API call nahi hota aur koi khatarna command
+nahi chalti — key ki zarurat nahi.
 
-| Test file | Kya check karta hai |
-|---|---|
-`test_basic.py` | Chat, mode switching, brain, logging |
-`test_security.py` | Token, origin, host, dangerous endpoints |
-`test_voice.py` | Voice chain, limit, mode naam, `/stt` `/tts` |
-`test_gatekeeper.py` | 40+ SAFE/ASK/BLOCKED cases, path tricks, mode parity |
-`test_gatekeeper_approval.py` | Card hash, single use, 60s timeout, kill switch, rate limit, log masking |
-`test_paths.py` | Traversal, case, 8.3 naam, junction, drive root |
-`test_tools.py` | 10 tools (temp folder me), 20 KB limit, scrubbed env, timeout |
-`test_prompt_strict.py` | LLM JSON strict validation + duplicate key reject |
-`test_engine_tools.py` | 5-step loop, ASK/BLOCKED, kill switch, mode parity |
-`test_engine_detail.py` | Tool output aur confirm card ki masking |
-`test_tool_routes.py` | Tool endpoints, CSP, UI source safety |
-Aakhir me "OK" / "Saare test pass." aana chahiye. Test me real API call nahi hota aur koi
-khatarna command bhi nahi chalti — key ki zarurat nahi.
 
 ---
 
@@ -161,35 +160,36 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 
 | File | Kaam |
 |---|---|
-`main.py` | Server chalu karta hai |
-`config.py` | `.env`, settings, tool risk, allowed folders, blocked patterns |
-`log_setup.py` | `logs/prabh.log` banata hai |
-`core/events.py` | `status` / `message` / `log` / `activity` / `confirm` events |
-`core/modes.py` | Naam se mode + persona file |
-`core/engine.py` | Poora chat flow + tool loop (**sirf** `run_tool` raasta) |
-`brain/router.py` | Pehle Groq, phir Gemini — dono fail ho to ek hi message |
-`brain/prompt.py` | Persona + tool JSON rules + strict parser |
-`brain/groq_client.py`, `brain/gemini_client.py` | Brain API calls |
-`gatekeeper/keeper.py` | Har tool ka faisla + card ka intezaar |
-`gatekeeper/rules.py`, `patterns.py` | Risk + khatarna command regex |
-`gatekeeper/paths.py` | Traversal, symlink, 8.3, protected root jaanch |
-`gatekeeper/approvals.py`, `limiter.py`, `audit.py` | Card hash, kill switch, masked log |
-`tools/*.py` | 10 tools ka asal kaam |
-`server/app.py` | `POST /chat` + `WebSocket /ws` + CSP |
-`server/security.py` | Host + Origin + token check |
-`server/tool_routes.py` | `/tool/confirm`, `/tools/toggle`, `/tools/cancel`, `/tools/status` |
-`server/voice_routes.py` | `POST /stt` + `POST /tts` |
-`voice/*.py` | STT/TTS providers (details [VOICE.md](VOICE.md)) |
-`ui/index.html`, `ui/style.css`, `ui/app.js` | Interface |
-`ui/tools.js`, `ui/tools.css` | ACTIVITY panel, confirm card, kill switch |
-`ui/recorder.js`, `ui/speaker.js` | Mic record + audio playback |
-`personas/sunday.txt`, `personas/prabh.txt` | Dono ka character |
+| `main.py` | Server chalu karta hai |
+| `config.py` | `.env`, settings, tool risk, allowed folders, blocked patterns |
+| `config_brain.py`, `config_voice.py` | Brain aur voice constants (`config.py` re-export karta hai) |
+| `log_setup.py` | `logs/prabh.log` banata hai |
+| `core/events.py`, `core/modes.py` | Chat events + naam se mode, persona, label |
+| `core/engine.py` | Poora chat flow + tool loop (**sirf** `run_tool` raasta) |
+| `brain/pool.py`, `pool_config.py` | Do-tier brain pool + uski order (pool hi Groq/Gemini/NVIDIA/OpenRouter chala hai) |
+| `brain/openai_pool.py`, `brain/limiter.py` | OpenAI-compatible calls + NVIDIA 30/min limiter |
+| `brain/health.py`, `health_words.py` | Cooldown/lock + error-text categories |
+| `brain/probe.py`, `checkup.py` | Manual strict-JSON probe + startup `/models` check |
+| `brain/prompt.py` | Persona + tool JSON rules + strict parser |
+| `gatekeeper/keeper.py` | Har tool ka faisla + card ka intezaar |
+| `gatekeeper/rules.py`, `patterns.py`, `paths.py` | Risk, khatarna command regex, traversal/8.3/junction jaanch |
+| `gatekeeper/approvals.py`, `limiter.py`, `audit.py` | Card hash, kill switch, masked log |
+| `tools/*.py` | 10 tools ka asal kaam |
+| `server/app.py` | `POST /chat` + `WebSocket /ws` + CSP |
+| `server/security.py` | Host + Origin + token check |
+| `server/brain_routes.py` | `GET /brain/status` (pool ka live haal) |
+| `server/tool_routes.py`, `server/voice_routes.py` | `/tool/confirm`, `/tools/*`, `POST /stt`, `POST /tts` |
+| `voice/*.py` | STT/TTS providers (details [VOICE.md](VOICE.md)) |
+| `ui/index.html`, `ui/style.css`, `ui/app.js` | Interface + chat/WebSocket |
+| `ui/voice_ui.js` | Mic + speaker wiring |
+| `ui/tools.js`, `ui/tools.css`, `ui/recorder.js`, `ui/speaker.js` | ACTIVITY panel, confirm card, mic record, audio play |
+| `personas/sunday.txt`, `personas/prabh.txt` | Dono ka character |
 
 ---
 
 ## Error kahan dekhein?
 
-Sab kuch `logs/prabh.log` me likha jaata hai — har brain call ka timing bhi (`groq=1.4s total=1.5s`). Har tool ka hisaab `logs/actions.log` me.
+Sab kuch `logs/prabh.log` me likha jaata hai — har brain call ka timing bhi (`pool: T1 groq 1402ms | total 1451ms`). Har tool ka hisaab `logs/actions.log` me.
 
 ```powershell
 Get-Content D:\prabh\logs\prabh.log -Tail 20
@@ -197,4 +197,4 @@ Get-Content D:\prabh\logs\actions.log -Tail 20
 ```
 
 Agar browser me sirf "Abhi koi brain jawab nahi de paya" dikh raha hai, to `.env` me key
-sahi hai ya nahi check karo — model list ka live check [BRAIN.md](BRAIN.md) me hai.
+sahi hai ya nahi check karo — live check aur pool detail [BRAIN.md](BRAIN.md) me hai.

@@ -19,8 +19,9 @@ _MASK = "***"
 
 _SECRET_ENV = re.compile(r"(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL)", re.IGNORECASE)
 _SHAPES = (
-    re.compile(r"gsk_[A-Za-z0-9]{10,}"),
-    re.compile(r"sk_[A-Za-z0-9_\-]{10,}"),
+    re.compile(r"gsk[_-][A-Za-z0-9]{10,}"),
+    re.compile(r"nvapi[_-][A-Za-z0-9_\-]{10,}"),
+    re.compile(r"sk[_-][A-Za-z0-9_\-]{10,}"),
     re.compile(r"AIza[A-Za-z0-9_\-]{10,}"),
     re.compile(r"\bAQ\.[A-Za-z0-9_\-]{20,}"),
     re.compile(r"\bbearer\s+[A-Za-z0-9._\-]{8,}", re.IGNORECASE),
@@ -30,6 +31,8 @@ _SHAPES = (
 
 
 def _live_values() -> tuple:
+    """Abhi is waqt `os.environ` me jo asli keys hain. Har call par fresh padhta
+    hai — taaki nayi key baad me daali jaaye to wo bhi mask ho."""
     out = []
     for name, value in os.environ.items():
         if len(value) >= 12 and _SECRET_ENV.search(name):
@@ -37,14 +40,11 @@ def _live_values() -> tuple:
     return tuple(sorted(set(out), key=len, reverse=True))
 
 
-LIVE_VALUES = _live_values()
-
-
 def mask(text) -> str:
     """Har secret ko *** bana do. Text chhota bhi ho to koi crash nahi."""
     out = str(text)
-    for value in LIVE_VALUES:
-        if value and value in out:
+    for value in _live_values():
+        if value in out:
             out = out.replace(value, _MASK)
     for regex in _SHAPES:
         out = regex.sub(_MASK, out)

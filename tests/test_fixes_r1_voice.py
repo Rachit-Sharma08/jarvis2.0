@@ -11,7 +11,7 @@ import os
 from unittest.mock import patch
 
 import config
-from voice import tts
+from voice import tts, tts_female
 
 FAILED = []
 
@@ -47,17 +47,17 @@ def run_with(failing, mode="prabh"):
 def test_voice_config():
     print("VOICE CONFIG")
     check("prabh edge female", config.voice_for("edge", "prabh"), "hi-IN-SwaraNeural")
-    check("sunday edge", config.voice_for("edge", "sunday"), "hi-IN-MadhurNeural")
+    # Round 2: dono mode Swara (female). Sunday bhi Swara.
+    check("sunday edge bhi Swara", config.voice_for("edge", "sunday"), "hi-IN-SwaraNeural")
     check("prabh female-only mode", "prabh" in config.FEMALE_ONLY_MODES, True)
-    check("dono edge voice alag", config.EDGE_VOICES["prabh"] != config.EDGE_VOICES["sunday"], True)
+    check("dono mode female-only", set(config.FEMALE_ONLY_MODES) == {"prabh", "sunday"}, True)
+    check("dono edge voice same", config.EDGE_VOICES["prabh"] == config.EDGE_VOICES["sunday"], True)
     with patch.dict(os.environ, {}, clear=False):
         os.environ.pop("ELEVENLABS_VOICE_PRABH", None)
         check("id na ho to male default nahi", config.voice_for("elevenlabs", "prabh"), "")
+        # Round 2: Sunday bhi female-only — default (male) fallback nahi milta.
         os.environ.pop("ELEVENLABS_VOICE_SUNDAY", None)
-        check("sunday ko default mila", config.voice_for("elevenlabs", "sunday"),
-              config.ELEVENLABS_DEFAULT_VOICE)
-        check("prabh default se bacha", config.voice_for("elevenlabs", "prabh") !=
-              config.ELEVENLABS_DEFAULT_VOICE, True)
+        check("sunday ko bhi default nahi", config.voice_for("elevenlabs", "sunday"), "")
 
 
 def test_cartesia_payload():
@@ -70,16 +70,23 @@ def test_cartesia_payload():
 
 
 def test_female_chain_order():
-    """Prabh: ElevenLabs female -> Cartesia female -> Edge Swara. Male kabhi nahi."""
+    """Dono mode: ElevenLabs female -> Cartesia female -> Edge Swara. Male kabhi nahi."""
     print("FEMALE CHAIN ORDER")
     check("chain order", config.TTS_CHAIN, ("elevenlabs", "cartesia", "edge"))
-    audio, provider = run_with({"elevenlabs"})
-    check("elevenlabs fail par cartesia", provider, "cartesia")
-    audio, provider = run_with({"elevenlabs", "cartesia"})
-    check("dono fail par edge", provider, "edge")
-    check("edge ka audio mila", audio, b"AUDIOedge")
-    check("edge voice female (Swara)", config.voice_for("edge", "prabh"), "hi-IN-SwaraNeural")
-
+    # Test allowlist ko pata id se replace karta hai — asli voice ids par depend
+    # na kare, warna env badalne par test toot jayega.
+    fake_allow = {
+        "elevenlabs": {"FAKE-EL-1"},
+        "cartesia": {"fake-cartesia-id"},
+        "edge": {"hi-IN-SwaraNeural"},
+    }
+    saved_allow = dict(tts_female.ALLOW)
+    tts_female.ALLOW.clear()
+    tts_female.ALLOW.update(fake_allow)
+    saved_env = {k: os.environ.get(k) for k in
+                 ("ELEVENLABS_VOICE_PRABH", "CARTESIA_VOICE_PRABH")}
+    os.environ["ELEVENLABS_VOICE_PRABH"] = "FAKE-EL-1"
+    os.environ["CARTESIA_VOICE_PRABH"] = "fake-cartesia-id"
     called = []
 
     class Watcher(Fake):
@@ -87,28 +94,67 @@ def test_female_chain_order():
             called.append(self.label)
             return await Fake.speak(self, text, mode)
 
-    with patch.dict(os.environ, {"CARTESIA_VOICE_PRABH": "cartesia-female-test-id"}, clear=False):
-        os.environ.pop("ELEVENLABS_VOICE_PRABH", None)
+    def run_watched(failing):
         saved = dict(tts.PROVIDERS)
-        tts.PROVIDERS.update({n: Watcher(n) for n in config.TTS_CHAIN})
+        tts.PROVIDERS.update({n: Watcher(n, n in failing) for n in config.TTS_CHAIN})
         try:
-            audio, provider = asyncio.run(tts.speak("test", "prabh"))
+            return asyncio.run(tts.speak("test", "prabh"))
         finally:
             tts.PROVIDERS.clear()
             tts.PROVIDERS.update(saved)
-    check("id na ho par elevenlabs chala hi nahi", "elevenlabs" in called, False)
-    check("cartesia par chala gaya", provider, "cartesia")
+
+    try:
+        audio, provider = run_with({"elevenlabs"})
+        check("elevenlabs fail par cartesia", provider, "cartesia")
+        audio, provider = run_with({"elevenlabs", "cartesia"})
+        check("dono fail par edge", provider, "edge")
+        check("edge ka audio mila", audio, b"AUDIOedge")
+        check("edge voice female (Swara)", config.voice_for("edge", "prabh"), "hi-IN-SwaraNeural")
+
+        # Sab id valid hain to pehla provider (elevenlabs) hi chalta hai.
+        audio, provider = run_watched(set())
+        check("sab chalta hai", provider, "elevenlabs")
+
+        # ElevenLabs id missing -> seedha Cartesia.
+        called.clear()
+        os.environ["ELEVENLABS_VOICE_PRABH"] = ""
+        audio, provider = run_watched(set())
+        check("elevenlabs id na ho par chala nahi", "elevenlabs" in called, False)
+        check("cartesia par chala gaya", provider, "cartesia")
+
+        # Dono premium id missing -> Edge (Swara).
+        os.environ["CARTESIA_VOICE_PRABH"] = ""
+        called.clear()
+        audio, provider = run_watched(set())
+        check("dono id na ho par edge", provider, "edge")
+
+        # Female allowlist me nahi id -> skip (male awaaz nahi bolega).
+        os.environ["ELEVENLABS_VOICE_PRABH"] = "MALE-VOICE-NOT-ALLOWED"
+        os.environ["CARTESIA_VOICE_PRABH"] = "fake-cartesia-id"
+        called.clear()
+        audio, provider = run_watched(set())
+        check("allowlist ke bahar id skip", "elevenlabs" in called, False)
+        check("allowlist ke bahar id par cartesia", provider, "cartesia")
+    finally:
+        tts_female.ALLOW.clear()
+        tts_female.ALLOW.update(saved_allow)
+        for key, val in saved_env.items():
+            if val is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = val
 
 
 def test_sunday_can_use_default():
     print("SUNDAY CHAIN")
     audio, provider = run_with({"elevenlabs"}, mode="sunday")
     check("sunday: cartesia id nahi hai to edge", provider, "edge")
-    check("sunday edge voice Madhur", config.voice_for("edge", "sunday"), "hi-IN-MadhurNeural")
+    # Round 2: Sunday ki awaaz bhi Swara (dono mode same).
+    check("sunday edge voice Swara", config.voice_for("edge", "sunday"), "hi-IN-SwaraNeural")
     with patch.dict(os.environ, {}, clear=False):
         os.environ.pop("ELEVENLABS_VOICE_SUNDAY", None)
-        check("sunday default male allowed hai", config.voice_for("elevenlabs", "sunday"),
-              config.ELEVENLABS_DEFAULT_VOICE)
+        # Sunday ab female-only — male default fallback nahi milta.
+        check("sunday default male nahi milta", config.voice_for("elevenlabs", "sunday"), "")
         os.environ.pop("CARTESIA_VOICE_SUNDAY", None)
         check("sunday cartesia id na ho to skip", config.voice_for("cartesia", "sunday"), "")
 

@@ -13,7 +13,7 @@ import subprocess
 import threading
 
 import config
-from gatekeeper.audit import LIVE_VALUES, mask
+from gatekeeper.audit import _live_values, mask
 
 _SCRUB_NAME = re.compile(r"(KEY|TOKEN|SECRET|PASSWORD|CREDENTIAL|AUTH)", re.IGNORECASE)
 _active = {}
@@ -26,7 +26,7 @@ def clean_env() -> dict:
     for name, value in os.environ.items():
         if _SCRUB_NAME.search(name):
             continue
-        if any(secret and secret in value for secret in LIVE_VALUES):
+        if any(secret and secret in value for secret in _live_values()):
             continue
         env[name] = value
     return env

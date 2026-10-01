@@ -19,13 +19,16 @@ TIER1, TIER2 = 1, 2
 # dikhe to turant band. OpenRouter sirf ':free' model.
 FREE_ONLY = ("nvidia", "openrouter")
 
-# Ye words kisi bhi response me dikhe to provider free-only hone par band.
+# Ye words kisi bhi response me dikhe to free-only provider band ho jaata hai.
+# Sirf CHHOTE jawab par lagta hai (see billing_hit) — warna normal baat me "payment"
+# bolne par provider galti se band ho jayega.
 BILLING_WORDS = (
     "payment required", "insufficient_credit", "insufficient credit",
-    "insufficient_credits", "insufficient funds", "billing", "payment",
+    "insufficient credits", "insufficient funds", "billing",
     "add credits", "credits expired", "credit balance is too low",
-    "exceeded your current quota", "purchase", "subscription",
+    "exceeded your current quota", "out of credits", "requires a paid plan",
 )
+BILLING_MAX_CHARS = 160   # isse lamba jawab = asli baat, band nahi karna
 
 
 def _p(**kw) -> dict:
@@ -51,22 +54,18 @@ POOL = (
        key=config.GEMINI_API_KEY, model=config.GEMINI_MODEL,
        models=(config.GEMINI_MODEL, "gemini-flash-latest")),
 
-    _p(name="openrouter", timeout=30.0, key=config.OPENROUTER_API_KEY,
+    _p(name="openrouter", timeout=45.0, key=config.OPENROUTER_API_KEY,
        base_url=config.OPENROUTER_BASE_URL,
-       # Sirf :free. Probe-verified Sept 2026.
-       models=("qwen/qwen3.8-27b:free", "nvidia/nemotron-3-super-120b-a12b:free",
-               "google/gemma-4-31b-it:free", "nvidia/nemotron-3.5-lightning:free"),
-       model="qwen/qwen3.8-27b:free"),
+       models=config.OPENROUTER_MODELS, model=config.OPENROUTER_MODELS[0]),
 
     _p(name="groq_slow", timeout=20.0, api_style="groq", key=config.GROQ_API_KEY,
        model="openai/gpt-oss-20b", models=("openai/gpt-oss-20b",)),
 
     # NVIDIA sabse aakhri reserve — credits limited (1000) aur per-key 40 RPM.
     # Isliye pool-wide 30/min limiter (rate_limit=30) lagta hai.
-    _p(name="nvidia", timeout=25.0, rate_limit=30,
+    _p(name="nvidia", timeout=25.0, rate_limit=config.NVIDIA_MAX_CALLS_PER_MINUTE,
        key=config.NVIDIA_API_KEY, base_url=config.NVIDIA_BASE_URL,
-       model=config.NVIDIA_MODEL,
-       models=(config.NVIDIA_MODEL, "nvidia/nemotron-3.5-lightning-30b-a3b")),
+       model=config.NVIDIA_MODEL, models=config.NVIDIA_MODELS),
 )
 
 
@@ -101,8 +100,14 @@ def pick_model(provider: dict, gone: dict = None, limit: int = None) -> str:
 
 
 def billing_hit(text: str) -> str:
-    """Response me billing/credit word hai? Free-only provider turant band."""
-    low = (text or "").lower()
+    """Chhota response me billing/credit word? Free-only provider turant band.
+
+    Lamba jawab count nahi hota — warna user ke saamne normal baat me aaya "payment"
+    shabd provider ko galti se band kar dega.
+    """
+    low = (text or "").strip().lower()
+    if not low or len(low) > BILLING_MAX_CHARS:
+        return ""
     for word in BILLING_WORDS:
         if word in low:
             return word

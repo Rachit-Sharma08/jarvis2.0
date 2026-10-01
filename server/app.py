@@ -12,6 +12,7 @@ from core.engine import Engine
 from gatekeeper import keeper
 from log_setup import get_logger
 from server import security
+from server.brain_routes import router as brain_router
 from server.tool_routes import router as tool_router
 from server.voice_routes import router as voice_router
 
@@ -22,6 +23,7 @@ engine = Engine()
 app.mount("/ui", StaticFiles(directory=str(config.UI_DIR)), name="ui")
 app.include_router(voice_router)
 app.include_router(tool_router)
+app.include_router(brain_router)
 
 _DONE = object()
 

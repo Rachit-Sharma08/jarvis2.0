@@ -53,6 +53,42 @@ def _ask_with_retry(provider: dict, history: list, persona: str, model: str) -> 
         )
 
 
+def _candidates(provider: dict) -> list:
+    """Is provider ke valid models, preferred pehle. 404 wale chhoot jate hain."""
+    return [m for m in provider["models"] if not health.is_gone(m)]
+
+
+def _run_openai(provider: dict, history: list, persona: str, problems: list) -> tuple:
+    """OpenAI-compatible provider. Har model try karo — 404 par agla model.
+
+    429/402/time-out par retry nahi, sidha agle model par. Yehi chahiye taaki
+    preferred model 404 ho to bhi usable model mil jaye.
+    """
+    name = provider["name"]
+    for model in _candidates(provider):
+        try:
+            return _ask_with_retry(provider, history, persona, model), model
+        except CallError as exc:
+            if exc.kind == "gone":
+                # 404 permanent — agle valid model ko chance mile.
+                health.model_gone(name, model, str(exc))
+                problems.append(_short(f"{name}/{model}: {exc}"))
+                continue
+            problems.append(_short(f"{name}: {exc}"))
+            if exc.kind == "billing" and name in pool_config.FREE_ONLY:
+                # Free-only provider: billing word = turant band.
+                health.fail(name, "billing", str(exc), exc.retry_after)
+            else:
+                health.fail(name, exc.kind, str(exc), exc.retry_after)
+            return "", ""
+        except Exception as exc:
+            problems.append(_short(f"{name}: {exc}"))
+            health.fail(name, "other", str(exc))
+            return "", ""
+    problems.append(f"{name}: saare models 404")
+    return "", ""
+
+
 def _run_provider(provider: dict, history: list, persona: str, problems: list) -> tuple:
     """Is provider ko chalao. Ok -> (answer, model). Fail -> problems me daal ke ''."""
     name = provider["name"]
@@ -66,45 +102,20 @@ def _run_provider(provider: dict, history: list, persona: str, problems: list) -
         problems.append(rest)
         return "", ""
 
-    # 404 ke baad bhi model list me agla valid model ho sakta hai.
-    model = pool_config.pick_model(provider, health.GONE)
-    if not model:
+    if not _candidates(provider):
         problems.append(f"{name}: saare models 404")
         return "", ""
 
-    if provider["api_style"] == "gemini":
+    if provider["api_style"] in ("gemini", "groq"):
+        client = gemini_client if provider["api_style"] == "gemini" else groq_client
         try:
-            return gemini_client.ask(history, persona), provider["model"]
+            return client.ask(history, persona), provider["model"]
         except Exception as exc:
             problems.append(_short(f"{name}: {exc}"))
             health.fail(name, _kind_of(exc), str(exc))
             return "", ""
 
-    if provider["api_style"] == "groq":
-        try:
-            return groq_client.ask(history, persona), provider["model"]
-        except Exception as exc:
-            problems.append(_short(f"{name}: {exc}"))
-            health.fail(name, _kind_of(exc), str(exc))
-            return "", ""
-
-    try:
-        return _ask_with_retry(provider, history, persona, model), model
-    except CallError as exc:
-        problems.append(_short(f"{name}: {exc}"))
-        if exc.kind == "gone":
-            # 404 permanent — agle valid model ko chance mile.
-            health.model_gone(name, model, str(exc))
-        elif exc.kind == "billing" and name in pool_config.FREE_ONLY:
-            # Free-only provider: billing word = turant band (agle din tak).
-            health.fail(name, "billing", str(exc), exc.retry_after)
-        else:
-            health.fail(name, exc.kind, str(exc), exc.retry_after)
-        return "", ""
-    except Exception as exc:
-        problems.append(_short(f"{name}: {exc}"))
-        health.fail(name, "other", str(exc))
-        return "", ""
+    return _run_openai(provider, history, persona, problems)
 
 
 def _kind_of(exc: Exception) -> str:
@@ -132,7 +143,10 @@ def ask(history: list, persona: str) -> tuple:
         if problems:
             log.warning("Tier %d ke sab fail — agla tier", tier)
 
-    problems += [_short(w) for w in health.warnings()]
+    # Health warnings bhi dikhao, par wahi provider dobara mat likho.
+    for warning in health.warnings():
+        if not any(warning.startswith(p.split(":")[0]) for p in problems):
+            problems.append(_short(warning))
     log.error("Pool fail: %s", " | ".join(problems), exc_info=True)
     return (
         "Abhi koi brain jawab nahi de paya. Ye reasons mila:\n"

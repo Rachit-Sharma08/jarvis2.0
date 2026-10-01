@@ -5,7 +5,7 @@ import config
 from brain import health
 from core.timing import Stopwatch
 from log_setup import get_logger
-from voice import tts_cartesia, tts_edge, tts_elevenlabs
+from voice import tts_cartesia, tts_edge, tts_elevenlabs, tts_female
 
 log = get_logger("tts")
 
@@ -70,6 +70,12 @@ async def speak(text: str, mode: str) -> tuple:
             log.info("tts %s skip: %s ke liye voice id nahi hai", name, mode)
             problems.append(f"{name}: voice id nahi")
             continue
+        # Female allowlist. List me nahi to skip — male awaaz kabhi nahi bolega.
+        male_guard = tts_female.check(name, voice)
+        if male_guard:
+            log.info("tts %s skip: %s", name, male_guard)
+            problems.append(male_guard)
+            continue
         start = time.perf_counter()
         try:
             audio = await PROVIDERS[name].speak(spoken, mode)
@@ -91,6 +97,7 @@ async def speak(text: str, mode: str) -> tuple:
     log.error("sab TTS providers fail -> %s", " | ".join(problems))
     watch.total()
     raise TtsError(
-        "Awaaz nahi ban paayi. Thodi der baad try karo. "
-        "Details logs/prabh.log me hain."
+        "Awaaz nahi ban paayi. "
+        + " | ".join(problems)[:200]
+        + " — thodi der baad try karo."
     )

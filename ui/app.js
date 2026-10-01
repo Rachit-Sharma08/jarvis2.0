@@ -13,12 +13,16 @@ const noticeEl = document.getElementById("notice");
 let currentMode = "SUNDAY";
 let busy = false;
 
-function addMessage(role, text) {
+function addMessage(role, text, label) {
   const row = document.createElement("div");
   row.className = "msg " + role;
   const who = document.createElement("span");
   who.className = "who";
-  who.textContent = role === "user" ? "YOU" : "PRABH";
+  if (role === "user") {
+    who.textContent = "YOU";
+  } else {
+    who.textContent = label || "PRABH";
+  }
   row.appendChild(who);
   row.appendChild(document.createTextNode(text));
   logEl.appendChild(row);
@@ -57,8 +61,8 @@ function handleEvent(ev) {
     if (ev.value === "idle") busy = false;
   } else if (ev.type === "message") {
     if (alreadyShown(ev)) return;
-    addMessage(ev.role, ev.text);
-    if (ev.role === "assistant") speakAnswer(ev.text);
+    addMessage(ev.role, ev.text, ev.label);
+    if (ev.role === "assistant") voice.speak(ev.text, currentMode);
   } else if (ev.type === "confirm" || ev.type === "activity") {
     tools.handle(ev);
   } else if (ev.type === "log") {
@@ -105,94 +109,19 @@ async function sendText(text) {
 
 const tools = new ToolsPanel(TOKEN, (err) => showNotice(err));
 
-const speaker = new Speaker(
-  TOKEN,
-  (err) => { showNotice(err); setBusy(false); setStatus("idle"); },
-  (provider) => { setStatus("speaking"); console.log("awaaz:", provider); },
-  () => { busy = false; setStatus("idle"); }
-);
-
-function speakAnswer(text) {
-  speaker.speak(text, currentMode.toLowerCase());
-}
-
-const recorder = new Recorder(onAudioReady, (err) => {
-  showNotice(err);
-  micFlag.classList.remove("on");
-  setStatus("idle");
-  setBusy(false);
+const voice = new VoiceUI({
+  TOKEN: TOKEN,
+  el: { mic: micBtn, mute: muteBtn, stop: stopBtn, flag: micFlag },
+  notice: (text) => showNotice(text),
+  status: (value) => setStatus(value),
+  busy: (value) => { busy = value; },
+  sendText: (text) => sendText(text),
 });
 
-function setBusy(value) {
-  busy = value;
-}
-
-function onAudioReady(blob) {
-  micFlag.classList.remove("on");
-  micBtn.classList.remove("recording");
-  setStatus("transcribing");
-  transcribe(blob);
-}
 function stopEverything() {
-  speaker.stop();
   tools.cancel();
-  micBtn.classList.remove("recording");
-  micFlag.classList.remove("on");
-  setStatus("idle");
-  setBusy(false);
+  voice.stop();
 }
-
-async function transcribe(blob) {
-  try {
-    const reply = await fetch("/stt", {
-      method: "POST",
-      headers: { "Content-Type": blob.type || "audio/webm", "x-prabh-token": TOKEN },
-      body: blob,
-    });
-    const data = await reply.json().catch(() => ({}));
-    if (!reply.ok) {
-      showNotice(data.detail || "Sun nahi paya.");
-      stopEverything();
-      return;
-    }
-    setStatus("listening");
-    if (!data.text || !data.text.trim()) {
-      stopEverything();
-      return;
-    }
-    sendText(data.text);
-  } catch (err) {
-    showNotice("Sun nahi paya. Dobara try karo.");
-    stopEverything();
-  }
-}
-
-micBtn.addEventListener("click", async () => {
-  if (recorder.muted) {
-    showNotice("Mic band hai. Pehle MUTE hatao.");
-    return;
-  }
-  if (recorder.active) {
-    recorder.stop();
-    return;
-  }
-  showNotice("");
-  setBusy(true);
-  setStatus("listening");
-  micFlag.classList.add("on");
-  micBtn.classList.add("recording");
-  await recorder.start();
-});
-
-muteBtn.addEventListener("click", () => {
-  const muted = !recorder.muted;
-  recorder.setMuted(muted);
-  muteBtn.classList.toggle("active", muted);
-  showNotice(muted ? "Mic band hai. Bolna chahu to MUTE dabao." : "");
-  stopEverything();
-});
-
-stopBtn.addEventListener("click", stopEverything);
 
 document.getElementById("send").addEventListener("click", send);
 inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
