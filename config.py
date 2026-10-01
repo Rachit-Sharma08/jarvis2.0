@@ -39,6 +39,13 @@ from config_voice import (  # noqa: E402
     FEMALE_ONLY_MODES, RECORD_MAX_SECONDS, STT_MIN_DURATION_MS, TTS_CHAIN,
     TTS_MAX_CHARS, VOICE_ENV, has_cartesia, has_elevenlabs, voice_for,
 )
+from config_hud import (  # noqa: E402
+    AMBER, CYAN, CYAN_BRIGHT, CYAN_DIM, FONT_BODY, FONT_HEAD, FONT_MONO,
+    MUSIC_URL, NET_MB, QUICK_BUTTONS, STATS_CACHE_SECONDS,
+    STATS_INTERVAL_SECONDS, TEMP_MAX, TEMP_MIN, WEATHER_CACHE_SECONDS,
+    WEATHER_CITY, WEATHER_LAT, WEATHER_LON, WEATHER_TIMEOUT_SECONDS, WEATHER_URL,
+    quick_by_id, quick_ids, temp_percent, weather_text,
+)
 
 DEFAULT_MODE = "sunday"
 

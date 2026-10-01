@@ -1,0 +1,29 @@
+# ui/fonts — kahan se aaya
+
+CSS source: https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap
+Font files: fonts.gstatic.com (woff2, latin subset only)
+
+orbitron-var.woff2
+  family=Orbitron weight=500..700 style=normal   (variable font — ek hi file dono weights)
+  sha256=c25a9f9da5d9f3db
+  from=https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2
+
+rajdhani-400.woff2
+  family=Rajdhani weight=400 style=normal
+  sha256=759a9000e47b0287
+  from=https://fonts.gstatic.com/s/rajdhani/v17/LDIxapCSOBg7S-QT7p4HM-Y.woff2
+
+rajdhani-500.woff2
+  family=Rajdhani weight=500 style=normal
+  sha256=23afdb9b5b89b878
+  from=https://fonts.gstatic.com/s/rajdhani/v17/LDI2apCSOBg7S-QT7pb0EPOreec.woff2
+
+rajdhani-600.woff2
+  family=Rajdhani weight=600 style=normal
+  sha256=433a7007e4747a02
+  from=https://fonts.gstatic.com/s/rajdhani/v17/LDI2apCSOBg7S-QT7pbYF_Oreec.woff2
+
+share-tech-mono.woff2
+  family=Share Tech Mono weight=400 style=normal
+  sha256=41e6b9f297f7d9a2
+  from=https://fonts.gstatic.com/s/sharetechmono/v16/J7aHnp1uDWRBEqV98dVQztYldFcLowEF.woff2

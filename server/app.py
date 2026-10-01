@@ -1,20 +1,26 @@
 import asyncio
+
 from html import escape
 
-from fastapi import FastAPI, HTTPException, Request, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 import config
 from brain import checkup
+from core import sysstats
 from core.engine import Engine
 from gatekeeper import keeper
 from log_setup import get_logger
 from server import security
 from server.brain_routes import router as brain_router
+from server.drain import drain
+from server.hub import HUB
+from server.hud_routes import router as hud_router
 from server.tool_routes import router as tool_router
 from server.voice_routes import router as voice_router
+from server.ws_routes import router as ws_router
 
 log = get_logger("server")
 
@@ -24,26 +30,8 @@ app.mount("/ui", StaticFiles(directory=str(config.UI_DIR)), name="ui")
 app.include_router(voice_router)
 app.include_router(tool_router)
 app.include_router(brain_router)
-
-_DONE = object()
-
-
-def _next_or_done(iterator):
-    return next(iterator, _DONE)
-
-
-async def drain(generator):
-    """Engine ko thread me chalao taaki event loop khaali rahe.
-
-    Zaroori hai: ASK tool ka card 60 second tak wait karta hai. Agar ye loop
-    par chalta to /tool/confirm ka POST kabhi serve hi nahi hota.
-    """
-    iterator = iter(generator)
-    while True:
-        item = await asyncio.to_thread(_next_or_done, iterator)
-        if item is _DONE:
-            return
-        yield item
+app.include_router(hud_router)
+app.include_router(ws_router)
 
 
 class ChatIn(BaseModel):
@@ -89,26 +77,14 @@ async def chat(data: ChatIn, request: Request):
     return {"events": events, "mode": engine.mode}
 
 
-@app.websocket("/ws")
-async def ws(sock: WebSocket):
-    denied = security.verify(
-        sock.headers.get("origin", ""),
-        sock.headers.get("host", ""),
-        sock.query_params.get("token", ""),
-    )
-    if denied:
-        await sock.close(code=1008)
-        return
+@app.on_event("startup")
+async def _on_startup() -> None:
+    """Server shuru hote hi: hub ka loop pakdo aur CPU ka pehla sample le lo.
 
-    await sock.accept()
-    await sock.send_json({"type": "status", "value": "idle"})
-    log.info("websocket connected")
-    try:
-        while True:
-            payload = await sock.receive_json()
-            async for event in drain(engine.handle(payload.get("text", ""), payload.get("rid", ""))):
-                await sock.send_json(event)
-    except WebSocketDisconnect:
-        log.info("websocket disconnected")
-    except Exception as exc:
-        log.error("websocket error: %s: %s", type(exc).__name__, exc)
+    `sysstats.prime()` isliye zaroori hai kyunki psutil ka pehla CPU %
+    `interval=None` par hamesha 0 deta hai — bina prime ke pehla panel
+    2 second tak 0% dikhata.
+    """
+    HUB.attach(asyncio.get_running_loop())
+    sysstats.prime()
+    log.info("HUD ready: stats pump + %d quick buttons", len(config.QUICK_BUTTONS))

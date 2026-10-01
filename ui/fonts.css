@@ -1,0 +1,49 @@
+/* Local fonts — sab /ui/fonts/ se. CSP strict hai, bahar ka koi URL nahi.
+ *
+ * Source : Google Fonts (fonts.googleapis.com) se ek baar download kiye gaye.
+ * License: SIL Open Font License 1.1 — poori copy ui/fonts/OFL-LICENSE.txt me.
+ * Origin : har file ka sha256 + source URL → ui/fonts/MANIFEST.txt
+ *
+ * Dobara banana ho to generator ka tareeka HUD.md me likha hai.
+ * Font badalna ho to MANIFEST.txt update karna mat bhoolna.
+ */
+
+@font-face {
+  font-family: "Orbitron";
+  font-style: normal;
+  font-weight: 500 700;
+  font-display: swap;
+  src: url("/ui/fonts/orbitron-var.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rajdhani";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/ui/fonts/rajdhani-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rajdhani";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("/ui/fonts/rajdhani-500.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Rajdhani";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/ui/fonts/rajdhani-600.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Share Tech Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/ui/fonts/share-tech-mono.woff2") format("woff2");
+}
