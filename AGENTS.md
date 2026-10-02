@@ -73,10 +73,8 @@ prabh/
   server/hub.py + drain.py -> thread-safe event hub + async generator drain
   server/weather.py        -> Open-Meteo fetch + 15 min cache + WMO labels
   voice/stt.py + stt_guard.py, voice/tts.py + tts_female.py + tts_*.py
-  desktop/launcher.py -> supervisor: app crash ho to dobara (start_prabh.bat se chalta hai)
-  desktop/app.py, tray.py, trayicon.py -> Sunday app: server thread + tray + HUD
-  desktop/hud_window.py, single.py, state.py -> Edge --app, ek hi instance, ek STATE
-  desktop/micperm.py, lockwatch.py -> Windows mic permission + lock ka pata
+  desktop/launcher.py -> app/tray/hud_window/single/state/micperm/lockwatch/startup.py
+  desktop/startup.py  -> startup ki 4 line (server up/tray started/HUD ready/wake: stub)
   wake/worker.py     -> abhi stub (READY=False); Step 1 me Vosk wala sunega
   start_prabh.bat    -> supervisor chalao (registry entry nahi, wo Step 3 ke aakhir me)
   ui/index.html, app.js (chat+ws glue), voice_ui.js (mic+speaker)
@@ -86,9 +84,27 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (25 suite + poolhelp.py + desktophelp.py + hud_*.py — poori list TESTS.md me)
+  tests/ (26 suite + poolhelp.py + desktophelp.py + hud_*.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
+
+### 3.4 Bat file aur log ke pakkaurey niyam
+
+- **`.bat` me raw `(` / `)` kabhi mat likho** (echo ya comment me bhi nahi) —
+  `cmd` ka `if not exist (...)` block beech me toot jaata hai aur baaki ki
+  line HAMESHA chalu ho jaati hai. Isi wajah se Phase 5 me python launch hi
+  nahi hua tha. Block chahiye to `goto :label` use karo. Test: `tests/test_bat.py`.
+- **`.bat` hamesha CRLF** (LF nahi) aur ASCII only. Windows LF-only batch file
+  ko ajeeb se parse karta hai.
+- **Log ASCII.** `log_setup.ascii_text()` + `AsciiFormatter` — console `cp1252`
+  hai, is liye em-dash/Devanagari log me `??` ban jaate hain. Naya log text
+  likhte waqt ASCII hi rakho.
+- **Crash kabhi chup mat ho.** `desktop/launcher.py` ka `_console()` console
+  par bhi bolta hai; `_tee()` child ka output console + `logs/desktop.out`
+  dono me bhejta hai. Naya crash chup-chaap nahi rehna chahiye.
+- **Startup ki 4 line ek jagah**: shabd `config_desktop.STARTUP_*` me, bolta
+  sirf `desktop/app.py` (`desktop/startup.py` ka `say()`). Koi dusra module
+  "HUD ready" ya "server up" na bole.
 
 ### 3.3 Phase 5 desktop ke pakkaurey niyam
 
@@ -221,7 +237,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 25 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 26 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -302,3 +318,10 @@ green**, sab file `<200`.
   `ui/hud_desktop.js`, wake stub, Sunday-only flag, TOOLS 30-min auto-off, Vosk model +
   pystray/sounddevice/vosk/miniaudio packages, `test_desktop*.py` + `desktophelp.py`
   — **25 suite green**. Auto-start registry entry jaan-boojh kar nahi likhi.
+- **Phase 5 Step 3a fix round 2 (2 Oct 2026)** — `start_prabh.bat` me ek `echo`
+  line par raw `( )` ki wajah se `cmd` ka `if` block toota aur python launch hi
+  nahi hua (na tray, na process). Fix: `goto` label + CRLF + ASCII, launcher
+  crash console par bole + child output tee, startup ki 4 line ek jagah
+  (`desktop/startup.py`, `config_desktop.STARTUP_*`), `log_setup.ascii_text()`,
+  naya `tests/test_bat.py` — **26 suite green**. Purana JARVIS auto-start
+  (`HKCU\Run` me `electron.app.Electron`) sirf bataya, chhua nahi.

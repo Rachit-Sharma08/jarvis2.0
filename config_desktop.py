@@ -90,6 +90,17 @@ EXIT_QUIT = 0
 EXIT_RESTART = 20
 EXIT_ALREADY_RUNNING = 3
 
+# ---- Startup ke 4 standard line ----
+# Ye chaar line hamesha isi shabd me aati hain — console par bhi aur
+# `logs/prabh.log` me bhi — taaki crash ke waqt pata chale app kahan tak
+# pahunchi thi. Sirf `desktop/app.py` inhe bolta hai (ek hi jagah).
+STARTUP_SERVER = "server up"
+STARTUP_TRAY = "tray started"
+STARTUP_HUD = "HUD ready"
+STARTUP_WAKE = "wake: stub"
+# Kitni der tak startup ka intezaar — phir "HUD ready: FAILED" bol kar aage badho.
+STARTUP_HTTP_TIMEOUT = 20.0
+
 # ---- Suraksha ----
 # TOOLS ON karne ke 30 minute baad apne aap OFF. Wake se bhi gatekeeper
 # bilkul waisa hi hai — awaaz se Allow kabhi nahi hota.

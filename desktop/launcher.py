@@ -14,19 +14,49 @@ Exit code ka matlab:
                              ke andar na ho jaaye — warna crash-loop RAM/CPU
                              khaali kar dega aur kuch dikhega bhi nahi.
 
-Child ka console `logs/desktop.out` me jaata hai (pythonw me koi console
-hota hi nahi, to crash ka traceback wahin se padha jaayega).
+Child ka console do jagah jaata hai: **seedha is console par** (taaki crash
+turant padhne ko mile) **aur** `logs/desktop.out` me (pythonw me koi console
+hota hi nahi, to traceback wahin se padha jaayega).
 """
 
 import subprocess
 import sys
+import threading
 import time
 from pathlib import Path
 
 import config
-from log_setup import get_logger
+from log_setup import ascii_text, get_logger
 
 log = get_logger("launcher")
+
+
+def _console(text: str) -> None:
+    """Line console par bhi. Sirf log me rakhne se user ko crash ka pata hi
+    nahi chalta — isi liye har crash/backoff dono jagah dikhta hai."""
+    line = ascii_text(text)
+    print(line, flush=True)
+    log.error("%s", line)
+
+
+def _tee(stream, sink) -> None:
+    """Child ki stdout/stderr -> console + `logs/desktop.out` (dono)."""
+    try:
+        for raw in iter(stream.readline, b""):
+            line = ascii_text(raw.decode("utf-8", "replace").rstrip())
+            try:
+                sink.write(line + "\n")
+                sink.flush()
+            except (OSError, ValueError):
+                pass
+            print(line, flush=True)
+    except (OSError, ValueError):
+        pass
+    finally:
+        try:
+            stream.close()
+        except OSError:
+            pass
 
 # Child ka stdout/stderr. pythonw ke saath console na ho to ye zaroori hai.
 CHILD_OUT = config.LOG_DIR / "desktop.out"
@@ -88,12 +118,14 @@ def supervise(max_restarts: int = None, window: int = None) -> int:
 
     while True:
         config.LOG_DIR.mkdir(parents=True, exist_ok=True)
-        with open(CHILD_OUT, "ab") as out:
+        with open(CHILD_OUT, "a", encoding="ascii", errors="replace") as out:
             proc = subprocess.Popen(
                 child_command(), shell=False, stdin=subprocess.DEVNULL,
-                stdout=out, stderr=subprocess.STDOUT,
+                stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
             )
             log.info("child shuru (pid=%s)", proc.pid)
+            threading.Thread(target=_tee, args=(proc.stdout, out),
+                             name="child-out", daemon=True).start()
             code = proc.wait()
 
         now = time.monotonic()
@@ -106,14 +138,17 @@ def supervise(max_restarts: int = None, window: int = None) -> int:
             log.info("tray ne restart kaha — turant dobara")
             continue
         if action == GIVE_UP:
-            log.error(
-                "%d crash %d second me — supervisor ab band. Neeche wala log dekho:\n%s",
-                len(crashes), span, _log_tail(),
-            )
+            _console("Sunday BAND: %d crash %d second me. Aage chhod diya."
+                     % (len(crashes), span))
+            _console("Crash ki wajah (logs\\desktop.out): %s" % (_log_tail() or "khaali"))
+            _console("Detail: logs\\prabh.log")
             return code or 1
 
-        log.error("child crash (code=%s). %d second baad dobara. Crash #%d/%d\n%s",
-                  code, wait, len(crashes), limit, _log_tail())
+        _console("CRASH #%d/%d (exit code %s). %d second baad dobara chalega."
+                 % (len(crashes), limit, code, wait))
+        tail = _log_tail()
+        if tail:
+            _console("Wajah: %s" % tail)
         time.sleep(wait)
 
 

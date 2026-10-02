@@ -1,14 +1,10 @@
 """Asli app — server + tray + HUD + wake, sab ek process me.
 
-Layout:
-  - main thread      : intezaar + shutdown
-  - "server" thread  : uvicorn (FastAPI) — wahi `server.app`
-  - "lockwatch"      : Win+L ka pata
-  - "wake" thread    : `wake/worker.py` (Step 3a me stub)
-  - pystray thread   : tray menu
-
 Ek hi process is liye ki engine ek hi rahe (`server/state.py`) — browser,
 quick button aur wake teeno ka mode aur gatekeeper state ek jaisa.
+
+Thread: main = intezaar/shutdown · "server" = uvicorn · "lockwatch" = Win+L ·
+"wake" = `wake/worker.py` (stub) · pystray = tray menu.
 
 Supervisor alag hai (`desktop/launcher.py`): crash par wahi dobara chala
 deta hai. Yahan crash ka Exit code `config.EXIT_RESTART` se jaata hai.
@@ -22,7 +18,7 @@ import uvicorn
 
 import config
 from core import sysstats
-from desktop import hud_window, lockwatch, micperm, single as single_mod
+from desktop import hud_window, lockwatch, micperm, single as single_mod, startup
 from desktop.state import STATE
 from desktop.tray import Tray
 from gatekeeper import keeper
@@ -84,6 +80,7 @@ class SundayApp:
             self._preflight()
             self._start_server()
             self._start_tray()
+            self._await_hud()
             self._start_watchers()
             if not self.hud.available():
                 log.error("Edge/Chrome nahi mila — HUD nahi khulega (baaki sab chalega)")
@@ -109,7 +106,6 @@ class SundayApp:
             log.error("mic band hai: %s", reason)
         else:
             log.info("mic permission: %s", reason or "theek hai")
-
     def _start_server(self) -> None:
         from server.app import app as fastapi_app      # import late: config ready ho
 
@@ -121,20 +117,39 @@ class SundayApp:
         # Naye browser ko abhi ka mic/tools haalat bhejne ka raasta.
         HUB.set_welcome(lambda: [STATE.event()])
         threading.Thread(target=self.server.run, name="server", daemon=True).start()
-        log.info("server thread shuru: %s", config.SERVER_ORIGIN)
+        startup.say(config.STARTUP_SERVER, config.SERVER_ORIGIN)
 
     def _start_tray(self) -> None:
         if not self.tray.start():
-            log.warning("tray nahi chala — app chal raha hai, sirf icon nahi dikhega")
+            log.warning("tray nahi chala - app chal raha hai, sirf icon nahi dikhega")
+            startup.say(config.STARTUP_TRAY, "FAILED - icon nahi dikhega")
+        else:
+            startup.say(config.STARTUP_TRAY, config.TRAY_NAME)
         # Tools ka asli haalat (env se ON ho sakta hai) state me daalo.
         STATE.set_tools(keeper.tools_on())
-        # TOOLS kahin se bhi badle — UI button, tray, lock, auto-off timer —
+        # TOOLS kahin se bhi badle - UI button, tray, lock, auto-off timer -
         # sab ka ek hi raasta: `Limiter` se hook, phir STATE (tray+HUD dono).
         keeper.LIMITER.set_on_change(self._on_tools_change)
+
+    def _await_hud(self) -> None:
+        """Server sach me jawab de raha hai? Tabhi 'HUD ready'. Port busy ya
+        crash ho to 'FAILED' bol kar app aage badh jaata hai — chup-chaap na
+        reh kar, taaki crash ki wajah console par dikhe."""
+        ok, reason = startup.await_http(config.SERVER_ORIGIN, config.STARTUP_HTTP_TIMEOUT)
+        if ok:
+            startup.say(config.STARTUP_HUD, "stats pump + %d quick buttons"
+                      % len(config.QUICK_BUTTONS))
+        else:
+            startup.say(config.STARTUP_HUD, "FAILED - %s" % reason)
+            log.error("HUD server nahi uthi: %s", reason)
 
     def _start_watchers(self) -> None:
         lockwatch.watch(on_lock=self._on_lock)
         wake_worker.start(on_wake=self._on_wake, on_state=STATE.set_wake)
+        if wake_worker.READY:
+            startup.say(config.STARTUP_WAKE, "sun raha hai")
+        else:
+            startup.say(config.STARTUP_WAKE, "Step 1 me aayega - mic nahi khula")
 
     def _wait(self) -> None:
         last = STATE.version()
@@ -161,12 +176,12 @@ class SundayApp:
         nahi: card ka jawab sirf UI button se aata hai, wake se nahi."""
         if keeper.tools_on():
             keeper.set_tools(False)          # STATE hook khud update karega
-            log.warning("Windows lock hua — TOOLS apne aap OFF")
+            log.warning("Windows lock hua - TOOLS apne aap OFF")
         STATE.set_mic(config.TRAY_OFF, "PC lock hai")
 
     def _on_tools_change(self, on: bool) -> None:
         """`gatekeeper.Limiter` ka hook — TOOLS kahin se bhi badle, haalat yahin
-        se jaata hai. Isse `app._wait()` ka loop tray icon refresh kar dega."""
+        se jaata hai. `_wait()` ka loop tray icon refresh kar dega."""
         STATE.set_tools(on)
 
     def _on_wake(self, phrase: str) -> None:

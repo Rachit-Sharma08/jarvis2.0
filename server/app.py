@@ -90,4 +90,7 @@ async def _on_startup() -> None:
     """
     HUB.attach(asyncio.get_running_loop())
     sysstats.prime()
-    log.info("HUD ready: stats pump + %d quick buttons", len(config.QUICK_BUTTONS))
+    # 'HUD ready' sirf `desktop/app.py` bolta hai (startup ki 4 line, ek jagah).
+    # Yahan sirf HTTP layer ka haalat.
+    log.info("http routes ready: stats pump + %d quick buttons",
+             len(config.QUICK_BUTTONS))

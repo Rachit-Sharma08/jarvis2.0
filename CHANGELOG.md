@@ -84,6 +84,71 @@ Edge `--app` sach me khula · tray ready · koi crash nahi (`logs/desktop.out` k
 **Abhi nahi hua (jaan-boojh kar)** — wake word (Step 1), VAD/command flow (Step 2),
 aur **auto-start**. Registry me koi entry nahi likhi gayi hai.
 
+## Fix round 2 — `start_prabh.bat` launch hi nahi ho raha tha (2 Oct 2026)
+
+User ne bataya: double-click par na tray icon, na python process — sirf
+"Press any key to continue". Ye **test se nahi, bilkul fresh shuruat se** pakda
+gaya (purane code par koi test nahi tha).
+
+**Asli wajah — ek `echo` line par raw bracket.** `cmd` ka `if not exist (...)`
+block, kisi bhi uske andar ki line par `( )` milte hi beech me toot jaata hai:
+
+```
+if not exist ".venv\Scripts\python.exe" (
+  echo .venv nahi mila...
+  echo Download: https://www.python.org/downloads/  (Python 3.12)   <-- block KHATAM
+)
+pause          <-- ab ye HAMESHA chalta hai
+exit /b 1      <-- aur ye bhi HAMESHA -> python KABHI launch nahi hua
+```
+
+Proof `cmd /c` ke `@echo on` trace se. Isiliye echo lines bhi kabhi print nahi
+huyin — `exit /b 1` unse pehle chala gaya.
+
+**5 fix:**
+
+1. `start_prabh.bat` — bracket block hata kar `goto novenv` label; poori file
+   **CRLF** (pehle 19 LF / 0 CRLF — Windows `.bat` ko CRLF chahiye); ASCII only.
+2. `desktop/launcher.py` — child ka stdout ab **console + `logs/desktop.out`
+   dono** me jaata hai (`_tee`). Har crash par console par `CRASH #n/limit`,
+   exit code, backoff aur crash ki **wajah** bhi print hoti hai (`_console`).
+   Pehle crash sirf `log.error` me thi — user ko console par kuch nahi dikhta
+   tha, matlab app "chup-chaap mar" sakta tha.
+3. **Startup ki 4 line ek jagah** — `server up` / `tray started` /
+   `HUD ready` / `wake: stub`. Shabd `config_desktop.STARTUP_*` me, bolta sirf
+   `desktop/app.py` (naya `desktop/startup.py` helper: `say()` + `await_http()`).
+   Console par **aur** `logs/prabh.log` dono me. `HUD ready` ab sach me
+   `GET /` ka 200 check karta hai — nahi mila to `HUD ready: FAILED - <wajah>`,
+   chup-chaap nahi. `server/app.py` ka duplicate log hata diya.
+4. `log_setup.py` — `ascii_text()` + `AsciiFormatter`; file `encoding="ascii"`.
+   Pehle `wake word ... — mic nahi khula` log me `??` ban kar aata tha (console
+   `cp1252` hai). Ab em-dash `-`, arrow `->`, baaki Unicode hata deta hai.
+5. `tests/test_bat.py` (naya) — CRLF check, ASCII check, **raw bracket rule**
+   (bracket sirf `if`/`for`/`else` line par), aur asli pakka test: file ki copy
+   me python line ki jagah `echo` daal kar `cmd` se chala kar dekho ki line
+   sach me pahunchti hai ya nahi. Buggy file par ye test fail hota hai
+   (sirf "Press any key to continue" aata hai) — manually confirm kiya.
+
+**Live (asli double-click jaisa, `cmd /c start_prabh.bat`):**
+
+```
+server up: http://127.0.0.1:8000
+tray started: Sunday
+HUD ready: stats pump + 6 quick buttons
+wake: stub: Step 1 me aayega - mic nahi khula
+```
+
+Tray icon window mila (`Sunday...SystemTrayIcon`, pid 13668), `GET /` = 200.
+
+**Purana JARVIS auto-start (sirf bataya, chhua nahi):**
+`HKCU\...\Run` me `electron.app.Electron` →
+`D:\jarvis\desktop\node_modules\electron\dist\electron.exe D:\jarvis\desktop --hidden`.
+`D:\jarvis` abhi bhi maujood hai. Startup folder me Jarvis nahi — sirf
+`start_local_hidden.vbs` (VoiceMemories AI ka `node local_host.js`) aur
+`SystemConfig.bat` (`D:\SystemConfig\run-all.ps1`). Koi scheduled task nahi.
+
+**26 suite green.**
+
 ---
 
 ## Phase 4 (1-2 Oct 2026) — 3-column HUD

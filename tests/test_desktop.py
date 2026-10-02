@@ -134,6 +134,51 @@ def test_wake_stub():
     check("wake chalu nahi", wake_worker.READY, False)
 
 
+def test_startup_lines():
+    """Startup ke 4 line ek jagah, exact shabd — console + log dono."""
+    print("STARTUP LINES")
+    for key in ("STARTUP_SERVER", "STARTUP_TRAY", "STARTUP_HUD", "STARTUP_WAKE"):
+        check(f"config.{key} hai", hasattr(config, key), True)
+    check("server up", config.STARTUP_SERVER, "server up")
+    check("tray started", config.STARTUP_TRAY, "tray started")
+    check("HUD ready", config.STARTUP_HUD, "HUD ready")
+    check("wake: stub", config.STARTUP_WAKE, "wake: stub")
+
+    src = (ROOT / "desktop/app.py").read_text(encoding="utf-8")
+    for key in ("STARTUP_SERVER", "STARTUP_TRAY", "STARTUP_HUD", "STARTUP_WAKE"):
+        check(f"app.py me {key} bolta hai", f"config.{key}" in src, True)
+    # 'HUD ready' sirf ek jagah — server/app.py duplicate na bole.
+    check("server/app.py duplicate log nahi",
+          'log.info("HUD ready' in (ROOT / "server/app.py").read_text(encoding="utf-8"),
+          False)
+
+    # Console par bhi jaani chahiye, warna user ko crash dikhta hi nahi.
+    check("startup.py console par print karta hai",
+          "print(line, flush=True)" in (ROOT / "desktop/startup.py").read_text(encoding="utf-8"),
+          True)
+    lsrc = (ROOT / "desktop/launcher.py").read_text(encoding="utf-8")
+    check("launcher crash console par bolta hai", "_console(" in lsrc, True)
+    check("launcher child output tee karta hai", "stdout=subprocess.PIPE" in lsrc, True)
+
+
+def test_log_ascii():
+    """Log ASCII — em-dash/Devanagari mojibake (`??`) na bane."""
+    print("LOG ASCII")
+    from log_setup import ascii_text, get_logger
+    check("em-dash -> -", ascii_text("a \u2014 b"), "a - b")
+    check("arrow -> ->", ascii_text("x \u2192 y"), "x -> y")
+    check("Devanagari hat jaata hai", ascii_text("\u0939\u093f\u0928\u094d\u0926\u0940"), "")
+    check("ASCII waisa hi rehta hai", ascii_text("server up: 200"), "server up: 200")
+
+    # Asli logger se ek non-ASCII line likhwa kar file me jaanche.
+    probe = "PROBE-\u2014\u2192\u0939\u093f"
+    before = config.LOG_FILE.stat().st_size
+    get_logger("ascii_probe").error("%s", probe)
+    new = config.LOG_FILE.read_bytes()[before:]
+    check("logger ne non-ASCII likha hi nahi", [b for b in new if b > 127], [])
+    check("par woh message me hai", probe[:6] in new.decode("ascii", "replace"), True)
+
+
 def test_hygiene():
     print("HYGIENE")
     gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
@@ -142,13 +187,15 @@ def test_hygiene():
     check("sirf sunday .env.example me",
           "PRABH_SUNDAY_ONLY" in (ROOT / ".env.example").read_text(encoding="utf-8"), True)
     for path in ("desktop/app.py", "desktop/launcher.py", "desktop/tray.py",
-                 "desktop/hud_window.py", "desktop/state.py", "config_desktop.py"):
+                 "desktop/hud_window.py", "desktop/state.py",
+                 "desktop/startup.py", "config_desktop.py", "log_setup.py"):
         lines = len((ROOT / path).read_text(encoding="utf-8").splitlines())
         check(f"{path} <200 lines ({lines})", lines < 200, True)
 
 
 for fn in (test_config, test_hud_window, test_single_instance, test_launcher,
-           test_tools_auto_off, test_wake_stub, test_hygiene):
+           test_tools_auto_off, test_wake_stub, test_startup_lines,
+           test_log_ascii, test_hygiene):
     fn()
 
 finish("Saare desktop shell test pass.")
