@@ -582,4 +582,9 @@ green**, sab file `<200`.
   Ek asli galti: split karte hi `Ok`/`boom` helper **local** reh gaye the, to
   `diagnose()` ke 2 check chup-chaap False hue — isi liye ab module level par
   rakhne ka niyam. Hygiene check `<200` se **`<=200`** hua aur ab har
-  `tests/test_*.py` par lagta hai. **36 suite green**.
+  `tests/test_*.py` par lagta hai. **36 suite green**. Teeno commit push ho chuke
+  hain — remote `3c6f151` (temp askpass, repo ke bahar, turant delete; `.git/config`
+  me token nahi gaya). `CLAUDE.md` bhi 3 Oct ke haal par sync kiya: usme Step 1
+  abhi tak "stub" likha tha, brain ke model ke naam hard-code the (wo
+  `config_brain.py` se aate hain — **guess kabhi mat likho**), aur roadmap Step 1
+  par atka tha.

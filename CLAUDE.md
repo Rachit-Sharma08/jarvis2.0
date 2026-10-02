@@ -15,13 +15,16 @@ nahi. Naam **Sunday** (pehle "Prabh" tha, wo mode ab band hai). Ek brain hai
 (sirf **free** providers), awaaz hai, aur 10 PC tools hain jinse Sunday computer par
 kaam kar sakta hai.
 
-## 2. Ab ka haal (2 Oct 2026 raat)
+## 2. Ab ka haal (3 Oct 2026)
 
-- Git **clean**, commit `b999c92`.
-- **28 test suite green** (`SUITE GREEN`). Sab standalone, koi real API call nahi.
+- Git **clean**, commit `3c6f151` (GitHub par push ho chuka hai).
+- **36 test suite green** (`SUITE GREEN`). Sab standalone, koi real API call nahi.
 - App chalta hai: `GET http://127.0.0.1:8000/` = 200, tray + HUD live.
-- Phase 5 **Step 3a (desktop shell)** poora. Aage **Step 1 = Vosk wake word**.
-- Sab production file **200 line se chhoti**.
+- Phase 5 **Step 1 (Vosk wake word) poora**, aur **Step 2 ke do hisse**: 2a command
+  capture + WAV, 2b speaker (`desktop/playback.py`). Aage **Step 2c** — command ka
+  text lena → brain → jawab ki awaaz.
+- Sab production file **200 line se chhoti ya barabar** (`test_desktop.py` ka hygiene
+  check ye khud har file par lagata hai, test file me bhi).
 
 ## 3. Chalane ka tareeka
 
@@ -49,20 +52,24 @@ if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
 - Exit code **0** hi asli pass hai. `print("FAIL: koi nahi")` matlab **sab pass**.
-- 3–5 min leti hai — `Start-Job` + result file wala tarika `TESTS.md` me hai
-  (har naye shell me `Start-Job` mar jaata hai, is liye **detached** process chalao).
+- 3–5 min leti hai (36 suite) — `Start-Job` + result file wala tarika `TESTS.md` me
+  hai. Har naye shell me `Start-Job` mar jaata hai, is liye **detached** process chalao
+  (`Start-Process powershell -File <script> -WindowStyle Hidden`).
 
 ## 5. Sunday ABHI ye kar sakta hai
 
 **Baat-cheet**
 - Text: HUD ya browser me likho → brain sochta hai → jawab.
-- Awaaz: mic dabao → bolo → wahi brain → **female awaaz** me jawab
+- Awaaz (browser): mic dabao → bolo → wahi brain → **female awaaz** me jawab
   (TTS chain: ElevenLabs → Cartesia (abhi skip) → Edge Swara).
+- Awaaz (Python, Step 1-2): mic hamesha sunta hai, **"Sunday"** bolte hi HUD khulta hai
+  (100% offline Vosk). TTS ki awaaz `desktop/playback.py` se bajti hai — app ke
+  bina bhi: `python -m desktop.playback --say "Ji, boliye"`.
 
 **Brain — 5 free provider, ye order (NVIDIA aakhir me, credits kat-te hain):**
-Groq `gpt-oss-120b` (T1) → Gemini 3.5 Flash → OpenRouter `nemotron-3-super-120b :free`
-→ Groq `gpt-oss-20b` → NVIDIA `nemotron-3-super-120b`. (`brain/pool_config.py` me
-badlo — engine me kabhi hard-code mat likho.)
+Groq (T1) → Gemini → OpenRouter `:free` → Groq 20b (slow) → NVIDIA (T2).
+Model ke naam `config_brain.py` / `.env` se aate hain — `brain/pool_config.py`
+me provider ki list badlo, engine me kabhi hard-code mat likho.
 
 **HUD (3 column)**
 - Left: clock + chronometer, weather (Delhi, 15 min cache)
@@ -86,12 +93,15 @@ badlo — engine me kabhi hard-code mat likho.)
 
 ## 6. Sunday ABHI ye NAHI kar sakta (galat mat samjho)
 
-- ❌ **"Hello Sunday" wake word nahi hai** — `wake/worker.py` stub hai (`READY=False`).
-  Chat likhne ya mic dabane se chalta hai, **bula kar nahi**.
-- ❌ **Awaaz se PC control nahi** — sirf text/awaaz me soch. Tools chat se chalte hain.
+- ❌ **Wake ke baad command ka jawab nahi aata** — mic se command uthana (`Step 2a`)
+  aur awaaz bajana (`Step 2b`) dono ban chuke hain, par dono ko jodne wala glue
+  (`wake/command.py`, **Step 2c**) nahi bana. Abhi "Sunday" bolte hi sirf HUD khulta hai.
+- ❌ **Awaaz se tool nahi chalta** — tool sirf chat se. Aur ALLOW hamesha screen par
+  button se hoga, awaaz se kabhi nahi.
 - ❌ **Auto-start nahi** — Windows login par khud nahi chalta (Step 3 me aayega).
 - ❌ **Prabh mode band** — code maujood hai, `PRABH_SUNDAY_ONLY=1` se off.
 - ❌ Cartesia ki female voice id nahi mili → wo provider skip ho jaati hai.
+- ❌ **Cartesia voice id** (`CARTESIA_VOICE_*`) abhi khaali hai.
 
 ## 7. Pakkaurey (sabse zaroori)
 
@@ -108,10 +118,16 @@ badlo — engine me kabhi hard-code mat likho.)
 10. **File 200 se badi** → split karo. Ek file ka ek hi kaam.
 11. **Keys** `.env` me — kabhi code/log/commit/README me nahi. Naya provider ka
     order + `brain/health.py` me behaviour.
-12. **Test me asli Desktop/tray/Edge/registry/`RegisterHotKey` kabhi mat chalao.**
+12. **Test me asli Desktop/tray/Edge/registry/`RegisterHotKey`/mic/speaker kabhi mat
+    chalao** — fakes `tests/desktophelp.py` / `tests/wakehelp.py` me hain.
 13. **`.lnk` banana/hataana test me nahi** — `shortcut.command()` ki list check karo.
 14. **Windows tray list exe ka naam dikhati hai**, app ka nahi. Registry ka key
     hash hota hai — hard-code mat karo, har change se pehle `reg export`.
+15. **Speaker ka ek raasta `desktop/playback.py`** — naya `sd.play` kahin aur nahi.
+    `miniaudio.decode_file` bytes par MB ka dump karta hai, sirf `decode()` chalao.
+    `sd.query_devices(kind="output")` list nahi deta.
+16. **Test file 200+ ho to split karo**, aur helper **module level** par rakh —
+    warna doosre function me `NameError` se chup-chaap fail ho jaata hai.
 
 Poora niyam → **`AGENTS.md`** (section 3.1–3.4, 8, 8.1, 8.2).
 
@@ -119,17 +135,28 @@ Poora niyam → **`AGENTS.md`** (section 3.1–3.4, 8, 8.1, 8.2).
 
 | Step | Kya | Halaat |
 |---|---|---|
-| **1** | **Vosk wake word** — `wake/worker.py` asli, VAD + recognition → `on_wake` | **agla kaam** (model download ho chuka hai) |
-| 2 | Mic se command + Python se playback (`wake/audio.py`, `desktop/playback.py`) | Step 1 ke baad |
+| **1** | Vosk wake word — mic hamesha sunta hai, "Sunday" par HUD | **ho gaya** (2 Oct) |
+| **2a** | Command capture + WAV (`wake/utterance.py`, `wake/wav.py`) | **ho gaya** (3 Oct) |
+| **2b** | Speaker — TTS bytes bajana (`desktop/playback.py`) | **ho gaya** (3 Oct) |
+| **2c** | Glue: "Ji, boliye" → mic drain + warm-up → capture → Groq STT → `ENGINE` → HUD events → awaaz me jawab | **agla kaam** |
 | 3 | Auto-start (HKCU Run) | **sirf jab owner "haan" bole** |
 | — | Face / trust / learn / maker | aage, decided nahi |
 
-## 9. Owner ke haath me abhi ye 3 kaam
+**Step 2c me dhyan rakhne ki baat:** `Session._fire()` `on_wake` ko wake thread par
+synchronously call karta hai — command glue wahin chalega (ek hi queue consumer).
+Mic/stop-event ka public raasta `wake/worker.py` se dena hai. `worker.stop()` ka
+join sirf 3 s hai, par command + TTS 8 s+ lag sakte hain.
 
-1. **Ctrl+Alt+S dabao** → HUD khulna chahiye (synthetic key se test nahi ho paya).
-2. **Taskbar dekho** → Sunday icon seedha dikhta hai ya nahi? (Wo *python* likhta hai —
-   ye normal hai, list exe ka naam dikhati hai.)
-3. **Purana Chrome tab `localhost:8000` band karo** → warna log token-reject se bharta hai.
+## 9. Owner ke haath me abhi ye kaam
+
+1. **Awaaz ka asli test** (sirf ek baar, app band karke):
+   `.\.venv\Scripts\python.exe -m desktop.playback --say "Ji, boliye"` — awaaz aayi?
+2. **Ctrl+Alt+S dabao** → HUD khulna chahiye. Nahi khule to Desktop ka
+   `Sunday HUD.lnk` try karo (tray ki list me app ka naam **nahi** dikhta).
+3. **Taskbar ke `^`** par click → Sunday icon → right-click → **"Always show icons"**
+   ( warna icon overflow me chhupa rehta hai).
+4. **Purana Chrome tab `localhost:8000` band karo** → warna log token-reject se bharta hai.
+5. **GitHub PAT revoke** — jo token push ke liye diya gaya tha, wo abhi chat me hai.
 
 ## 10. File ka rasta (kuch zaroori)
 
@@ -142,10 +169,12 @@ gatekeeper/        keeper, rules, approvals, audit (mask)
 tools/             command, files, apps, system
 server/            app + security + state (ek shared Engine) + *_routes
 voice/             stt, tts (+ chain)
-desktop/           launcher, app, tray, state, hud_window, hotkey, open_hud, shortcut
-wake/worker.py     abhi STUB (Step 1 me asli)
+desktop/           launcher, app, tray, state, hud_window, hotkey, open_hud,
+                   shortcut, playback (Step 2 ka speaker)
+wake/              worker (module-level ek hi worker) + session, audio, model,
+                   detect, phrase (Step 1) + utterance, wav (Step 2a)
 ui/                index.html + hud_*.js + hud_*.css
-tests/             28 suite + poolhelp.py / desktophelp.py / hud_*.py
+tests/             36 suite + poolhelp.py / desktophelp.py / wakehelp.py / hud_*.py
 ```
 
 ## 11. Privacy warning
