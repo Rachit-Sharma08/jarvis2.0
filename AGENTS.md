@@ -353,19 +353,35 @@ Source `D:\SystemConfig\Startup-helper\SystemConfig.bat` se byte-identical
   **"Always show icons"**. Isse wo permanent dikhta rahega.
 - Debug ke liye: `tests/` me nahi, ek throwaway `EnumWindows` script se process ki window
   class dekho + `NotifyIconSettings` count nikalo. Script har baar naya bana sakte ho.
+- ⚠️ `Get-Process` se `CommandLine` **nahi** milta — Edge HUD check me `Get-Process msedge |
+  Where CommandLine` galat tha aur "HUD nahi khuli" galat bataya. Hamesha
+  `Get-CimInstance Win32_Process` use karo.
 
-### 4. HUD `localhost` vs `127.0.0.1`
+### 4. HUD `localhost` vs `127.0.0.1` — ek Chrome tab chalu hai galat URL par
 
-- Log me `token reject` + `origin=http://localhost:8000` dikhta hai — browser GET par `Origin`
+- Log me `token reject (origin=http://localhost:8000)` — browser GET par `Origin`
   nahi bhejta aur security `127.0.0.1` maangti hai. **HUD hamesha `http://127.0.0.1:8000` kholo.**
   `localhost` se kuch bhi nahi chalega (Phase 4 me ye hi chhupi hui bug thi).
+- Pakda gaya: **ek Chrome tab `http://localhost:8000` par khula hai aur har ~6 second me
+  poll kar raha hai** (client = Chrome network-service PID 7940, parent Chrome PID 16836).
+  196 reject, jabki `127.0.0.1` se sirf 4. User ko ye tab band karna hai — warna log
+  bharta rahega aur us tab me HUD kabhi nahi khulega.
 
 ### 5. Jahan chhoda tha (2-Oct raat, user sone gaya tha)
 
-- App **band tha** (koi `desktop.app`/`desktop.launcher` process nahi, port 8000 khaali),
-  `data\prabh.pid` khaali, lock free, git clean. Fix round 3 (`1fde9d9`) already live code me tha.
-- **Agla step user ka hai:** `start_prabh.bat` double-click → tray icon `^` me dekhna →
-  "Always show icons" → phir confirm. Uske baad hi Phase 5 **Step 1** (Vosk wake word) shuru.
+- User ne double-click kar diya — app **live chal raha hai** (PID 17260). Ye verify hua:
+  - startup ki 4 line sahi: `server up: http://127.0.0.1:8000` · `tray started: Sunday` ·
+    `HUD ready` · `wake: stub`
+  - `GET /` = **200** ✓
+  - tray icon **register hua** — window class `Sunday1977541771184SystemTrayIcon` PID 17260
+    par maujood ✓ (pystray theek chal raha hai)
+  - `NotifyIconSettings`: 21 icon, sirf 1 promoted, 20 overflow `^` me
+  - Explorer ka overflow window maujood hai → `^` click karne se khulega
+- **User ke confirm ka wait:** taskbar ke `^` par click → Sunday icon → right-click →
+  **"Always show icons"**. Phir batana ki dikha ya nahi.
+- Ek kaam bacha hai user ke haath: **`localhost:8000` wala Chrome tab band karna**
+  (section 4) — warna log bharta rahega.
+- Iske baad hi Phase 5 **Step 1** (Vosk wake word) shuru karna hai.
 
 ---
 
