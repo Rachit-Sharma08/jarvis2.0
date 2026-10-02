@@ -51,6 +51,10 @@ async def ws(sock: WebSocket) -> None:
     await sock.accept()
     queue = HUB.subscribe()
     await sock.send_json({"type": "status", "value": "idle"})
+    # Naya client ko abhi ka haalat bhi bhejo (desktop mic/tools) — warna
+    # pill "DESKTOP …" hi rehta jab state server se pehle set ho chuki ho.
+    for event in HUB.welcome():
+        await sock.send_json(event)
     log.info("websocket connected")
 
     pump = asyncio.create_task(stats_pump())

@@ -62,6 +62,25 @@ Model load + grammar smoke `MODEL OK`. `models/` git-ignore hai.
 **Test** — `tests/test_desktop.py` + `tests/test_desktop_tray.py` (naya helper
 `tests/desktophelp.py`). Koi asli Edge/tray/registry/mic nahi chalti. **25 suite green.**
 
+**Asli app chala kar 4 bug pakde** (sirf test se nahi):
+
+1. `app.py` me `NameError: open_hud_at_start` — app shuru hi hote hue gir raha tha
+   (supervisor 5 baar restart kar raha tha). Test ise miss karta tha kyunki koi
+   test `run()` tak nahi jaata tha.
+2. `single.py` PID hamesha `0` dikha raha tha — lock wali file ka pehla byte locked
+   hone par dusra process use **padh hi nahi sakta** (`ERROR_SHARING_VIOLATION`).
+   Ab PID alag `data/prabh.pid` me.
+3. HUD ka DESKTOP pill `DESKTOP …` hi reh raha tha — state WebSocket se pehle set
+   ho chuki thi, is liye `publish()` ka event kisi ko nahi mila. Ab `Hub.welcome()`
+   hook: naye client ko turant snapshot milta hai.
+4. TOOLS toggle HUD se karne par tray icon nahi badalta tha (`/tools/toggle` seedha
+   `keeper` ko bulata tha). Ab `Limiter.set_on_change()` hook hai — TOOLS kahin se
+   bhi badle, `STATE` ek hi raaste se update hota hai (auto-off timer bhi).
+
+**Manual check (asli app):** `GET /` 200 · token meta + DESKTOP pill present ·
+`/hud/stats` bina token 401 · doosra instance exit 3 (PID sahit) ·
+Edge `--app` sach me khula · tray ready · koi crash nahi (`logs/desktop.out` khali).
+
 **Abhi nahi hua (jaan-boojh kar)** — wake word (Step 1), VAD/command flow (Step 2),
 aur **auto-start**. Registry me koi entry nahi likhi gayi hai.
 

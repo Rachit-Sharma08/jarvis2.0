@@ -18,10 +18,29 @@ class Hub:
     def __init__(self) -> None:
         self._queues: list[asyncio.Queue] = []
         self._loop: asyncio.AbstractEventLoop | None = None
+        self._welcome = None
 
     def attach(self, loop: asyncio.AbstractEventLoop) -> None:
         """Server start par ek baar. Iske bina thread-safe push nahi hoga."""
         self._loop = loop
+
+    def set_welcome(self, func) -> None:
+        """Nayi WebSocket par bhejne wala event (jaise desktop ka haalat).
+
+        Isse `publish()` par depend nahi karna padta — state server se pehle
+        set ho chuki ho tab bhi browser ko mil jaati hai. `desktop/app.py`
+        ye register karta hai; app na chale to hook `None` rehta hai.
+        """
+        self._welcome = func
+
+    def welcome(self) -> list:
+        """Welcome events. Hook crash kare to kuch nahi bhejte — connect na tute."""
+        if self._welcome is None:
+            return []
+        try:
+            return list(self._welcome())
+        except Exception:
+            return []
 
     def subscribe(self, maxsize: int = 200) -> asyncio.Queue:
         """Nayi connection ke liye queue. `unsubscribe` bhoolna mat."""

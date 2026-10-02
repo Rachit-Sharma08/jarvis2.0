@@ -116,10 +116,14 @@ class DesktopState:
         return changed
 
     # ---- HUD tak bhejna ----
+    def event(self) -> dict:
+        """WebSocket ka `desktop` event. Naye client ko bhi yahi bhejte hain."""
+        return {"type": "desktop", "data": self.snapshot()}
+
     def publish(self) -> None:
         """WebSocket clients ko `desktop` event. Exception kabhi nahi uthata."""
         try:
-            HUB.publish({"type": "desktop", "data": self.snapshot()})
+            HUB.publish(self.event())
         except Exception as exc:      # hub band ho to app bhi na gire
             log.warning("desktop publish fail: %s: %s", type(exc).__name__, exc)
 

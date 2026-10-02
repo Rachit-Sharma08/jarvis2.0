@@ -28,6 +28,19 @@ class Limiter:
         self._auto_off = (config.TOOLS_AUTO_OFF_MINUTES if auto_off_minutes is None
                           else auto_off_minutes)
         self._since = time.monotonic()
+        self._on_change = None
+
+    def set_on_change(self, func) -> None:
+        """TOOLS on/off ya auto-OFF hone par ek baar call hona hai.
+
+        Desktop tray + HUD ka mic/tools haalat isi se refresh hota hai, taaki
+        TOOLS toggle UI se, tray se, lock se ya timer se kahan se bhi kiya ho —
+        sab ka ek hi raasta rahe (`gatekeeper` me `desktop` ka import nahi).
+
+        **Hook dobara `Limiter` me call nahi karega** (auto-off ke andar lock
+        pakda hota hai) — sirf haalat update kare.
+        """
+        self._on_change = func
 
     @property
     def enabled(self) -> bool:
@@ -37,12 +50,15 @@ class Limiter:
 
     def set_enabled(self, on: bool) -> bool:
         with self._lock:
+            changed = self._enabled != bool(on)
             self._enabled = bool(on)
             if self._enabled:
                 self._since = time.monotonic()
             else:
                 self._calls.clear()
-            return self._enabled
+            value = self._enabled
+        self._notify(changed)
+        return value
 
     def minutes_left(self) -> float:
         """Auto-off me bache minute. OFF hai to 0."""
@@ -85,6 +101,16 @@ class Limiter:
             "TOOLS auto-OFF: %d minute ho gaye. Dobara ON karne ke liye toggle dabao.",
             self._auto_off,
         )
+        self._notify(True)
+
+    def _notify(self, changed: bool) -> None:
+        """Hook ko batao. Hook crash kare to gatekeeper kabhi na fute."""
+        if not changed or self._on_change is None:
+            return
+        try:
+            self._on_change(self._enabled)
+        except Exception as exc:
+            log.warning("on-change hook fail: %s: %s", type(exc).__name__, exc)
 
     def _prune(self) -> None:
         cutoff = time.monotonic() - 60

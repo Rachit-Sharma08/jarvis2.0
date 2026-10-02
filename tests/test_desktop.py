@@ -103,18 +103,28 @@ def test_launcher():
 def test_tools_auto_off():
     print("TOOLS AUTO-OFF (30 min)")
     limiter = Limiter(enabled=True, auto_off_minutes=0.0004)   # ~24 ms
+    seen = []
+    limiter.set_on_change(seen.append)          # desktop tray ka hook
     check("shuru me ON", limiter.enabled, True)
     check("bache minute", limiter.minutes_left() <= 0.01, True)
     time.sleep(0.05)
     check("30 min baad OFF", limiter.enabled, False)
     check("OFF par 0 minute", limiter.minutes_left(), 0.0)
+    check("auto-off ne hook ko bataya", seen, [False])
     limiter.set_enabled(True)
     check("dobara ON", limiter.enabled, True)
+    check("hook ON bhi mila", seen[-1], True)
+    check("same value par hook nahi", (limiter.set_enabled(True), len(seen))[1], 2)
     check("timer dobara chala", Limiter(enabled=True, auto_off_minutes=5).minutes_left() > 0, True)
     check("check() OFF par rokta hai", Limiter(enabled=False).check() != "", True)
     forever = Limiter(enabled=True, auto_off_minutes=0)     # 0 = auto-off band
     time.sleep(0.02)
     check("0 minute = kabhi OFF nahi", forever.enabled, True)
+    # Hook crash kare to gatekeeper na fute
+    boom = Limiter(enabled=False)
+    boom.set_on_change(lambda on: (_ for _ in ()).throw(RuntimeError("hook crash")))
+    boom.set_enabled(True)
+    print("  OK   crash-safe hook")
 
 
 def test_wake_stub():

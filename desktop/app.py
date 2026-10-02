@@ -27,6 +27,7 @@ from desktop.state import STATE
 from desktop.tray import Tray
 from gatekeeper import keeper
 from log_setup import get_logger
+from server.hub import HUB
 from wake import worker as wake_worker
 
 log = get_logger("app")
@@ -49,7 +50,6 @@ class Actions:
 
     def toggle_tools(self) -> None:
         on = keeper.set_tools(not keeper.tools_on())
-        STATE.set_tools(on)
         log.info("tray: TOOLS=%s (auto-OFF %d min me)", on, config.TOOLS_AUTO_OFF_MINUTES)
 
     def restart(self) -> None:
@@ -63,6 +63,7 @@ class Actions:
 
 class SundayApp:
     def __init__(self, open_hud_at_start: bool = False):
+        self.open_hud_at_start = bool(open_hud_at_start)
         self.hud = hud_window.HudWindow()
         self.tray = Tray(Actions(self))
         self.lock = single_mod.Single()
@@ -86,7 +87,7 @@ class SundayApp:
             self._start_watchers()
             if not self.hud.available():
                 log.error("Edge/Chrome nahi mila — HUD nahi khulega (baaki sab chalega)")
-            if config.HUD_OPEN_AT_START or open_hud_at_start:
+            if config.HUD_OPEN_AT_START or self.open_hud_at_start:
                 self.tray_actions().open_hud()
             self._wait()
         finally:
@@ -117,6 +118,8 @@ class SundayApp:
             fastapi_app, host=config.SERVER_HOST, port=config.SERVER_PORT,
             log_level="warning", access_log=False,
         ))
+        # Naye browser ko abhi ka mic/tools haalat bhejne ka raasta.
+        HUB.set_welcome(lambda: [STATE.event()])
         threading.Thread(target=self.server.run, name="server", daemon=True).start()
         log.info("server thread shuru: %s", config.SERVER_ORIGIN)
 
@@ -125,6 +128,9 @@ class SundayApp:
             log.warning("tray nahi chala — app chal raha hai, sirf icon nahi dikhega")
         # Tools ka asli haalat (env se ON ho sakta hai) state me daalo.
         STATE.set_tools(keeper.tools_on())
+        # TOOLS kahin se bhi badle — UI button, tray, lock, auto-off timer —
+        # sab ka ek hi raasta: `Limiter` se hook, phir STATE (tray+HUD dono).
+        keeper.LIMITER.set_on_change(self._on_tools_change)
 
     def _start_watchers(self) -> None:
         lockwatch.watch(on_lock=self._on_lock)
@@ -154,10 +160,14 @@ class SundayApp:
         """Win+L — sirf baat-cheet. TOOLS apne aap OFF. ALLOW ka raasta badalta
         nahi: card ka jawab sirf UI button se aata hai, wake se nahi."""
         if keeper.tools_on():
-            keeper.set_tools(False)
-            STATE.set_tools(False)
+            keeper.set_tools(False)          # STATE hook khud update karega
             log.warning("Windows lock hua — TOOLS apne aap OFF")
         STATE.set_mic(config.TRAY_OFF, "PC lock hai")
+
+    def _on_tools_change(self, on: bool) -> None:
+        """`gatekeeper.Limiter` ka hook — TOOLS kahin se bhi badle, haalat yahin
+        se jaata hai. Isse `app._wait()` ka loop tray icon refresh kar dega."""
+        STATE.set_tools(on)
 
     def _on_wake(self, phrase: str) -> None:
         log.info("WAKE HIT: %r", phrase)

@@ -29,6 +29,7 @@ class Single:
 
     def __init__(self, path: Path = None):
         self.path = Path(path or config.LOCK_FILE)
+        self.pid_path = self.path.with_suffix(".pid")
         self._handle = None
 
     def acquire(self) -> "Single":
@@ -60,21 +61,22 @@ class Single:
         finally:
             self._handle.close()
             self._handle = None
+            self.pid_path.unlink(missing_ok=True)
             log.info("single instance lock chhodi")
 
     def owner_pid(self) -> int:
-        """Lock file me likha PID. Sirf log/error message ke liye."""
+        """PID alag `.pid` file me hai. Lock wali file ka pehla byte jab locked
+        ho to dusra process use **padh hi nahi sakta** (ERROR_SHARING_VIOLATION),
+        isliye PID wahan likhna error message ko 0 dikha deta tha."""
         try:
-            return int(self.path.read_bytes().split(b",")[0] or 0)
-        except (OSError, ValueError):
+            first = self.pid_path.read_text(encoding="utf-8").splitlines()[0]
+            return int(first.strip())
+        except (OSError, ValueError, IndexError):
             return 0
 
     def _write_pid(self, pid: int) -> None:
         try:
-            self._handle.seek(0)
-            self._handle.truncate()
-            self._handle.write(f"{pid},{int(self.path.stat().st_mtime)}".encode())
-            self._handle.flush()
+            self.pid_path.write_text(f"{pid}\n", encoding="utf-8")
         except OSError as exc:
             log.warning("pid likha nahi gaya: %s", exc)
 

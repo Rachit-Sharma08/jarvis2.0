@@ -24,3 +24,6 @@ models/
 # editor
 .vscode/
 .idea/
+
+# verification artifacts (Phase 4/5 ke live browser checks)
+.playwright-mcp/
