@@ -1,4 +1,4 @@
-# Tests (26 suites)
+# Tests (28 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 26 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 28 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -69,6 +69,8 @@ Ek-ek karke:
 | `test_hud.py` | Phase 4 HUD — ye khud se 4 helper file me phaila hai (neeche dekho) |
 | `test_desktop.py` | Desktop shell: backoff, `--app` command, single instance, crash-restart ke faisle, TOOLS auto-off, startup ki 4 line, log ASCII, `.gitignore` |
 | `test_desktop_tray.py` | Tray icon ke 5 rang, menu ke 5 button, shared state, mic permission key, lock heuristic |
+| `test_desktop_shortcut.py` | HUD ka backup raasta: `open_hud.plan()`, `shortcut.command()` list, Desktop path padhna, app/tray wiring — `.lnk` **kabhi banata nahi** |
+| `test_desktop_hotkey.py` | `hotkey.parse/describe` (pure) + `Hotkey` stub flow + **thread-ownership pakkaura** (`RegisterHotKey` aur pump ek hi thread) + hotkey file ka hygiene |
 | `test_bat.py` | `start_prabh.bat`: CRLF + ASCII + raw-bracket rule, aur asli `cmd` par launch line sach me chalti hai ya nahi |
 
 ### `test_desktop*.py` ke helpers
@@ -109,3 +111,11 @@ socho, `hud_check_ui.py` UI ke liye hai aur `hud_check_api.py` server ke liye.
 - Mile hue helpers `tests/poolhelp.py` me hain — naya pool test wahin se import kare.
 - Desktop test me bhi `tests/desktophelp.py` se `check()` lo, aur startup entry
   (Run key) kabhi test me register mat karo.
+- **Asli Desktop/registry kabhi mat chhedo** — `shortcut.install()`/`remove()`
+  ko test me mat bulao, sirf `shortcut.command()` ki list check karo. Warna asli
+  Desktop par `.lnk` ban jaata hai ya ghat jaata hai.
+- **Asli `RegisterHotKey` bhi mat chalao** — `Hotkey(api=StubApi())` daal kar
+  start/stop/press ka flow check karo. Stub me `threading.get_ident()` record
+  karwao: `RegisterHotKey` aur `pump()` **ek hi thread** par hone chahiye
+  (warna `WM_HOTKEY` kisi aur queue me chala jaata hai aur key kabhi trigger
+  nahi hoti — 2-Oct ka asli bug yahi tha).

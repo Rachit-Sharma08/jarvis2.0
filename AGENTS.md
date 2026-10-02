@@ -59,7 +59,8 @@ prabh/
   brain/checkup.py   -> start par sirf free /models list check
   brain/prompt.py    -> persona + tool JSON rules + strict parser
   personas/sunday.txt, personas/prabh.txt
-  config_desktop.py   -> tray rang, HUD size/path, crash backoff, exit codes, mic/lock helpers
+  config_desktop.py   -> tray rang, HUD size/path, crash backoff, exit codes, mic/lock helpers,
+                        HUD_HOTKEY + HUD_SHORTCUT_NAME
   gatekeeper/keeper.py, rules.py, patterns.py, paths.py, approvals.py, limiter.py, audit.py
   tools/__init__.py, command.py, files.py, apps.py, system.py
   server/app.py      -> GET /, POST /chat, CSP headers + Referrer-Policy
@@ -76,6 +77,9 @@ prabh/
   desktop/launcher.py -> app/tray/hud_window/single/state/micperm/lockwatch/startup.py
   desktop/actions.py  -> tray ke 5 button ka faisla (mute/HUD/TOOLS/restart/quit)
   desktop/startup.py  -> startup ki 4 line (server up/tray started/HUD ready/wake: stub)
+  desktop/hotkey.py   -> global hotkey (Ctrl+Alt+S), sirf ctypes + RegisterHotKey
+  desktop/open_hud.py -> shortcut + hotkey dono ka EK raasta (server zinda -> HUD)
+  desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Sunday HUD" .lnk banao/hatao
   wake/worker.py     -> abhi stub (READY=False); Step 1 me Vosk wala sunega
   start_prabh.bat    -> supervisor chalao (registry entry nahi, wo Step 3 ke aakhir me)
   ui/index.html, app.js (chat+ws glue), voice_ui.js (mic+speaker)
@@ -85,7 +89,7 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (26 suite + poolhelp.py + desktophelp.py + hud_*.py — poori list TESTS.md me)
+  tests/ (28 suite + poolhelp.py + desktophelp.py + hud_*.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
 
@@ -238,7 +242,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 26 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 28 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -274,6 +278,12 @@ endpoint mat likho.
 - Desktop test me Edge/tray/mic/registry **kabhi chalao mat** — sirf command/path/faisla
   check karo. `launcher.next_step()` aur `gatekeeper` ke `Limiter` jaise pure helpers
   bana lo taaki test me process chane ki zarurat na pade.
+- Yahi Desktop shortcut ke liye bhi: `shortcut.command()` ki list check karo,
+  `shortcut.install()/remove()` **kabhi mat bulao** (warna asli Desktop ka `.lnk`
+  bigad jaata hai).
+- **`RegisterHotKey` bhi asli mat chalao** — `Hotkey(api=StubApi())` se. Aur stub me
+  `threading.get_ident()` record karwao: register aur pump **ek hi thread** par hone
+  chahiye. (2-Oct ka asli bug yahi tha.)
 - Crash/backoff/exit-code ka faisla **pure function** me rakho (`next_step(jawab, ...)`),
   taaki supervisor loop se alag test ho sake.
 - **"Pehle se chal raha hai" jaisa koi bhi message `pid_alive()` + `GET /` 200 — dono check
@@ -291,6 +301,38 @@ endpoint mat likho.
 
 ---
 
+## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
+
+- **Tray list me app ka naam nahi, EXE ka naam dikhta hai.** Venv ka `python.exe` sirf
+  redirector hai — asli process `D:\Python312\python.exe` chalata hai, aur Windows usi ka
+  naam dikhata hai. Is liye Sunday kholne par bhi list me `python` likha hota hai.
+  Asli exe nikaalne ka tareeka: `Get-CimInstance Win32_Process` me `-m desktop.app`
+  dhoondo, phir us PID ka `Path` padho.
+- **Tray entry ka key hash hai — hard-code mat karo.**
+  `HKCU\Control Panel\NotifyIconSettings\<hash>` me har icon ki alag entry hai, aur
+  **ek hi exe ki do entry ho sakti hai**. Pehchaan `ExecutablePath` +
+  `InitialTooltip` se karo (purana stale tooltip — jaise `MyJarvis.Desktop` — batata hai
+  ki entry kitni purani hai), ya live process se.
+- **Har registry change se pehle `reg export`.** Poori subkey `D:\prabh\backup\` me
+  (`backup/` gitignored hai). Phir **sirf ek** value badlo aur pehle/bad me entry count
+  compare kar ke proof rakh lo. Baaki icon (Teams, Hermes, OneDrive) **kabhi mat chhed**.
+  Wapas chahiye to usi `.reg` ko `reg import` — `.env` ki tarah `.reg` commit mat karo.
+- **Register hona aur dikhna alag baat hai.** Icon `Register` ho sakta hai aur phir bhi
+  overflow `^` me chhupa rahe (`IsPromoted` missing). Register hone ka proof: `EnumWindows`
+  se window class (Sunday ka class PID ke saath). Dikhne ke liye `IsPromoted=1` +
+  `SHChangeNotify(SHCNE_ASSOCCHANGED)` — sign-out ki zarurat nahi.
+- **Global hotkey sirf `desktop/hotkey.py` me.** `RegisterHotKey` + `PeekMessageW` (GetMessage
+  block karta hai, `stop()` turant nahi maanta). `PeekMessageW` ka `argtypes` zaroori hai —
+  64-bit par `lParam` kat jaata hai. `MOD_NOREPEAT` mat lagao (kuch build me fail).
+  `hWnd=NULL` hone ki wajah se `RegisterHotKey` aur message pump **ek hi thread** par
+  hone chahiye — warna `WM_HOTKEY` kisi aur thread ki queue me chala jaata hai.
+- **HUD ke teen raasta ek hi function se:** `desktop/open_hud.py`. Server band ho to crash
+  karne ke bajaye message box (pythonw me stdout nahi hota, is liye print kaam nahi karta).
+- **PowerShell quoting JS me mat todo.** `.lnk` banane wala `.ps1` **alag file** rakho aur
+  `subprocess` se `shell=False` par chalao.
+
+---
+
 ## ABHI KYA BAAKI HAI
 
 - Round 2 poora ho gaya (1-2 Oct 2026). Plan/record `ROUND2.md` me padh sakte ho.
@@ -300,6 +342,9 @@ endpoint mat likho.
 - Baaqi Phase 5, isi order me: **Step 1** (Vosk wake word, model download ho chuka hai) →
   **Step 2** (VAD + command + Python playback) → **Step 3** auto-start (registry tabhi jab
   user "haan" bole). Face/trust/learn/maker baad me.
+- **Fix round 4 ho gaya (2 Oct 2026)** — tray entry `IsPromoted=1` (backup ke saath), Desktop
+  `Sunday HUD` shortcut + global hotkey `Ctrl+Alt+S`, dono ka ek raasta
+  (`desktop/open_hud.py`), 28 suite green. Record `CHANGELOG.md` me.
 - Ek hi cheez aur baaki hai: **Cartesia ki female voice id** (`CARTESIA_VOICE_*`). Na mile to Cartesia skip hoti
 hai — koi problem nahi, Edge Swara chalti hai.
 - Aage ka kaam user se pucho; koi chhupi hui task nahi hai.
@@ -367,7 +412,7 @@ Source `D:\SystemConfig\Startup-helper\SystemConfig.bat` se byte-identical
   196 reject, jabki `127.0.0.1` se sirf 4. User ko ye tab band karna hai — warna log
   bharta rahega aur us tab me HUD kabhi nahi khulega.
 
-### 5. Jahan chhoda tha (2-Oct raat, user sone gaya tha)
+### 5. Jahan chhoda tha (2-Oct raat, user sone gaya tha) — 19:48 par update hua
 
 - User ne double-click kar diya — app **live chal raha hai** (PID 17260). Ye verify hua:
   - startup ki 4 line sahi: `server up: http://127.0.0.1:8000` · `tray started: Sunday` ·
@@ -426,3 +471,15 @@ green**, sab file `<200`.
   (`HKCU\Run` me `electron.app.Electron`) **backup ke saath hata diya**; `D:\SystemConfig`
   ki jaanch poori par **kuch nahi badla** (user ke "haan" ka wait) — dono ka record
   section **8.1** me.
+- **Fix round 4 (2 Oct 2026)** — user ka andaza sahi tha: Windows 11 ki tray list me
+  `Sunday` **kabhi nahi** dikhega, wo **exe** ka naam dikhati hai aur venv ka python
+  redirector hai (asli `D:\Python312\python.exe`). Live proof — tray window class
+  `Sunday2587022232368SystemTrayIcon` base python ke PID par. Sirf **Prabh wali** entry
+  (`13638010186279013602`, tooltip khali) me `IsPromoted=1`, backup
+  `backup/notifyicon-python-20261002-194804.reg`, baaki 20 icon chhed nahi gaye — nayi
+  niyam section **8.2**. Tray na dikhe to **3 raasta**: tray menu / Desktop shortcut
+  (`Sunday HUD.lnk`) / global hotkey `Ctrl+Alt+S`, teeno ka ek raasta
+  `desktop/open_hud.py`. Naye `desktop/hotkey.py` (sirf ctypes, koi naya package nahi),
+  `desktop/shortcut.py` + `hud_shortcut.ps1`, `.env` se badalne wala `PRABH_HUD_HOTKEY`,
+  `tests/test_desktop_hotkey.py` + `tests/test_desktop_shortcut.py` (test file
+  200+ lines thi to split ki) — **28 suite green**.

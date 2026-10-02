@@ -23,6 +23,7 @@ import pystray
 from pystray import Menu, MenuItem
 
 import config
+from desktop import hotkey as hotkey_mod
 from desktop import trayicon
 from desktop.state import STATE
 from log_setup import get_logger
@@ -58,6 +59,7 @@ class Tray:
     # ---- menu ----
     def build(self) -> Menu:
         state = self.state
+        keys = hotkey_mod.describe(config.HUD_HOTKEY)
         return Menu(
             MenuItem(
                 lambda item: config.tray_title(state.mic()),
@@ -70,6 +72,10 @@ class Tray:
                 checked=lambda item: state.muted(),
             ),
             MenuItem("Open HUD", self._open_hud),
+            # Hotkey dikhana zaroori hai - warna user ko pata hi nahi chalta
+            # ki ek aur raasta hai. Sirf text, click se kuch nahi hota.
+            MenuItem("  ya phir %s" % (keys or "koi shortcut nahi"),
+                     None, enabled=False),
             MenuItem(
                 "TOOLS",
                 self._toggle_tools,

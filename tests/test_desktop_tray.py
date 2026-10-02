@@ -55,11 +55,15 @@ def test_tray_menu():
     tray = Tray(actions, state)
     labels = [item.text for item in tray.build()]
     show(f"items = {labels}")
-    check("status + 5 button", len(labels), 8)          # 6 asli + 2 divider
+    check("status + 5 button + hint", len(labels), 9)   # 7 asli + 2 divider
     for wanted in ("Mic Mute", "Open HUD", "TOOLS", "Restart", "Quit"):
         check(f"'{wanted}' hai", wanted in labels, True)
     check("pehla item haalat", labels[0].startswith("Sunday"), True)
     check("Quit sabse neeche", labels[-1], "Quit")
+    # Hotkey ki tafseer - sirf text, click se kuch nahi hota (disabled item)
+    hints = [t for t in labels if t.startswith("  ya phir")]
+    check("ek hint hai", len(hints), 1)
+    check("  usme current hotkey", config.HUD_HOTKEY and "Ctrl+Alt+S" in hints[0], True)
     # pystray ka `action` private hai — wahi method call karte hain jo click par chalti hai
     tray._toggle_mute(None, None)
     tray._open_hud(None, None)

@@ -88,9 +88,34 @@ Tray icon (taskbar ke right side, chhupa karo tab par):
 | upar wali line | haalat (mic band / sun raha / mute / error) |
 | Mic Mute | mic on-off |
 | Open HUD | HUD window kholta hai |
+| ya phir Ctrl+Alt+S | wahi kaam, bina mouse ke (badal sakte ho) |
 | TOOLS | PC tools on-off |
 | Restart | app dobara |
 | Quit | band |
+
+### Tray icon na dikhe to — ye 3 raasta hai
+
+Windows 11 taskbar ke icon chhupa deta hai (`^` wale overflow menu me). Tab bhi
+HUD kholne ke **teen** raasta hain, teeno ek hi kaam karte hain:
+
+| Raasta | Kaise |
+| --- | --- |
+| Tray ka menu | `^` par click → Sunday → **Open HUD** |
+| Desktop shortcut | Desktop par **"Sunday HUD"** par double-click |
+| Global hotkey | **Ctrl + Alt + S** (poore Windows me) |
+
+Hotkey badalna ho to `.env` me `PRABH_HUD_HOTKEY=<ctrl+alt+shift+s>` (ek letter
+ya F1–F24). Galat value ho to hotkey chalti hi nahi — app safe rehti hai.
+
+Teeno ka ek hi raasta `desktop/open_hud.py` hai: server chalu hai to HUD khulta
+hai, warna ek message box aata hai "pehle `start_prabh.bat` chalao".
+
+Shortcut dobara banana ho to:
+
+```powershell
+cd D:\prabh
+.\.venv\Scripts\python.exe -m desktop.shortcut install   # ya: remove / status
+```
 
 Sunke chalana (`hello sunday`) **Step 1 me aayega** — abhi sirf shell hai, to
 HUD khologe ya `http://127.0.0.1:8000` khol lo.
@@ -115,7 +140,7 @@ Band karne ke liye terminal me `Ctrl + C`.
 
 ## 3. Test
 
-Saare 25 suites ek loop me:
+Saare 28 suites ek loop me:
 
 ```powershell
 cd D:\prabh
@@ -130,8 +155,8 @@ if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 Ek-ek karke bhi: `.\.venv\Scripts\python.exe tests\test_gatekeeper.py`
 
 Har suite ka detail (kya check karta hai, naya test kaise likhein) →
-**[TESTS.md](TESTS.md)**. Test me real API call nahi hota aur koi khatarna command
-nahi chalti — key ki zarurat nahi.
+**[TESTS.md](TESTS.md)**. Test me real API call nahi hota aur koi khatarna
+command nahi chalti — key ki zarurat nahi.
 
 
 ---
@@ -192,7 +217,7 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `main.py` | Server chalu karta hai |
 | `config.py` | `.env`, settings, tool risk, allowed folders, blocked patterns |
 | `config_brain.py`, `config_voice.py` | Brain aur voice constants (`config.py` re-export karta hai) |
-| `config_desktop.py` | Desktop constants: tray rang, HUD size, crash backoff, exit code, mic/lock helpers |
+| `config_desktop.py` | Desktop constants: tray rang, HUD size, crash backoff, exit code, mic/lock helpers, `HUD_HOTKEY` |
 | `log_setup.py` | `logs/prabh.log` banata hai |
 | `core/events.py`, `core/modes.py` | Chat events + naam se mode, persona, label |
 | `core/engine.py` | Poora chat flow + tool loop (**sirf** `run_tool` raasta) |
@@ -233,6 +258,9 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `desktop/app.py` | Sunday app: server thread + tray + HUD + mic permission + lock watcher |
 | `desktop/tray.py`, `trayicon.py` | Tray menu (Mute / Open HUD / TOOLS / Restart / Quit) + rang se bana icon |
 | `desktop/hud_window.py` | Edge `--app` me HUD window (apna profile, 1200x720) |
+| `desktop/hotkey.py` | Global hotkey (default Ctrl+Alt+S) — sirf `ctypes`, koi naya package nahi |
+| `desktop/open_hud.py` | Shortcut **aur** hotkey dono ka ek hi raasta: server zinda hai to HUD khulo |
+| `desktop/shortcut.py`, `hud_shortcut.ps1` | Desktop ka "Sunday HUD" `.lnk` banao / hatao (`WScript.Shell`) |
 | `desktop/single.py` | Ek hi instance (doosra `"already running"` band ho jaata hai) |
 | `desktop/state.py`, `micperm.py`, `lockwatch.py` | Ek shared haalat, Windows mic permission check, lock ka pata |
 | `wake/worker.py` | Wake worker ka stub (Step 1 me asli Vosk sunna aayega) |

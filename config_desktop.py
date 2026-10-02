@@ -39,6 +39,18 @@ HUD_PROFILE_DIR = DATA_DIR / "hud-profile"
 # `.env` me PRABH_HUD_AT_START=1, ya `python -m desktop.app --hud`.
 HUD_OPEN_AT_START = os.getenv("PRABH_HUD_AT_START", "0") == "1"
 
+# ---- HUD ke do aur raasta (tray par nirbhar na rahein) ----
+# Tray icon Windows ke overflow `^` me chhup jaata hai (ye Windows ka normal
+# behaviour hai, pystray ki galti nahi), is liye ek teesra raasta zaroori hai:
+#   1. Desktop ka shortcut "Sunday HUD"  -> `desktop/shortcut.py`
+#   2. Global hotkey (default Ctrl+Alt+S) -> `desktop/hotkey.py`
+# Dono ka **ek hi kaam** `desktop/open_hud.py` karta hai: server zinda hai to
+# HUD window khol do, warna saaf message. Doosra koi raasta kabhi mat banao.
+HUD_SHORTCUT_NAME = "Sunday HUD"
+# `.env` me PRABH_HUD_HOTKEY=<ctrl+alt+shift+s> se badal do. Galat ya khali
+# value par hotkey chalti hi nahi — app bilkul safe rehta hai.
+HUD_HOTKEY = os.getenv("PRABH_HUD_HOTKEY", "ctrl+alt+s")
+
 # Pehle Edge, phir Chrome. Dono Windows 10/11 ke saath aate hain — inhe
 # install karne ki zarurat nahi.
 BROWSER_CANDIDATES = (

@@ -6,6 +6,87 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Fix round 4 (2 Oct 2026) — tray icon promote + shortcut + global hotkey
+
+User ka sawaal: Windows 11 ki "Other system tray icons" list me "Sunday" nahi
+mila. **User ka andaza sahi tha** — list exe ke naam se bhakti hai.
+
+- **Vichar pakka hua (live proof):** venv ka `python.exe` sirf ek redirector hai
+  — asli process `D:\Python312\python.exe` chalata hai. `Win32_Process` me dono
+  dikhe: `D:\prabh\.venv\Scripts\python.exe -m desktop.app` **aur**
+  `D:\Python312\python.exe -m desktop.app`. Tray ka window class
+  `Sunday2587022232368SystemTrayIcon` **base** python ke PID par mila.
+  Is liye Settings me iska naam **"python"** dikhega, "Sunday" kabhi nahi.
+- `NotifyIconSettings` me `D:\Python312\python.exe` ki **do** entry thi. Pehchaan
+  ka pakka raasta: ek ka `InitialTooltip` = `MyJarvis.Desktop` (purana JARVIS,
+  jo chalta nahi — naya entry ban hi nahi hua jab app start hua), dusri khali.
+  **Prabh wali = `13638010186279013602`**, sirf usi me `IsPromoted=1` kiya.
+- Backup: `backup/notifyicon-python-20261002-194804.reg` (9764 byte, `reg export`).
+  Wapas chahiye to wahi `.reg` `reg import`.
+- **Diff proof:** shuru aur baad me 21 entry, sirf **ek** value badli. Baaki 20
+  (Teams, OneDrive, Hermes, Chrome, Edge, WhatsApp…) bilkul chhed nahi gaye.
+  Baad me `SHChangeNotify(SHCNE_ASSOCCHANGED)` bheja — sign-out ki zarurat nahi.
+- **Ek kaam bacha user ke haath:** taskbar dekhna ki icon ab seedha dikhta hai ya
+  nahi. Na dikhe to batao — dusri entry pe flip kar denge (backup se wapas bhi
+  aa sakta hai). `InitialTooltip` khali hone ki wajah ye hai ki pystray title
+  `NIM_ADD` ke baad hi lagata hai.
+
+### Naya code — tray ke alawa do raasta
+
+| File | Kaam |
+|---|---|
+| `desktop/hotkey.py` | Global hotkey, sirf `ctypes` + `RegisterHotKey` (koi package nahi) |
+| `desktop/open_hud.py` | Shortcut aur hotkey dono ka **ek hi** raasta: server zinda → HUD khulo, warna message box |
+| `desktop/shortcut.py` + `hud_shortcut.ps1` | Desktop ka `Sunday HUD.lnk` banao / hatao (`WScript.Shell`) |
+| `desktop/app.py` | Hotkey `start()`/`stop()`, `_on_hotkey()` |
+| `desktop/tray.py` | Menu me ek disabled line — `ya phir Ctrl+Alt+S` (warna pata hi nahi chalta) |
+| `config_desktop.py` / `config.py` | `HUD_HOTKEY` (`.env` se badalta hai), `HUD_SHORTCUT_NAME` |
+
+- `parse()` pure hai: **ek modifier + ek key**. Galat spec par `(0,0)` →
+  `Hotkey.start()` `False`, app safe rehti hai. `PeekMessage` + chhota wait
+  (GetMessage block karta hai, `stop()` turant nahi maanta).
+- `PeekMessageW.argtypes` zaroori tha — warna 64-bit par `lParam` kat jaata hai.
+- `.ps1` alag file me taaki PowerShell quoting na badhe. `shell=False`, har jagah.
+- Test me **asli** Desktop/registry/`RegisterHotKey` kabhi nahi chalta —
+  `shortcut.command()` ki list + `Hotkey(api=StubApi())`.
+
+### ⚠️ Ek asli bug jo test se pakda (aur pehle chhup chhupa tha)
+
+Pehle `start()` `RegisterHotKey` **caller (main) thread** par call karta tha, aur
+message pump **doosre** thread par chalta tha. `hWnd=NULL` hone ki wajah se
+`WM_HOTKEY` usi thread ki queue me aata hai jisne register kiya — yaani key
+**kabhi trigger hi nahi hoti thi**, sirf `hotkey chalu` log dikhta tha.
+
+- Fix: `register()` + `pump()` + `unregister()` **ek hi thread** par. `start()`
+  ab `_live` event se wait karta hai ki Windows ne haan bola ya nahi.
+- Naya pakkaura: `tests/test_desktop_hotkey.py` stub me `threading.get_ident()`
+  record karta hai aur teeno ka thread compare karta hai.
+- **Test khud ne sach me bug pakda** — purana code wapas daal ke run kiya:
+  `register aur pump ek hi thread` FAIL hua. Fix ke saath 28 suite green.
+- Pehle wala stub galat pass de raha tha kyunki uska `pump()` khud `on_press()`
+  bana deta tha — asli `PeekMessage` ki zaroorat hi nahi padi.
+
+### Live verify
+
+- `RegisterHotKey` ne `hotkey chalu: Ctrl+Alt+S` log kiya (yahi tab log hota hai
+  jab Windows ne haan bola).
+- Shortcut ka payload Edge `--app` window khola `D:\prabh\data\hud-profile` par,
+  aur server-band par message box aaya.
+- Synthetic keystroke (`SendInput`) se trigger nahi hua — struct theek tha par
+  ye shell non-interactive window station me hai. **Asli keyboard se ek press
+  user ko karna hai**, tab `HOTKEY HIT` log aayega.
+- Registry proof: `IsPromoted=1` app ke **restart ke baad bhi** bacha hai
+  (21 entry, wahi key hash). Backup se live ka diff = sirf ek nayi value.
+
+### Ek naya pakkaura (section 8.2)
+
+- **Koi bhi tray/registry ka naam ya value hard-code mat karo.** Windows tray entry
+  ka key ek hash hota hai, aur ek hi exe ki **do** entry ho sakti hai. Pehchaan
+  `InitialTooltip` ya live process se karo, aur har change se pehle `reg export`.
+  Poora yahan: `AGENTS.md` 8.2.
+
+---
+
 ## PC wale kaam + fix round 3 ka record (2 Oct 2026 raat)
 
 Code ka poora record upar hai. Ye sirf **project ke bahar** wale kaam hain â€” detail

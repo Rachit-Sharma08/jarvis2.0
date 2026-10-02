@@ -1,13 +1,11 @@
-"""Asli app — server + tray + HUD + wake, sab ek process me.
+"""Asli app — server + tray + HUD + hotkey + wake, sab ek process me.
 
-Ek hi process is liye ki engine ek hi rahe (`server/state.py`) — browser,
-quick button aur wake teeno ka mode aur gatekeeper state ek jaisa.
+Ek hi process is liye ki engine ek hi rahe (`server/state.py`). Thread: main
+= intezaar/shutdown · "server" = uvicorn · "lockwatch" = Win+L · "hotkey" =
+Ctrl+Alt+S · "wake" = `wake/worker.py` (stub) · pystray = tray menu.
 
-Thread: main = intezaar/shutdown · "server" = uvicorn · "lockwatch" = Win+L ·
-"wake" = `wake/worker.py` (stub) · pystray = tray menu.
-
-Supervisor alag hai (`desktop/launcher.py`): crash par wahi dobara chala
-deta hai. Yahan crash ka Exit code `config.EXIT_RESTART` se jaata hai.
+Supervisor alag hai (`desktop/launcher.py`): crash par wahi dobara chala deta
+hai. Yahan crash ka Exit code `config.EXIT_RESTART` se jaata hai.
 """
 
 import sys
@@ -19,7 +17,8 @@ import uvicorn
 import config
 from core import sysstats
 from desktop import actions as actions_mod
-from desktop import hud_window, lockwatch, micperm, single as single_mod, startup
+from desktop import hud_window, hotkey as hotkey_mod
+from desktop import lockwatch, micperm, single as single_mod, startup
 from desktop.state import STATE
 from desktop.tray import Tray
 from gatekeeper import keeper
@@ -34,6 +33,7 @@ class SundayApp:
     def __init__(self, open_hud_at_start: bool = False):
         self.open_hud_at_start = bool(open_hud_at_start)
         self.hud = hud_window.HudWindow()
+        self.hotkey = hotkey_mod.Hotkey(config.HUD_HOTKEY, on_press=self._on_hotkey)
         self.tray = Tray(actions_mod.Actions(self))
         self.lock = single_mod.Single()
         self.server = None
@@ -85,6 +85,7 @@ class SundayApp:
             log.error("mic band hai: %s", reason)
         else:
             log.info("mic permission: %s", reason or "theek hai")
+
     def _start_server(self) -> None:
         from server.app import app as fastapi_app      # import late: config ready ho
 
@@ -136,6 +137,7 @@ class SundayApp:
     def _start_watchers(self) -> None:
         lockwatch.watch(on_lock=self._on_lock)
         wake_worker.start(on_wake=self._on_wake, on_state=STATE.set_wake)
+        self.hotkey.start()
         if wake_worker.READY:
             startup.say(config.STARTUP_WAKE, "sun raha hai")
         else:
@@ -151,6 +153,7 @@ class SundayApp:
     def _shutdown(self) -> None:
         log.info("band ho raha hai (code=%s)", self._code)
         wake_worker.stop()
+        self.hotkey.stop()
         self.tray.stop()
         self.hud.close()
         STATE.set_hud(False)
@@ -176,6 +179,13 @@ class SundayApp:
 
     def _on_wake(self, phrase: str) -> None:
         log.info("WAKE HIT: %r", phrase)
+        self.hud.open()
+        STATE.set_hud(True)
+
+    def _on_hotkey(self) -> None:
+        """Global hotkey (default Ctrl+Alt+S) - wake jaisa hi kaam: HUD kholo.
+        Wake word se bhi shortcut se bhi ek hi raasta (`hud.open()`)."""
+        log.info("HOTKEY HIT: %s", hotkey_mod.describe(config.HUD_HOTKEY))
         self.hud.open()
         STATE.set_hud(True)
 
