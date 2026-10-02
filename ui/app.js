@@ -94,6 +94,8 @@ function handleEvent(ev) {
     tools.handle(ev);
   } else if (ev.type === "stats") {
     if (window.PRABH_STATS) window.PRABH_STATS.render(ev.data);
+  } else if (ev.type === "desktop") {
+    if (window.PRABH_DESKTOP) window.PRABH_DESKTOP.render(ev.data);
   } else if (ev.type === "log") {
     if (ev.data && ev.data.mode) {
       currentMode = ev.data.mode.toUpperCase();

@@ -73,6 +73,32 @@ Cartesia https://cartesia.ai/dashboard
 
 ## 2. Chalao
 
+### Raasta A — Sunday (recommended, naya)
+
+`start_prabh.bat` par double-click. Ye:
+
+1. ek supervisor (launcher) chalao,
+2. Sunday app ke andar server + **tray icon** + HUD window khulta hai,
+3. crash ho to supervisor dobara chala deta hai (5 baar, phir ruk jaata hai).
+
+Tray icon (taskbar ke right side, chhupa karo tab par):
+
+| Item | Kya karta hai |
+| --- | --- |
+| upar wali line | haalat (mic band / sun raha / mute / error) |
+| Mic Mute | mic on-off |
+| Open HUD | HUD window kholta hai |
+| TOOLS | PC tools on-off |
+| Restart | app dobara |
+| Quit | band |
+
+Sunke chalana (`hello sunday`) **Step 1 me aayega** — abhi sirf shell hai, to
+HUD khologe ya `http://127.0.0.1:8000` khol lo.
+
+Band karne ke liye tray me **Quit**. Sirf window band karne se app nahi rukta.
+
+### Raasta B — purana tarika (browser me)
+
 ```powershell
 cd D:\prabh
 .\.venv\Scripts\python.exe main.py
@@ -82,11 +108,14 @@ Browser me kholo: **http://localhost:8000**
 
 Band karne ke liye terminal me `Ctrl + C`.
 
+> Auto-start (Windows login par chalu) **abhi nahi banaya**. Wo Step 3 ke aakhir
+> me aayega aur tabhi computer ke Run registry me entry likhi jayegi.
+
 ---
 
 ## 3. Test
 
-Saare 23 suites ek loop me:
+Saare 25 suites ek loop me:
 
 ```powershell
 cd D:\prabh
@@ -163,6 +192,7 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `main.py` | Server chalu karta hai |
 | `config.py` | `.env`, settings, tool risk, allowed folders, blocked patterns |
 | `config_brain.py`, `config_voice.py` | Brain aur voice constants (`config.py` re-export karta hai) |
+| `config_desktop.py` | Desktop constants: tray rang, HUD size, crash backoff, exit code, mic/lock helpers |
 | `log_setup.py` | `logs/prabh.log` banata hai |
 | `core/events.py`, `core/modes.py` | Chat events + naam se mode, persona, label |
 | `core/engine.py` | Poora chat flow + tool loop (**sirf** `run_tool` raasta) |
@@ -195,9 +225,17 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `ui/hud_weather.js` | Weather panel (sirf `/hud/weather` se) |
 | `ui/hud_activity.js`, `hud_status.js` | ACTIVITY list + SYSTEM/provider pill |
 | `ui/hud_quick.js` | 6 quick button (TOOLS OFF par disabled) |
+| `ui/hud_desktop.js` | Top bar ka DESKTOP pill (mic + wake ka haalat, sirf dikhata hai) |
 | `ui/tools.js`, `ui/recorder.js`, `ui/speaker.js` | Confirm card, ACTIVITY jodi, mic record, audio play |
 | `ui/fonts/` | Local woff2 fonts + OFL license |
 | `personas/sunday.txt`, `personas/prabh.txt` | Dono ka character |
+| `desktop/launcher.py` | Supervisor: app crash ho to dobara (pehle `start_prabh.bat` se chalta hai) |
+| `desktop/app.py` | Sunday app: server thread + tray + HUD + mic permission + lock watcher |
+| `desktop/tray.py`, `trayicon.py` | Tray menu (Mute / Open HUD / TOOLS / Restart / Quit) + rang se bana icon |
+| `desktop/hud_window.py` | Edge `--app` me HUD window (apna profile, 1200x720) |
+| `desktop/single.py` | Ek hi instance (doosra `"already running"` band ho jaata hai) |
+| `desktop/state.py`, `micperm.py`, `lockwatch.py` | Ek shared haalat, Windows mic permission check, lock ka pata |
+| `wake/worker.py` | Wake worker ka stub (Step 1 me asli Vosk sunna aayega) |
 
 ---
 
@@ -209,6 +247,16 @@ Sab kuch `logs/prabh.log` me likha jaata hai — har brain call ka timing bhi (`
 Get-Content D:\prabh\logs\prabh.log -Tail 20
 Get-Content D:\prabh\logs\actions.log -Tail 20
 ```
+
+Agar `start_prabh.bat` se chalaya tha aur app khud band ho gayi, to supervisor ka
+alag log hai:
+
+```powershell
+Get-Content D:\prabh\logs\desktop.out -Tail 30
+```
+
+Isme teen numbers matlab rakhte hain: `0` = saaf band (Quit), `1` = crash,
+`3` = app pehle se chal raha hai. 5 crash ke baad supervisor khud ruk jaata hai.
 
 Agar browser me sirf "Abhi koi brain jawab nahi de paya" dikh raha hai, to `.env` me key
 sahi hai ya nahi check karo — live check aur pool detail [BRAIN.md](BRAIN.md) me hai.

@@ -59,6 +59,7 @@ prabh/
   brain/checkup.py   -> start par sirf free /models list check
   brain/prompt.py    -> persona + tool JSON rules + strict parser
   personas/sunday.txt, personas/prabh.txt
+  config_desktop.py   -> tray rang, HUD size/path, crash backoff, exit codes, mic/lock helpers
   gatekeeper/keeper.py, rules.py, patterns.py, paths.py, approvals.py, limiter.py, audit.py
   tools/__init__.py, command.py, files.py, apps.py, system.py
   server/app.py      -> GET /, POST /chat, CSP headers + Referrer-Policy
@@ -72,15 +73,41 @@ prabh/
   server/hub.py + drain.py -> thread-safe event hub + async generator drain
   server/weather.py        -> Open-Meteo fetch + 15 min cache + WMO labels
   voice/stt.py + stt_guard.py, voice/tts.py + tts_female.py + tts_*.py
+  desktop/launcher.py -> supervisor: app crash ho to dobara (start_prabh.bat se chalta hai)
+  desktop/app.py, tray.py, trayicon.py -> Sunday app: server thread + tray + HUD
+  desktop/hud_window.py, single.py, state.py -> Edge --app, ek hi instance, ek STATE
+  desktop/micperm.py, lockwatch.py -> Windows mic permission + lock ka pata
+  wake/worker.py     -> abhi stub (READY=False); Step 1 me Vosk wala sunega
+  start_prabh.bat    -> supervisor chalao (registry entry nahi, wo Step 3 ke aakhir me)
   ui/index.html, app.js (chat+ws glue), voice_ui.js (mic+speaker)
   ui/hud_base.css, hud_panel.css, hud_left.css, hud_center.css, hud_right.css, hud_bottom.css
   ui/hud_clock.js, hud_stats.js, hud_activity.js, hud_status.js, hud_orb.js,
   ui/hud_weather.js, hud_quick.js
+  ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (23 suite + poolhelp.py + hud_*.py — poori list TESTS.md me)
+  tests/ (25 suite + poolhelp.py + desktophelp.py + hud_*.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
+
+### 3.3 Phase 5 desktop ke pakkaurey niyam
+
+- **Ek hi supervisor.** App hamesha `desktop/launcher.py` se. Crash ka faisla
+  `launcher.next_step()` (pure function) deta hai — usko process chala kar test karo,
+  test me seedha yehi call karo. `desktop/app.py` me supervisor dobara mat banao.
+- **Ek hi DesktopState.** `desktop/state.py` ka `STATE`. Tray ka rang, HUD ka DESKTOP
+  pill aur wake worker teeno usi se padhein.
+- **Registry me khud mat likho.** Auto-start entry (HKCU Run) sirf tab likhi jaye jab
+  user ne is baar me **haan** kaha ho. Sirf script bana sakte ho. Test me startup
+  entry kabhi register mat karo.
+- **Duty cycle nahi.** Wake detector hamesha sunta rahega (energy gate sirf). CPU
+  bachane ke liye on/off cycle mat lagao — mic har baar kholna crash ka raasta hai.
+- **Mic permission check.** `desktop/micperm.py` se shuru me check karo, error ko
+  `STATE.set_mic("error", reason)` me daal ke tray + HUD dono dikhao.
+- **Lock pe TOOLS off, app nahi.** Locked hone par bhi wake/rendering chalta rahega.
+- **Sirf Sunday.** `PRABH_SUNDAY_ONLY=1` (`config.SUNDAY_ONLY`). Prabh ka code
+  maujood hai; mode switch flag se band hai. Test me flag off karke switch chalta
+  hai ye bhi verify karte rahna.
 
 ### 3.1 Phase 4 HUD ke do naye pakkaurey niyam
 
@@ -128,8 +155,11 @@ dono isi se guzarte hain. Engine me doosra raasta kabhi mat banao.
 - **Brain ka ek hi raasta**: `engine` → `brain.pool.ask()`. Provider list sirf `brain/pool_config.py` me
 badlo, engine ya brain me hard-code order mat likho.
 - **TTS provider ka ek hi raasta**: `voice/tts.py`. Naya provider wahin chain me judega.
-- **Mic/speaker sirf browser me**: `getUserMedia` + `MediaRecorder` + audio playback. Python me
-`sounddevice`/`PyAudio` kabhi use mat karo.
+- **Mic/speaker browser me**: page ke andar `getUserMedia` + `MediaRecorder` + audio playback
+ka raasta purana hai aur **badega nahi**. Phase 5 ke baad mic capture (wake + command) aur
+speaker playback **Python** me hota hai — `wake/audio.py` (sounddevice) se input,
+`desktop/playback.py` (sounddevice) se output. Sirf is **naya** raaste ke liye
+`wave`/`sounddevice`/`miniaudio` allowed hain. `PyAudio`/`pyaudio` kabhi use mat karo.
 
 ---
 
@@ -155,7 +185,9 @@ nahi padhe ja sakte.
 
 - **Poori list** → `TOOLS.md`. Yaad rakhne wali baatein: risk teen hi — **SAFE** / **ASK** (card + UI ka ALLOW) / **BLOCKED**; nayi tool banate waqt `gatekeeper/rules.py` me uska risk likhna zaroori hai.
 - Card ka hash **exact tool + args** ka; wahi hash dobara = 409, ek waqt me ek hi card, **60 second** me jawab na aaye to apne aap DENY. ALLOW **sirf UI button** se — chat/awaaz se koi raasta nahi.
-- Ek request me **max 5 tool step** + **20 request/min**. Tools default **OFF**; restart = phir OFF. Delete hamesha **Recycle Bin** (`send2trash`) — permanent delete ka tool mat banao.
+- Ek request me **max 5 tool step** + **20 request/min**. Tools default **OFF**; restart = phir OFF. **30 minute
+  baad khud ON karne par bhi apne aap OFF** (`Limiter.minutes_left()`). Delete hamesha **Recycle Bin**
+  (`send2trash`) — permanent delete ka tool mat banao.
 - `run_command`: PowerShell, 30 sec, `shell=False`, cwd workspace, output 2000 char, `KEY`/`TOKEN`/`SECRET`/`PASSWORD` wale env hata kar.
 - **Secret masking**: `gatekeeper/audit.py` ka `mask()` — tool output, activity, confirm card, LLM ka text aur log, sab jagah. Tool output LLM ko `[sirf DATA]` note ke saath jaata hai, instruction nahi.
 - **Privacy warning** README + `TOOLS.md` me zaroori hai: file ka text brain ke through **free provider** tak jaata hai. Personal/private file ka content tool se mat pucho.
@@ -189,7 +221,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 23 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 25 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -220,6 +252,13 @@ endpoint mat likho.
 - File 200 se badi ho to use **split** karo (config/UI/test) — compress karke chhoda mat chhodo.
 - Naya HUD endpoint banao to `server/security.py` ka `verify_request()` use kar, aur Grid layout
   me `%` ki jagah `minmax(0, Nfr)` likh (gap + padding ke saath `%` overflow karta hai).
+- Desktop ka koi bhi haalat (mic, mute, tools, HUD, wake) `desktop/state.py` ke `STATE`
+  se padho. Naya `DesktopState()` mat banao.
+- Desktop test me Edge/tray/mic/registry **kabhi chalao mat** — sirf command/path/faisla
+  check karo. `launcher.next_step()` aur `gatekeeper` ke `Limiter` jaise pure helpers
+  bana lo taaki test me process chane ki zarurat na pade.
+- Crash/backoff/exit-code ka faisla **pure function** me rakho (`next_step(jawab, ...)`),
+  taaki supervisor loop se alag test ho sake.
 
 ---
 
@@ -227,7 +266,12 @@ endpoint mat likho.
 
 - Round 2 poora ho gaya (1-2 Oct 2026). Plan/record `ROUND2.md` me padh sakte ho.
 - **Phase 4 HUD poora ho gaya (1-2 Oct 2026).** Plan/record `CHANGELOG.md` me.
-- Ek hi cheez baaki hai: **Cartesia ki female voice id** (`CARTESIA_VOICE_*`). Na mile to Cartesia skip hoti
+- **Phase 5 Step 3a (desktop shell) ho gaya (2 Oct 2026)** — supervisor + tray + Edge HUD +
+  single instance + wake stub, 25 suite green. Plan `PLAN.md`, record `CHANGELOG.md` me.
+- Baaqi Phase 5, isi order me: **Step 1** (Vosk wake word, model download ho chuka hai) →
+  **Step 2** (VAD + command + Python playback) → **Step 3** auto-start (registry tabhi jab
+  user "haan" bole). Face/trust/learn/maker baad me.
+- Ek hi cheez aur baaki hai: **Cartesia ki female voice id** (`CARTESIA_VOICE_*`). Na mile to Cartesia skip hoti
 hai — koi problem nahi, Edge Swara chalti hai.
 - Aage ka kaam user se pucho; koi chhupi hui task nahi hai.
 
@@ -253,3 +297,8 @@ green**, sab file `<200`.
   shared Engine (`server/state.py`), same-origin GET fix (Referer/`Sec-Fetch-Site`),
   grid `%` → `fr` overflow fix, SVG radialGradient, SYSTEM pill startup fix — **23 suite green**,
   live Chrome par 0 error, sab file `<200`.
+- **Phase 5 Step 3a (2 Oct 2026)** — desktop shell: `config_desktop`, `desktop/`
+  (launcher/app/tray/trayicon/hud_window/single/state/micperm/lockwatch), `start_prabh.bat`,
+  `ui/hud_desktop.js`, wake stub, Sunday-only flag, TOOLS 30-min auto-off, Vosk model +
+  pystray/sounddevice/vosk/miniaudio packages, `test_desktop*.py` + `desktophelp.py`
+  — **25 suite green**. Auto-start registry entry jaan-boojh kar nahi likhi.

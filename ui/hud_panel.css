@@ -79,6 +79,13 @@
 .pill.sys.degrade { color: var(--amber); border-color: rgba(245, 166, 35, 0.5); }
 .pill.sys.off   { color: #ff8080; border-color: rgba(255, 128, 128, 0.5); }
 
+/* Desktop pill — Python side ka mic + wake. Tray icon ka rang yahi hai. */
+.pill.desk            { color: var(--ink-dim); }
+.pill.desk.idle       { color: var(--cyan); border-color: rgba(46, 168, 255, 0.45); }
+.pill.desk.listening  { color: var(--cyan-bright); border-color: var(--cyan); background: rgba(46, 168, 255, 0.16); }
+.pill.desk.muted      { color: var(--amber); border-color: rgba(245, 166, 35, 0.55); background: rgba(245, 166, 35, 0.10); }
+.pill.desk.error      { color: #ff8080; border-color: rgba(255, 128, 128, 0.5); }
+
 /* ---- Chhote buttons (top bar + bottom bar) ---- */
 .mini {
   font-family: var(--font-mono);

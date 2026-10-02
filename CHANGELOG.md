@@ -6,6 +6,67 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Phase 5 Step 3a (2 Oct 2026) — desktop shell (tray + supervisor + Edge HUD)
+
+Wake/face/trust/learn/maker ka poora plan `PLAN.md` + `PLAN-TRUST.md` me hai
+(commit `081b7f7`). Abhi **sirf Step 3a** bana — wake sirf stub hai.
+
+**Naye package** (`.venv` me, D: drive ke cache/temp se):
+`vosk 0.3.45` · `sounddevice 0.5.6` · `numpy 2.5.3` · `miniaudio 1.71` ·
+`pystray 0.19.5`. Aage ka chhota plan: `wake word` → `mic` → `chime` →
+`baat sunai de` (sirf Step 1-3; face se pehle).
+
+**Vosk model** (Step 1 ke liye pehle se download): `models/vosk-model-small-en-us-0.15`
+— 41,205,931 byte, SHA256 `30F26242C4EB449F948E42CB302DD7A686CB29A3423A8367F99FF41780942498`.
+Model load + grammar smoke `MODEL OK`. `models/` git-ignore hai.
+
+**Naye files**
+
+- `config_desktop.py` — tray ke 5 rang, HUD 1200x720, crash backoff (2/5/10/20/30s),
+  exit code (0 quit · 1 crash · 3 already running), Edge path, `browser_path()`.
+- `desktop/launcher.py` — supervisor. `next_step()` **pure function** hai (test me
+  crash list wapas deta hai, mutate nahi karta), `supervise()` child spawn karta hai.
+  Crash par backoff, 5 crash ke baad ruk jaata aur `logs/desktop.out` ka tail log karta hai.
+- `desktop/app.py` — server thread + tray + HUD + `micperm` + `lockwatch`, sab ek
+  jagah se. Server ready hone ka wait 15s.
+- `desktop/tray.py` / `trayicon.py` — menu: haalat / Mic Mute / Open HUD / TOOLS /
+  Restart / Quit. Icon Pillow se 64x64, mic ka nishaan har state me, rang alag.
+- `desktop/hud_window.py` — Edge `--app` primary, Chrome fallback, apna profile
+  (`data/hud-profile`), `--window-size=1200,720`. Is machine par Edge mila.
+- `desktop/single.py` — `msvcrt.locking` se ek hi instance; doosra exit code 3.
+- `desktop/state.py` — ek `STATE`: mic/mute/tools/HUD/wake + version, WebSocket par
+  `{"type":"desktop"}`.
+- `desktop/micperm.py` — `HKCU\...\ConsentStore\microphone` (master `Allow` +
+  `NonPackaged\<exe>`). Is machine par master `Allow`, python ki entry abhi nahi —
+  matlab pehli baar Windows poochega.
+- `desktop/lockwatch.py` — `OpenInputDesktop(DESKTOP_SWITCHDESKTOP)` heuristic;
+  locked + tools ON ho to tools OFF. Locked hone par bhi **rukta nahi** (per soch).
+- `wake/worker.py` — sirf stub (`start()` -> False, `READY=False`), Step 1 me bharega.
+- `ui/hud_desktop.js` — top bar ka DESKTOP pill (mic + wake). Sirf dikhata hai.
+- `start_prabh.bat` — supervisor chalao, crash ka log batao.
+
+**Badhle hue**
+
+- `config.py` — `config_desktop` re-export, `DEFAULT_MODE="sunday"`,
+  `SUNDAY_ONLY` (`PRABH_SUNDAY_ONLY`, default `1`). Prabh ka code **hataya nahi**,
+  sirf switch band hai.
+- `core/modes.py` — `SUNDAY_ONLY` on par Prabh prefix mode nahi badalta, text waise
+  jaata hai.
+- `gatekeeper/limiter.py` — TOOLS **30 minute** baad apne aap OFF (`minutes_left()`
+  bhi). `0` minute = auto-off band.
+- `tests/test_basic.py`, `test_voice.py` — Sunday-only ke hisaab se theek kiya
+  (flag off karke switch chalta hai ye bhi check hota hai).
+- `.gitignore` — `data/`, `models/`, `.cache/`, `.tmp/`. `.env.example` me
+  `PRABH_SUNDAY_ONLY`, `PRABH_TOOLS_ON`, `PRABH_HUD_AT_START`.
+
+**Test** — `tests/test_desktop.py` + `tests/test_desktop_tray.py` (naya helper
+`tests/desktophelp.py`). Koi asli Edge/tray/registry/mic nahi chalti. **25 suite green.**
+
+**Abhi nahi hua (jaan-boojh kar)** — wake word (Step 1), VAD/command flow (Step 2),
+aur **auto-start**. Registry me koi entry nahi likhi gayi hai.
+
+---
+
 ## Phase 4 (1-2 Oct 2026) — 3-column HUD
 
 **Reference photo** — `D:\Pictures\sunday.jpg` se `design/reference.png` copy ki.

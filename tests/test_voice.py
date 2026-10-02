@@ -34,16 +34,31 @@ def check(name, got, want):
 
 def test_mode_aliases():
     print("MODE NAME VARIANTS")
-    cases = [
+    sunday_cases = [
         ("Sunday, hi", "sunday"), ("sunday hi", "sunday"),
         ("संडे kya haal", "sunday"), ("संडे, ok", "sunday"),
+    ]
+    prabh_cases = [
         ("Prabh, hi", "prabh"), ("PRABHU hi", "prabh"),
         ("प्रभ namaste", "prabh"), ("प्रभु namaste", "prabh"),
     ]
-    for text, want in cases:
-        other = "prabh" if want == "sunday" else "sunday"
-        check(f"'{text[:12]}' -> {want}", modes.detect_mode(text, other)[0], want)
-    check("bina naam wahi mode", modes.detect_mode("kya haal", "prabh")[0], "prabh")
+    # Phase 5: abhi sirf SUNDAY. Prabh bolne par bhi switch nahi hona chahiye.
+    check("sirf sunday (config)", config.SUNDAY_ONLY, True)
+    for text, want in sunday_cases:
+        check(f"'{text[:12]}' -> {want}", modes.detect_mode(text, "prabh")[0], want)
+    for text, _want in prabh_cases:
+        check(f"'{text[:12]}' -> sunday (blocked)", modes.detect_mode(text, "sunday")[0], "sunday")
+    # Text poora nahi katna — sirf mode nahi badla.
+    mode, rest = modes.detect_mode("Prabh, kya haal batao", "sunday")
+    check("blocked par text bacha", (mode, rest), ("sunday", "kya haal batao"))
+    # Flag off karne par Prabh wapas chalu — code maarta nahi, sirf flag hai.
+    config.SUNDAY_ONLY = False
+    try:
+        for text, want in prabh_cases:
+            check(f"flag off: '{text[:12]}' -> {want}", modes.detect_mode(text, "sunday")[0], want)
+        check("flag off par bina naam wahi", modes.detect_mode("kya haal", "prabh")[0], "prabh")
+    finally:
+        config.SUNDAY_ONLY = True
     check("aadha naam nahi maana", modes.detect_mode("sundaya kya", "sunday")[0], "sunday")
     check("6 naam config me", len(config.mode_aliases()), 6)
 

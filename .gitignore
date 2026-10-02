@@ -10,6 +10,17 @@ venv/
 # logs
 logs/
 
+# Phase 5 runtime (local only, kabhi commit nahi).
+# NOTE: gitignore me patter ke aage comment nahi likh sakte — alag line par.
+# data/  = lock file + HUD ka browser profile
+# models/ = Vosk wake-word model (~40 MB, ek baar download)
+# .cache/ = pip cache (D: drive par hi rehta hai)
+# .tmp/   = temp / build files
+data/
+models/
+.cache/
+.tmp/
+
 # editor
 .vscode/
 .idea/

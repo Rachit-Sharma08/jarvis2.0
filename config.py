@@ -3,6 +3,8 @@
 Bade hisse alag file me hain (ek file, ek kaam):
   - config_brain.py  → brain provider keys, models, tokens, timeouts
   - config_voice.py  → TTS/STT constants + voice id ka faisla
+  - config_hud.py    → HUD ka rang, weather, stats interval, quick buttons
+  - config_desktop.py → desktop shell: HUD window, tray, supervisor, autostart
 Yahan woh sab re-export hote hain, isliye `config.GROQ_API_KEY` aur
 `config.TTS_CHAIN` dono pehle jaise hi kaam karte hain.
 
@@ -46,8 +48,24 @@ from config_hud import (  # noqa: E402
     WEATHER_CITY, WEATHER_LAT, WEATHER_LON, WEATHER_TIMEOUT_SECONDS, WEATHER_URL,
     quick_by_id, quick_ids, temp_percent, weather_text,
 )
+from config_desktop import (  # noqa: E402
+    AUTOSTART_NAME, AUTOSTART_RUN_KEY, BROWSER_CANDIDATES, DATA_DIR,
+    EXIT_ALREADY_RUNNING, EXIT_QUIT, EXIT_RESTART, HUD_HEIGHT,
+    HUD_OPEN_AT_START, HUD_PATH, HUD_PROFILE_DIR, HUD_WIDTH, LOCK_FILE,
+    LOCK_POLL_SECONDS, MIC_CONSENT_KEY, RESTART_BACKOFF, RESTART_MAX,
+    RESTART_WINDOW_SECONDS, TRAY_COLORS, TRAY_ERROR, TRAY_IDLE,
+    TRAY_LISTENING, TRAY_MUTED, TRAY_NAME, TRAY_OFF, TRAY_TITLE,
+    TOOLS_AUTO_OFF_MINUTES, backoff_for, browser_path, tray_color, tray_title,
+)
 
 DEFAULT_MODE = "sunday"
+
+# Phase 5: sirf Sunday. PRABH mode ka code **hataya nahi gaya** — bas band
+# kar diya gaya hai. Band karna ek flag se hai taaki baad me wapas on kar
+# sakein bina kuch badle. `core/modes.py` yahi flag dekhta hai: "Prabh..." bol
+# par bhi mode sunday hi rahega, aur wo text ek normal message ki tarah brain
+# ko jayegi.
+SUNDAY_ONLY = os.getenv("PRABH_SUNDAY_ONLY", "1") == "1"
 
 # Ye app sirf is PC par chalti hai. 0.0.0.0 kabhi allowed nahi.
 SERVER_HOST = "127.0.0.1"

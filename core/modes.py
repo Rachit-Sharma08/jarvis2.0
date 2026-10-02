@@ -17,6 +17,10 @@ NAMES = {"sunday": "Sunday", "prabh": "Prabh"}
 def detect_mode(text: str, current_mode: str) -> tuple:
     """Message 'Sunday...' ya 'Prabh...' se shuru ho to mode badal do.
 
+    `config.SUNDAY_ONLY` on hai to PRABH ka switch **band** hai — koi bhi
+    message se prabh mode nahi jayega. Prabh ka code yahan maujood hai,
+    hataya nahi gaya; sirf ek flag se band hai (Phase 5, sirf Sunday).
+
     Returns (mode, message_without_prefix).
     """
     if not text:
@@ -28,6 +32,9 @@ def detect_mode(text: str, current_mode: str) -> tuple:
 
     mode = ALIASES[match.group(1).lower()]
     rest = text[match.end():].strip()
+    if config.SUNDAY_ONLY and mode != config.DEFAULT_MODE:
+        # Blocked switch: text waise hi aage jayega, sirf mode nahi badlega.
+        return current_mode, rest or text.strip()
     return mode, rest or text.strip()
 
 
