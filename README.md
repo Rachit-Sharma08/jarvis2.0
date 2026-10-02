@@ -21,6 +21,8 @@ screen par confirm card aata hai.
 - Awaaz ke liye → [VOICE.md](VOICE.md)
 - Brain (models, fallback, error) ke liye → [BRAIN.md](BRAIN.md)
 - PC ke kaam ke liye → [TOOLS.md](TOOLS.md)
+- Kisi bhi AI ko ye project sikhana ho → **[CLAUDE.md](CLAUDE.md)** (chhota handoff:
+  haalaat, chalti cheezein, pakkaurey, roadmap). Poore niyam → `AGENTS.md`.
 
 ---
 
