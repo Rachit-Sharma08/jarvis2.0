@@ -59,9 +59,11 @@ WAKE_COOLDOWN_SECONDS = 1.5
 
 # ---- command window ----
 COMMAND_MAX_SECONDS = 8      # wake ke baad itni der suno
-COMMAND_MIN_SECONDS = 0.6
-COMMAND_END_SILENCE_SECONDS = 1.1   # user chup ho gaya -> command khatam
+COMMAND_MIN_SECONDS = 0.6    # itni ASLI awaaz chahiye, khamoshi ginti nahi
+COMMAND_END_SILENCE_SECONDS = 0.9   # user chup ho gaya -> command khatam
+COMMAND_HANGOVER_SECONDS = 0.4     # beech ka chhota ruk na kaato (wake se chhota)
 COMMAND_PRE_ROLL_SECONDS = 0.4     # "Sunday" ke aakhri shabd bhi pakad lo
+COMMAND_WAIT_SECONDS = 5.0         # pehla shabd aaya hi nahi -> "sun nahi aaya"
 COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-ta hai
 
 # Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye — is liye

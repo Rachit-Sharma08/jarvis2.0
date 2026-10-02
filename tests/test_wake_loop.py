@@ -130,6 +130,32 @@ def _raise_model(folder=""):
     raise model_mod.ModelMissing("model nahi mila")
 
 
+def test_mic_dies_empty_queue():
+    """Queue khaali + mic dead -> loop `listening` me atak na rahe."""
+    print("MIC DEATH (queue khaali)")
+    saved = (session_mod.detect.build, session_mod.audio_mod.MicSource)
+
+    class DeadAfterStart(FakeMic):
+        def start(self):
+            super().start()
+            self.alive = False           # turant mara, ek bhi chunk nahi
+            return True
+
+    session_mod.detect.build = lambda: FakeListener()
+    session_mod.audio_mod.MicSource = DeadAfterStart
+    states = []
+    try:
+        worker.stop()
+        check("start ne chalaya", worker.start(on_state=states.append), True)
+        ok = wait(lambda: worker.state() == "error", seconds=3.0)
+        check("error state aaya", ok, True)
+        check("listening nahi", worker.listening(), False)
+        truthy("error state bheja", "error" in states)
+    finally:
+        session_mod.detect.build, session_mod.audio_mod.MicSource = saved
+        worker.stop()
+
+
 def test_states_and_describe():
     print("SESSION STATES (direct)")
     fresh = session_mod.Session()
@@ -145,7 +171,8 @@ def test_states_and_describe():
     check("stop se pehle bhi crash nahi", fresh.state(), "off")
 
 
-for fn in (test_worker_loop, test_crash_safe, test_worker_fail, test_states_and_describe):
+for fn in (test_worker_loop, test_crash_safe, test_worker_fail,
+           test_mic_dies_empty_queue, test_states_and_describe):
     fn()
 
 finish("Saare wake loop test pass.")

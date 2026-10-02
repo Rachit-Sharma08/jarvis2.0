@@ -111,8 +111,10 @@ class Session:
             try:
                 raw = self._mic.chunks.get(timeout=0.5)
             except queue.Empty:
+                if not self._mic.alive:            # mic mara, queue khaali
+                    break
                 continue
-            if not self._mic.alive:                  # mic beech me mar gaya
+            if not self._mic.alive:
                 break
             if self._paused.is_set() or time.monotonic() < cool_until:
                 continue                             # chunk phenko, suno nahi
@@ -146,16 +148,27 @@ class Session:
         vad.reset()
 
     def _end(self) -> None:
-        """Loop khatam (band ya mic mara). Jo bhi haal — saaf jodo."""
-        reason = self._mic.error if self._mic is not None else ""
+        """Loop khatam (band ya mic mara) — haal ke hisaab se `off` ya `error`.
+
+        Sirf `mic.error` dekhna kaafi nahi: device unplug ho to error khaali
+        hota hai aur app chup-chaap `off` ho jaata tha. Is liye faisla `_stop`
+        se hota hai — loop khud khatam hua matlab `error`.
+        """
+        mic = self._mic
+        reason = mic.error if mic is not None else ""
+        dead = mic is not None and not mic.alive
         self._close()
         self._thread = None
-        if reason and not self._stop.is_set():
-            log.error("wake mic chala gaya: %s", reason)
-            self._say(self._on_state, "error")
+        if self._stop.is_set():
+            log.info("wake band")
+            value = "off"
+        elif reason or dead:
+            log.error("wake mic chala gaya: %s", reason or "device band (wajah nahi mili)")
+            value = "error"
         else:
             log.info("wake band")
-            self._say(self._on_state, "off")
+            value = "off"
+        self._say(self._on_state, value)
 
     def _fail(self, exc: Exception) -> None:
         self._failures += 1
