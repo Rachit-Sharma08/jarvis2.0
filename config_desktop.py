@@ -118,6 +118,21 @@ STARTUP_WAKE = "wake"
 # Kitni der tak startup ka intezaar — phir "HUD ready: FAILED" bol kar aage badho.
 STARTUP_HTTP_TIMEOUT = 20.0
 
+# ---- Speaker (Step 2: "Ji, boliye" aur jawab ki awaaz) ----
+# TTS ke mp3/wav bytes `desktop/playback.py` me `miniaudio` se 16-bit PCM me
+# badal kar `sounddevice` se bajte hain. Mic ki taraf ka rule yahi hai — ek hi
+# jagah (`wake/audio.py`), koi doosra `OutputStream` nahi.
+# Device khali chhodne par Windows ka default speaker chalta hai. Device badalna
+# ho to `.env` me PRABH_SPEAKER=<device name>; list ke liye
+# `python -m desktop.playback --list`.
+OUTPUT_DEVICE = os.getenv("PRABH_SPEAKER", "").strip() or None
+# 32 kHz mono. TTS 22-24 kHz deta hai, is se upar jaane se koi fayda nahi aur
+# resample ka kaam bhi kam hota hai.
+OUTPUT_RATE = int(os.getenv("PRABH_SPEAKER_RATE", "32000"))
+# TTS + decode + play ka total intezaar. Is se zyada lage to chup kar do —
+# wake thread ko rok na sakte.
+PLAYBACK_TIMEOUT_SECONDS = 45.0
+
 # ---- Suraksha ----
 # TOOLS ON karne ke 30 minute baad apne aap OFF. Wake se bhi gatekeeper
 # bilkul waisa hi hai — awaaz se Allow kabhi nahi hota.
