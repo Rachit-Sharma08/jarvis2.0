@@ -97,7 +97,7 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (32 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py — poori list TESTS.md me)
+  tests/ (36 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
 
@@ -250,7 +250,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 32 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 36 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -330,6 +330,13 @@ endpoint mat likho.
   fake `tests/desktophelp.py` me `install_audio()` se `sys.modules` me daalo
   (playback late import karta hai, is liye bas yahi kaafi hai) aur `voice/tts.speak`
   ko badal do. Asli check `python -m desktop.playback --say "..."` se.
+- **Test file 200+ ho to theme ke hisaab se todo**, aur **helper class/function ko
+  module level par rakh** — use hone wali function me chhod diya to doosri me
+  `NameError` se **silent fail** ho jaata hai (aisa hi hua: `Ok`/`boom` split ke
+  baad local reh gaye, 2 check chup-chaap False hue). Naya file banakar
+  `TESTS.md` ki table me row zaroor daalo. `test_desktop.py` ka hygiene check
+  ab **har** `tests/test_*.py` par `<=200` lines lagata hai — is liye split ke
+  baad koi badi file chup-chaap nahi reh sakti.
 - **Wake test me asli mic / Vosk model / sounddevice kabhi mat chalao.** Fakes
   `tests/wakehelp.py` me hain; `Session.start()` sirf **do** cheez maangta hai —
   `wake.session.detect.build` aur `wake.session.audio_mod.MicSource` (wahi patch karo).
@@ -567,3 +574,12 @@ green**, sab file `<200`.
   `desktophelp.install_audio()` + 2 naye suite — **32 suite green**. Naye 6 niyam
   bullet (playback/akhi-raasta/decode/query_devices/np.asarray/test-fake).
   `tests/test_wake.py` ka `WAKE_MODEL_ALT_DIR` leak fix + `wake/__init__.py` docstring.
+- **Test split (3 Oct 2026)** — `tests/test_desktop.py` 390 lines tha (niyam tod
+  raha tha, pehle se). 4 file me toda: `test_desktop.py` (160, shell + hygiene),
+  `test_desktop_single.py` (163, single instance + stale PID/lock),
+  `test_desktop_guard.py` (96, TOOLS auto-off + tray guard), aur naya
+  `test_wake_worker.py` (49, wake wiring — pehle `test_desktop.py` me tha).
+  Ek asli galti: split karte hi `Ok`/`boom` helper **local** reh gaye the, to
+  `diagnose()` ke 2 check chup-chaap False hue — isi liye ab module level par
+  rakhne ka niyam. Hygiene check `<200` se **`<=200`** hua aur ab har
+  `tests/test_*.py` par lagta hai. **36 suite green**.

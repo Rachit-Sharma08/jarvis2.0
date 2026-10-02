@@ -50,6 +50,16 @@ awaaz bajane ka bhi. Brain tak pohanchna agli sub-step hai (`wake/command.py`).
   wapas karta tha (`WAKE_MODEL_ALT_DIR` hamesha ke liye galat reh jaata) -
   ab dono wapas + 2 naya check. `wake/__init__.py` ka docstring ab Step 2 ke
   asli haal se match karta hai.
+- **Test split (isi din):** `tests/test_desktop.py` 390 lines tha - 200-line
+  niyam tod raha tha. 4 file me toda: `test_desktop.py` (160, shell + hygiene),
+  `test_desktop_single.py` (163, single instance + stale PID/lock),
+  `test_desktop_guard.py` (96, TOOLS auto-off + tray guard) aur naya
+  `test_wake_worker.py` (49, wake wiring). **Ek asli galti** split karte hi pakdi:
+  `Ok` / `boom` helper naye function me local reh gaye the, to `diagnose()` ke 2
+  check chup-chaap `False` hue. Isi liye ab helper **module level** par rakhne ka
+  pakkaura banaya. Hygiene check `<200` se **`<=200`** hua aur ab har
+  `tests/test_*.py` par lagta hai - koi badi test file chup-chaap nahi reh sakti.
+  **32 -> 36 suite green.**
 
 ---
 

@@ -1,4 +1,4 @@
-# Tests (32 suites)
+# Tests (36 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 32 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 36 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -67,7 +67,9 @@ Ek-ek karke:
 | `test_fixes_r1_ui.py` | UI fixes, dedupe, labels |
 | `test_fixes_r1_voice.py` | Cartesia payload, female chain, khaali text block |
 | `test_hud.py` | Phase 4 HUD — ye khud se 4 helper file me phaila hai (neeche dekho) |
-| `test_desktop.py` | Desktop shell: backoff, `--app` command, single instance, crash-restart ke faisle, TOOLS auto-off, startup ki 4 line, log ASCII, `.gitignore` |
+| `test_desktop.py` | Desktop shell: config/backoff, HUD `--app` command, launcher ke crash-restart ke faisle, startup ki 4 line, log ASCII, **hygiene (har source + har test file `<=200` lines)** |
+| `test_desktop_single.py` | Single instance + stale PID/lock: `pid_alive`/`http_alive` ke fake probe, 4 "CHAL/atka/stale" combination, stale PID ka apne aap hatna |
+| `test_desktop_guard.py` | App ke do "ruk jaao" pakkaure: TOOLS 30-min auto-off (+crash-safe hook) aur tray ke bina 3 koshish → `EXIT_NO_TRAY` |
 | `test_desktop_tray.py` | Tray icon ke 5 rang, menu ke 5 button, shared state, mic permission key, lock heuristic |
 | `test_desktop_shortcut.py` | HUD ka backup raasta: `open_hud.plan()`, `shortcut.command()` list, Desktop path padhna, app/tray wiring — `.lnk` **kabhi banata nahi** |
 | `test_desktop_hotkey.py` | `hotkey.parse/describe` (pure) + `Hotkey` stub flow + **thread-ownership pakkaura** (`RegisterHotKey` aur pump ek hi thread) + hotkey file ka hygiene |
@@ -75,6 +77,7 @@ Ek-ek karke:
 | `test_desktop_play_say.py` | `playback.say()` — text se TTS, **har galti par `0` aur crash nahi** (TtsError / crash / khaali audio / timeout), `--say` ka raasta |
 | `test_wake.py` | Wake constants, PCM/RMS + energy VAD (pure), Vosk JSON par `detect`, "sunday" pakadna, model ke **error** raaste |
 | `test_wake_loop.py` | Worker ka poora loop **fake mic + fake listener** se: trigger, `heard` state, cooldown, mute-pause, crash-safe callbacks |
+| `test_wake_worker.py` | Worker ka **wiring** (`wake_worker.start/stop/…`) — `Session` ke sirf do cheez fake, asli mic/model kabhi nahi |
 | `test_wake_utterance.py` | Wake ke baad ka command: pre-roll, VAD se band karna, min/max/wait/stop, **mic mar jaye to turant lautna**, `wav.py` ka sahi WAV |
 | `test_bat.py` | `start_prabh.bat`: CRLF + ASCII + raw-bracket rule, aur asli `cmd` par launch line sach me chalti hai ya nahi |
 
@@ -85,6 +88,13 @@ Ek-ek karke:
 (`sounddevice`), aur `install_audio()` / `remove_audio()` jo dono ko `sys.modules`
 me daalte hain (playback late import karta hai, is liye bas yahi karna padta hai).
 Naya desktop test yahin se import kare.
+
+**Bade suite ko 2-3 file me todo** (AGENTS.md ka 200-line niyam). `test_desktop.py`
+200+ lines ho gaya to usme se theme alag karke naya file banao — jaise
+`test_desktop_single.py` (single instance) + `test_desktop_guard.py` (TOOLS
+auto-off + tray guard) banaye gaye. Ek zaroori baat: file todte waqt **helper
+function/class ko usi function me mat chhodo** jahan use hota hai — module level
+par le jao, warna doosre function me `NameError` (silent fail) ho jaata hai.
 
 **Desktop suite ka niyam:** koi **asli** cheez mat chalao — Edge spawn nahi,
 tray message loop nahi, Run registry nahi, mic nahi, **speaker nahi**. Sirf
