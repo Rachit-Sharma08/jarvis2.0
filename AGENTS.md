@@ -306,6 +306,69 @@ hai — koi problem nahi, Edge Swara chalti hai.
 
 ---
 
+## 8.1 PC WALE KAAM (2 Oct 2026) — ye project ke code se alag hain
+
+Ye sab **`D:\prabh` ke bahar** ka kaam tha. Ek baar record hai; dobara mat karo.
+
+### 1. Purana JARVIS auto-start — **HATA DIYA GAYA** (backup ke saath)
+
+- `HKCU\Software\Microsoft\Windows\CurrentVersion\Run` se value `electron.app.Electron`
+  **delete** kar di gayi thi (`reg query` me ab nahi hai — proof log me hai).
+- Backup: `D:\prabh\backup\jarvis-autostart-20261002-141601.reg` — 456 byte, UTF-16LE + BOM
+  + CRLF, path `D:\jarvis\desktop`. **Wapas chahiye to `.reg` file `reg import` karo.**
+- `backup/` folder `.gitignore` me hai — system backup kabhi commit mat karo.
+- `D:\jarvis` folder aur `electron.exe` **chhue nahi gaye**, koi `electron.exe` process
+  bhi nahi tha. Baaki 7 Run values (OneDrive, Teams, Hermes x2, Chrome, Microsoft.Lists, Edge) shaant.
+
+### 2. `D:\SystemConfig` — JAANCH POORI, Koi BADLAV NAHI (user ke "haan" ka wait)
+
+Chain (ek hi raasta): Startup folder `SystemConfig.bat` (4 line, sirf `run-all.ps1` chalaati hai)
+→ `run-all.ps1` → `apply-settings.ps1` (har login) + `backup.ps1` (12h+ purana ho to).
+Source `D:\SystemConfig\Startup-helper\SystemConfig.bat` se byte-identical
+(SHA256 `5A128FDDE2D354C242CC2BF5DA74F9E5868B20CDA37A6A89FD341DE04ABC0FCB`).
+
+- **Kab bana:** 14-Sep-2026 21:08 → 22:55, ek hi session me (`PARTNER_CHAT_LOG.txt` ke hisaab se
+  opencode ke saath). Aakhri chal: 2-Oct-2026 08:24:54, "Sab kuch OK".
+- **Internet: kuch nahi bhejta, kuch nahi download karta.** Poore folder me sirf ek URL:
+  `cdp-helper.ps1` ka `http://localhost:9222/json` — wo bhi **startup chain me nahi**, kabhi
+  nahi bulta.
+- Judne ka tareeka: **sirf Startup folder**. Registry `Run`/`RunOnce` me koi entry nahi, koi
+  scheduled task nahi. `StartupApproved\StartupFolder\SystemConfig.bat = 02000...` (enabled).
+- **Secrets (kabhi mat likh):** plaintext password 3 jagah —
+  `Fix-Password-Prompt.ps1:6`, `PARTNER_CHAT_LOG.txt:54-55`. Koi API key/token nahi.
+- Folder me hai par **startup chain me nahi**: `DisableUAC.bat` (UAC band karne ki koshish —
+  **kaam nahi ki**, `EnableLUA=1` aaj bhi), `Add-Me-To-Admins.bat`, `FixAdmins2.bat`,
+  `elevate*.bat`, `After-Account-Change.bat`, `cdp-helper.ps1`. User **abhi admin nahi**.
+- **Reversible plan (user ke "haan" par):** Startup folder se sirf `SystemConfig.bat` ka entry
+  hatao. `D:\SystemConfig` ki koi file delete mat karo. Backup `backup\` me rakh lo.
+
+### 3. Tray icon na dikhna — asli wajah **Windows overflow** hai, pystray nahi
+
+- `HKCU\Control Panel\NotifyIconSettings`: 22 icon entries, sirf **1** par `IsPromoted=1`
+  (direct taskbar me), baaki **21** par key hi nahi = Windows ne sabko overflow `^` me
+  chhupa diya hai (normal Windows 10/11 behaviour).
+- Pichli baar bhi icon **register hua tha** (log `tray ready` + window class
+  `Sunday1944541326960SystemTrayIcon` maujood) — bas dikha nahi.
+- **User ko batao:** taskbar ke `^` (chevron) par click → Sunday icon → right-click →
+  **"Always show icons"**. Isse wo permanent dikhta rahega.
+- Debug ke liye: `tests/` me nahi, ek throwaway `EnumWindows` script se process ki window
+  class dekho + `NotifyIconSettings` count nikalo. Script har baar naya bana sakte ho.
+
+### 4. HUD `localhost` vs `127.0.0.1`
+
+- Log me `token reject` + `origin=http://localhost:8000` dikhta hai — browser GET par `Origin`
+  nahi bhejta aur security `127.0.0.1` maangti hai. **HUD hamesha `http://127.0.0.1:8000` kholo.**
+  `localhost` se kuch bhi nahi chalega (Phase 4 me ye hi chhupi hui bug thi).
+
+### 5. Jahan chhoda tha (2-Oct raat, user sone gaya tha)
+
+- App **band tha** (koi `desktop.app`/`desktop.launcher` process nahi, port 8000 khaali),
+  `data\prabh.pid` khaali, lock free, git clean. Fix round 3 (`1fde9d9`) already live code me tha.
+- **Agla step user ka hai:** `start_prabh.bat` double-click → tray icon `^` me dekhna →
+  "Always show icons" → phir confirm. Uske baad hi Phase 5 **Step 1** (Vosk wake word) shuru.
+
+---
+
 ## CHANGE HISTORY
 
 Poora record → **`CHANGELOG.md`**. Saali line:
@@ -343,4 +406,7 @@ green**, sab file `<200`.
   `_clean_stale_pid()` stale `.pid` hata deta hai; message console par bhi;
   tray `retry_start()` 3 koshish ke baad `EXIT_NO_TRAY` (4) se saaf exit +
   `run()` me `_stop.is_set()` check; `desktop/actions.py` naya split
-  (`app.py` 189 lines) — **26 suite green**.
+  (`app.py` 189 lines) — **26 suite green**. Purana JARVIS auto-start
+  (`HKCU\Run` me `electron.app.Electron`) **backup ke saath hata diya**; `D:\SystemConfig`
+  ki jaanch poori par **kuch nahi badla** (user ke "haan" ka wait) — dono ka record
+  section **8.1** me.
