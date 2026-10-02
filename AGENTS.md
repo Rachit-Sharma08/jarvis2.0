@@ -80,6 +80,7 @@ prabh/
   desktop/callbacks.py -> app ke 4 callback ka matlab (lock/tools/wake/hotkey), app.py se alag
   desktop/startup.py  -> startup ki 4 line + say_hud()/say_wake() (line yahin banti hai)
   desktop/hotkey.py   -> global hotkey (Ctrl+Alt+S), sirf ctypes + RegisterHotKey
+  desktop/playback.py -> Step 2 speaker: TTS bytes -> miniaudio PCM -> sounddevice
   desktop/open_hud.py -> shortcut + hotkey dono ka EK raasta (server zinda -> HUD)
   desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Sunday HUD" .lnk banao/hatao
   wake/worker.py     -> Step 1 ka module-level raasta (poori app me EK worker)
@@ -96,7 +97,7 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (30 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py — poori list TESTS.md me)
+  tests/ (32 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
 
@@ -249,7 +250,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 30 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 32 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -311,6 +312,24 @@ endpoint mat likho.
 - **Mic ka ek hi owner `wake/audio.py`.** Naya `sounddevice.InputStream` kahin aur mat
   banao (`wake/session.py` bhi wahin se chunk leta hai). VAD + `chunk_to_rms()` bhi usi
   file me — pure hain, is liye test me bina mic ke chal jaate hain.
+- **Speaker ka ek hi raasta `desktop/playback.py`.** Naya `sd.play` / `OutputStream`
+  kahin aur mat likho, aur koi provider wahan mat chuno — awaaz hamesha
+  `voice/tts.py` se (`say()` sirf bajata hai).
+- **`miniaudio.decode` likhna, `decode_file` nahi.** `decode_file` sirf filename
+  leta hai; bytes dene par wo poora audio buffer apne `FileNotFoundError` message
+  me daal deta hai (terminal par MB ka dump). Isi wajah se probe/output kabhi
+  kabhi binary se flood ho jaata hai — **bade output ko file me likho**, console
+  par mat pheko.
+- **`sd.query_devices(kind="output")` list NAHI deta** — sirf default output device
+  ka ek dict deta hai (sounddevice 0.5.6). List ke liye `sd.query_devices()`
+  (bina argument) + `max_output_channels > 0` filter. `playback.devices()` me yahi.
+- **`decoded.samples` me `bytes()` mat lagao** — miniaudio ka array int16 se seedha
+  padha ja sakta hai: `np.asarray(samples, dtype="<i2")`. `bytes()` par wapas raw
+  bytes bante hain jo int16 me galat padhe jaate hain.
+- **Playback test me asli speaker kabhi na baja.** `miniaudio` + `sounddevice` ke
+  fake `tests/desktophelp.py` me `install_audio()` se `sys.modules` me daalo
+  (playback late import karta hai, is liye bas yahi kaafi hai) aur `voice/tts.speak`
+  ko badal do. Asli check `python -m desktop.playback --say "..."` se.
 - **Wake test me asli mic / Vosk model / sounddevice kabhi mat chalao.** Fakes
   `tests/wakehelp.py` me hain; `Session.start()` sirf **do** cheez maangta hai —
   `wake.session.detect.build` aur `wake.session.audio_mod.MicSource` (wahi patch karo).
@@ -371,9 +390,19 @@ endpoint mat likho.
 - **Phase 5 Step 1 (Vosk wake word) ho gaya (2 Oct 2026)** — mic hamesha sunta hai, "Sunday" par
   HUD khulta hai, tray MUTE sunna rokta hai, **30 suite green**. Detail `VOICE.md`,
   record `CHANGELOG.md`.
-- Baaqi Phase 5, isi order me: **Step 2** (wake ke baad command sunna + TTS se "Ji, boliye"
-  + phir brain) → **Step 3** auto-start (registry tabhi jab user "haan" bole).
+- **Phase 5 Step 2 ke do hisse ho gaye (3 Oct 2026) — 32 suite green.** **2a** command
+  capture (`wake/utterance.py` + `wake/wav.py`), **2b** speaker (`desktop/playback.py`,
+  `python -m desktop.playback --say "Ji, boliye"` se bina app ke awaaz test ho jaati hai).
+  Dono ka record `CHANGELOG.md`, detail `VOICE.md`.
+- **Baaqi Phase 5, isi order me:** **Step 2c** (`wake/command.py` — wake ke baad "Ji, boliye",
+  mic queue drain + warm-up, capture → Groq STT → shared `ENGINE` → Hub/UI events → jawab ki
+  awaaz) → **Step 3** auto-start (registry tabhi jab user "haan" bole).
   Face/trust/learn/maker baad me.
+- **Step 2c banate waqt yaad rakho:** `Session._fire()` `on_wake` ko **wake thread par
+  synchronously** call karta hai — is liye command glue wahin chalega (ek hi queue
+  consumer). Mic/stop-event ka public access `wake/worker.py` se dena hai (Session 199
+  lines par hai, naya file bhi 200 se chhota rakhna). `worker.stop()` ka join 3 s hai,
+  par command+TTS 8 s+ lag sakta hai — capture ko bhi stop event dena padega.
 - **Fix round 4 ho gaya (2 Oct 2026)** — tray entry `IsPromoted=1` (backup ke saath), Desktop
   `Sunday HUD` shortcut + global hotkey `Ctrl+Alt+S`, dono ka ek raasta
   (`desktop/open_hud.py`). Record `CHANGELOG.md` me.
@@ -527,3 +556,14 @@ green**, sab file `<200`.
   `test_wake_loop.py` — **30 suite green**. Do asli bug pakde: `FILLER` me `"[unk]"`
   bekaar tha, aur purana `test_desktop.py` **asli mic** khol raha tha. GitHub private
   repo `rachithunyawrr/jarvis2.0` bana + poora history push.
+- **Phase 5 Step 2 (3 Oct 2026)** — wake ke baad ka command + speaker. **2a** (`5e9a2fc`)
+  `wake/utterance.py` (pre-roll 0.4 s, VAD end 0.9 s, max 8 s, wait 5 s) + `wake/wav.py`
+  (PCM → WAV). Do asli bug: khaali queue par **infinite wait**, aur min-duration
+  aakhir ki khamoshi gin raha tha. **2b** (`d3a5f7a`) naya `desktop/playback.py`
+  (TTS bytes → `miniaudio` PCM → `sounddevice`), `OUTPUT_DEVICE`/`OUTPUT_RATE`/
+  `PLAYBACK_TIMEOUT_SECONDS`. Do asli galti pakdi: `miniaudio.decode_file` bytes par
+  MB ka dump (sirf `decode()` chahiye) aur `sd.query_devices(kind="output")` list nahi
+  deta (`query_devices()` + `max_output_channels` filter). Naye fake
+  `desktophelp.install_audio()` + 2 naye suite — **32 suite green**. Naye 6 niyam
+  bullet (playback/akhi-raasta/decode/query_devices/np.asarray/test-fake).
+  `tests/test_wake.py` ka `WAKE_MODEL_ALT_DIR` leak fix + `wake/__init__.py` docstring.

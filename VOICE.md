@@ -140,10 +140,47 @@ Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
 | Band karo | `.env` me `PRABH_WAKE=0` — phir startup me `wake: PRABH_WAKE=0 se band hai` dikhega |
 | Startup line | `wake: sun raha hai (sunday)` — ya mic band/model missing ho to wajah |
 
-### Abhi kya **nahi** hota (Step 2 ka kaam)
+### Command sunna (Step 2) — pehla hissa
 
-- ❌ Wake ke baad **command sunna** (aaj sirf HUD khulta hai)
-- ❌ **"Ji, boliye"** bolna (TTS se awaaz — `desktop/playback.py` Step 2 me)
+Wake ke baad mic se command uthane ka kaam shuru ho chuka hai:
+
+| Kya | Kahan |
+|---|---|
+| Command capture (pre-roll, VAD, max/min/wait) | `wake/utterance.py` |
+| PCM -> WAV (Groq ko bhejne ke liye) | `wake/wav.py` |
+| Speaker — TTS bytes bajana | `desktop/playback.py` |
+
+Abhi **brain tak pohanch nahi raha** (wo agla hissa hai). Jo ban chuka hai usse
+app ke bina test kar sakte ho:
+
+```powershell
+cd D:\prabh
+# 1. Kaunse speaker hain
+.\.venv\Scripts\python.exe -m desktop.playback --list
+# 2. Asli awaaz (ek baar "Ji, boliye" bolega)
+.\.venv\Scripts\python.exe -m desktop.playback --say "Ji, boliye"
+```
+
+### Speaker ke do pakkaurey (Step 2)
+
+1. **`miniaudio.decode`, `decode_file` nahi.** `decode_file` sirf filename leta
+   hai. Bytes dene par wo poora audio buffer apne error message me daal deta
+   hai — yaani terminal par MB ka dump. `desktop/playback.py` sirf `decode()`
+   (memory buffer) use karta hai.
+2. **`sd.query_devices(kind="output")` list nahi deta** — sirf default output
+   device ka ek dict deta hai. List ke liye `query_devices()` (bina argument)
+   + `max_output_channels > 0` filter. `desktop/playback.py` me yahi hai.
+
+TTS ka provider **yahan chuna nahi jaata** — awaaz hamesha `voice/tts.py` se
+aati hai (AGENTS.md ka "TTS provider ka ek hi raasta") aur `say()` sirf use
+bajata hai. `.env` me `PRABH_SPEAKER=<device name>` se speaker badal sakte ho,
+`PRABH_SPEAKER_RATE` se rate (default 32 kHz mono).
+
+### Abhi kya **nahi** hota (Step 2 ka baaki hissa)
+
+- ❌ Wake ke baad **command sunna** — capture to tayyar hai, par use karne wala
+  glue (`wake/command.py`) abhi nahi bana
+- ❌ Command ka **brain tak jaana** aur jawab ki awaaz
 - ❌ Sunke **tool chalana** — ALLOW hamesha screen par button se hi hoga, awaaz se nahi
 
 ### Model kahan hai / kya hua to

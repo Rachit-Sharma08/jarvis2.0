@@ -48,7 +48,9 @@ def test_config():
         check("band karne par wajah", (ok, reason), (False, "PRABH_WAKE=0 se band hai"))
     finally:
         config_wake.WAKE_ENABLED = saved
-    saved_dir = config_wake.WAKE_MODEL_DIR
+    # Dono model path ek saath badlo, aur dono wapas — sirf ek wapas karne se
+    # `WAKE_MODEL_ALT_DIR` is process me hamesha ke liye galat reh jaata.
+    saved_dirs = (config_wake.WAKE_MODEL_DIR, config_wake.WAKE_MODEL_ALT_DIR)
     config_wake.WAKE_MODEL_DIR = config_wake.WAKE_MODEL_ALT_DIR = r"D:\prabh\models\__nahi__"
     try:
         check("model na ho to path khaali", config_wake.model_path(), "")
@@ -56,7 +58,10 @@ def test_config():
         ok, reason = config_wake.wake_available()
         check("wake_available model par False", ok, False)
     finally:
-        config_wake.WAKE_MODEL_DIR = saved_dir
+        (config_wake.WAKE_MODEL_DIR,
+         config_wake.WAKE_MODEL_ALT_DIR) = saved_dirs
+        check("dono model path wapas", config_wake.WAKE_MODEL_DIR, saved_dirs[0])
+        check("alt path bhi wapas", config_wake.WAKE_MODEL_ALT_DIR, saved_dirs[1])
 
 
 def test_audio():

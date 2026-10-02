@@ -6,6 +6,53 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Phase 5 Step 2 (3 Oct 2026) - wake ke baad ka command + speaker
+
+Step 1 sirf **sunta** tha. Ab mic se command uthane ka raasta bana, aur TTS ki
+awaaz bajane ka bhi. Brain tak pohanchna agli sub-step hai (`wake/command.py`).
+
+### 2a - command capture (commit `5e9a2fc`)
+
+- **Naye file:** `wake/utterance.py` (mic se command, VAD se sahi waqt band) -
+  `wake/wav.py` (16 kHz mono PCM -> WAV, Groq ko bhejne ke liye).
+- **Teen window:** pre-roll 0.4 s ("Sunday, WhatsApp kholo" ek saath bole to
+  "WhatsApp" bhi pakde), end-silence 0.9 s, max 8 s, wait 5 s.
+- **Do asli bug:** (1) queue khali rahe to capture **infinite wait** karta tha -
+  ab `empty * 0.2 >= COMMAND_WAIT_SECONDS` par laut jaata hai. (2) min-duration
+  ab **awaaz** gin ta hai, aakhir ki khamoshi ko "0.6 s bola" na samjhe.
+- **`wake/session.py` ka mic-death fix:** pehla `chunks.get(timeout=0.5)` wala
+  `queue.Empty` par loop chala gaya tha aur `_end()` chup-chaap `off` bol deta
+  tha. Ab `_end()` sirf `_stop` se `off` decide karta hai - loop khud khatam
+  hua matlab `error`.
+
+### 2b - speaker (commit `d3a5f7a`)
+
+- **Naya file:** `desktop/playback.py` - TTS bytes (mp3/wav) -> `miniaudio`
+  16-bit PCM -> `sounddevice`. Awaaz hamesha `voice/tts.py` se (`say()` sirf
+  bajata hai), thread se `asyncio.run`.
+- **Naye config:** `OUTPUT_DEVICE` (default Windows speaker), `OUTPUT_RATE`
+  (32 kHz mono), `PLAYBACK_TIMEOUT_SECONDS` (45 s).
+- **Do asli galti probe/fake se pakdi gayi:**
+  1. `miniaudio.decode_file` sirf **filename** leta hai. Bytes dene par wo poora
+     audio buffer apne `FileNotFoundError` message me daal deta hai - terminal
+     par MB ka binary dump. Sirf `decode()` (memory buffer) use hota hai.
+  2. `sd.query_devices(kind="output")` **list nahi** deta - sirf default output
+     device ka ek dict (sounddevice 0.5.6). List ke liye `query_devices()`
+     bina argument + `max_output_channels > 0` filter.
+- **Test me asli speaker kabhi nahi bajti:** `miniaudio` + `sounddevice` ke fake
+  `tests/desktophelp.py` me `install_audio()` se `sys.modules` me. Asli check:
+  `python -m desktop.playback --list` aur `--say "Ji, boliye"`.
+- **Test:** 30 -> **32 suite green**. Naye suite `test_desktop_playback.py`
+  (decode + play + device list) aur `test_desktop_play_say.py` (TTS + har error
+  par `0`, crash nahi). Test me `int16` buffer `bytes()` se nahi, `np.asarray`
+  se padha jaata hai.
+- **Do chhote pakkaure:** `tests/test_wake.py` dono model path badal kar sirf ek
+  wapas karta tha (`WAKE_MODEL_ALT_DIR` hamesha ke liye galat reh jaata) -
+  ab dono wapas + 2 naya check. `wake/__init__.py` ka docstring ab Step 2 ke
+  asli haal se match karta hai.
+
+---
+
 ## Phase 5 Step 1 (2 Oct 2026) - wake word "Sunday" (asli Vosk, offline)
 
 Shell (Step 3a) poora tha, wake sirf **stub** tha (`worker.READY = False`). Ab app

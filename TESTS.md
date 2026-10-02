@@ -1,4 +1,4 @@
-# Tests (30 suites)
+# Tests (32 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 28 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 32 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -71,20 +71,27 @@ Ek-ek karke:
 | `test_desktop_tray.py` | Tray icon ke 5 rang, menu ke 5 button, shared state, mic permission key, lock heuristic |
 | `test_desktop_shortcut.py` | HUD ka backup raasta: `open_hud.plan()`, `shortcut.command()` list, Desktop path padhna, app/tray wiring — `.lnk` **kabhi banata nahi** |
 | `test_desktop_hotkey.py` | `hotkey.parse/describe` (pure) + `Hotkey` stub flow + **thread-ownership pakkaura** (`RegisterHotKey` aur pump ek hi thread) + hotkey file ka hygiene |
+| `test_desktop_playback.py` | Speaker: TTS bytes -> 16-bit PCM (`miniaudio.decode`, memory buffer), PCM -> `sounddevice.play`, output device list + filter, `--list`/`--say` |
+| `test_desktop_play_say.py` | `playback.say()` — text se TTS, **har galti par `0` aur crash nahi** (TtsError / crash / khaali audio / timeout), `--say` ka raasta |
 | `test_wake.py` | Wake constants, PCM/RMS + energy VAD (pure), Vosk JSON par `detect`, "sunday" pakadna, model ke **error** raaste |
 | `test_wake_loop.py` | Worker ka poora loop **fake mic + fake listener** se: trigger, `heard` state, cooldown, mute-pause, crash-safe callbacks |
+| `test_wake_utterance.py` | Wake ke baad ka command: pre-roll, VAD se band karna, min/max/wait/stop, **mic mar jaye to turant lautna**, `wav.py` ka sahi WAV |
 | `test_bat.py` | `start_prabh.bat`: CRLF + ASCII + raw-bracket rule, aur asli `cmd` par launch line sach me chalti hai ya nahi |
 
 ### `test_desktop*.py` ke helpers
 
-`tests/desktophelp.py` me `check()` / `show()` / `finish()` hai (poolhelp jaisa).
+`tests/desktophelp.py` me `check()` / `show()` / `truthy()` / `finish()` hai
+(poolhelp jaisa) + **speaker ke fake**: `FakeMini` (`miniaudio`), `FakeSd`
+(`sounddevice`), aur `install_audio()` / `remove_audio()` jo dono ko `sys.modules`
+me daalte hain (playback late import karta hai, is liye bas yahi karna padta hai).
 Naya desktop test yahin se import kare.
 
 **Desktop suite ka niyam:** koi **asli** cheez mat chalao — Edge spawn nahi,
-tray message loop nahi, Run registry nahi, mic nahi. Sirf **command/path/faisla**
-check karo (`hud_window.command(...)`, `launcher.next_step(...)`). Isi liye
-`launcher.next_step()` pure function hai — wapas me crash list deta hai aur
-`crashes` ko mutate nahi karta, to test me process chane ki zarurat nahi.
+tray message loop nahi, Run registry nahi, mic nahi, **speaker nahi**. Sirf
+**command/path/faisla** check karo (`hud_window.command(...)`,
+`launcher.next_step(...)`). Isi liye `launcher.next_step()` pure function hai —
+wapas me crash list deta hai aur `crashes` ko mutate nahi karta, to test me
+process chane ki zarurat nahi.
 
 ### `test_wake*.py` ke helpers
 
