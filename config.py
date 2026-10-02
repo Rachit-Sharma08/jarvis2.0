@@ -5,6 +5,7 @@ Bade hisse alag file me hain (ek file, ek kaam):
   - config_voice.py  → TTS/STT constants + voice id ka faisla
   - config_hud.py    → HUD ka rang, weather, stats interval, quick buttons
   - config_desktop.py → desktop shell: HUD window, tray, supervisor, autostart
+  - config_wake.py   → wake word, VAD, command window, WhatsApp call ke constants
 Yahan woh sab re-export hote hain, isliye `config.GROQ_API_KEY` aur
 `config.TTS_CHAIN` dono pehle jaise hi kaam karte hain.
 
@@ -59,6 +60,15 @@ from config_desktop import (  # noqa: E402
     TRAY_LISTENING, TRAY_MUTED, TRAY_NAME, TRAY_OFF, TRAY_START_ATTEMPTS,
     TRAY_TITLE,
     TOOLS_AUTO_OFF_MINUTES, backoff_for, browser_path, tray_color, tray_title,
+)
+from config_wake import (  # noqa: E402
+    ACK_ON_WAKE, BLOCK_MS, CALL_ASK_FIRST, CDP_HOST, CDP_PORT, CHANNELS,
+    COMMAND_END_SILENCE_SECONDS, COMMAND_MAX_SECONDS, COMMAND_MIN_SECONDS,
+    COMMAND_PRE_ROLL_SECONDS, COMMAND_WARMUP_SECONDS, INPUT_DEVICE, NOT_HEARD,
+    PLAYBACK_MUTE_MIC, SAMPLE_RATE, STOP_WORD, VAD_HANGOVER_BLOCKS,
+    VAD_SILENCE_BLOCKS, VAD_THRESHOLD, WAKE_COOLDOWN_SECONDS, WAKE_ENABLED,
+    WAKE_GRAMMAR, WAKE_MODEL_DIR, WAKE_WORDS, WHATSAPP_WEB, describe,
+    model_missing, model_path, wake_available,
 )
 
 DEFAULT_MODE = "sunday"

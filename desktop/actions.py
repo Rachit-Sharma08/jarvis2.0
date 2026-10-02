@@ -8,6 +8,7 @@ import config
 from desktop.state import STATE
 from gatekeeper import keeper
 from log_setup import get_logger
+from wake import worker as wake_worker
 
 log = get_logger("actions")
 
@@ -17,9 +18,18 @@ class Actions:
         self.app = app
 
     def toggle_mute(self) -> None:
+        """Mute palat de. Ek hi raasta: pehle `STATE`, phir wake worker ko
+        pause, phir mic ka haalat wahi hisaab se — mic ka asli owner wake
+        worker hai (Step 1), is liye unmute par 'listening' hi sahi hai."""
         muted = STATE.toggle_muted()
-        STATE.set_mic(config.TRAY_MUTED if muted else config.TRAY_OFF,
-                      "user ne mute kiya")
+        wake_worker.set_paused(muted)
+        if muted:
+            mic_state, reason = config.TRAY_MUTED, "user ne mute kiya"
+        elif wake_worker.listening():
+            mic_state, reason = config.TRAY_LISTENING, "wake sun raha hai"
+        else:
+            mic_state, reason = config.TRAY_OFF, "mic band"
+        STATE.set_mic(mic_state, reason)
         log.info("tray: mic mute=%s", muted)
 
     def open_hud(self) -> None:

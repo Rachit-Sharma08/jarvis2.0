@@ -74,8 +74,14 @@ def test_wiring():
     check("app hotkey banata hai", "hotkey_mod.Hotkey(" in app_src, True)
     check("app hotkey.start() karta hai", "self.hotkey.start()" in app_src, True)
     check("app hotkey.stop() karta hai", "self.hotkey.stop()" in app_src, True)
+    cb_src = (ROOT / "desktop/callbacks.py").read_text(encoding="utf-8")
+    # Hotkey aur wake dono ka ek hi raasta ab `desktop/callbacks.py` me hai
+    # (app.py sirf wahan bhejta hai) - dono `hud.open()` se kaam karte hain.
+    check("app dono callbacks.py me bhejta hai",
+          app_src.count("callbacks.on_") >= 2, True)
     check("hotkey wake jaisa hi kaam karta hai",
-          app_src.count("self.hud.open()\n        STATE.set_hud(True)") >= 1, True)
+          cb_src.count("hud.open()") >= 2 and "def on_hotkey" in cb_src
+          and "def on_wake" in cb_src, True)
     check("tray menu me hint hai",
           "hotkey_mod.describe(config.HUD_HOTKEY)" in
           (ROOT / "desktop/tray.py").read_text(encoding="utf-8"), True)

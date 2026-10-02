@@ -2,10 +2,13 @@
 
 Ek hi process is liye ki engine ek hi rahe (`server/state.py`). Thread: main
 = intezaar/shutdown · "server" = uvicorn · "lockwatch" = Win+L · "hotkey" =
-Ctrl+Alt+S · "wake" = `wake/worker.py` (stub) · pystray = tray menu.
+Ctrl+Alt+S · "wake" = `wake/worker.py` · pystray = tray menu.
 
 Supervisor alag hai (`desktop/launcher.py`): crash par wahi dobara chala deta
 hai. Yahan crash ka Exit code `config.EXIT_RESTART` se jaata hai.
+
+Yahan sirf **kab kya chalta hai** likha hai. Callback ke andar ka faisla
+`desktop/callbacks.py` me hai, haalaat `desktop/state.py` me.
 """
 
 import sys
@@ -17,6 +20,7 @@ import uvicorn
 import config
 from core import sysstats
 from desktop import actions as actions_mod
+from desktop import callbacks
 from desktop import hud_window, hotkey as hotkey_mod
 from desktop import lockwatch, micperm, single as single_mod, startup
 from desktop.state import STATE
@@ -123,25 +127,28 @@ class SundayApp:
         keeper.LIMITER.set_on_change(self._on_tools_change)
 
     def _await_hud(self) -> None:
-        """Server sach me jawab de raha hai? Tabhi 'HUD ready'. Port busy ya
+        """Server sach me 200 de raha hai? Tabhi 'HUD ready'. Port busy ya
         crash ho to 'FAILED' bol kar app aage badh jaata hai — chup-chaap na
-        reh kar, taaki crash ki wajah console par dikhe."""
+        reh kar, taaki crash ki wajah console par dikhe (line `startup.py`)."""
         ok, reason = startup.await_http(config.SERVER_ORIGIN, config.STARTUP_HTTP_TIMEOUT)
-        if ok:
-            startup.say(config.STARTUP_HUD, "stats pump + %d quick buttons"
-                      % len(config.QUICK_BUTTONS))
-        else:
-            startup.say(config.STARTUP_HUD, "FAILED - %s" % reason)
-            log.error("HUD server nahi uthi: %s", reason)
+        startup.say_hud(ok, reason)
 
     def _start_watchers(self) -> None:
         lockwatch.watch(on_lock=self._on_lock)
-        wake_worker.start(on_wake=self._on_wake, on_state=STATE.set_wake)
+        if self._start_wake():
+            STATE.set_mic(config.TRAY_LISTENING, "wake word sun raha hai")
         self.hotkey.start()
-        if wake_worker.READY:
-            startup.say(config.STARTUP_WAKE, "sun raha hai")
-        else:
-            startup.say(config.STARTUP_WAKE, "Step 1 me aayega - mic nahi khula")
+
+    def _start_wake(self) -> bool:
+        """Wake word worker (Step 1) — sirf **sunta** hai, kuch bolta nahi.
+
+        Mic khula reh kar sunta hai (duty cycle nahi), is liye mic ka pill
+        'listening' ho jaata hai. Na chalne par bhi startup ki 4th line bolti
+        hai — wajah chhoti, user ko dikhani hai (model missing / mic band)."""
+        started = wake_worker.start(on_wake=self._on_wake, on_state=STATE.set_wake)
+        _, reason = config.wake_available()
+        startup.say_wake(started, "" if started else micperm.explain(reason))
+        return started
 
     def _wait(self) -> None:
         last = STATE.version()
@@ -163,31 +170,18 @@ class SundayApp:
         self.lock.release()
         log.info("band")
 
-    # ---- callbacks ----
+    # ---- callbacks (asli kaam `desktop/callbacks.py` me) ----
     def _on_lock(self) -> None:
-        """Win+L — sirf baat-cheet. TOOLS apne aap OFF. ALLOW ka raasta badalta
-        nahi: card ka jawab sirf UI button se aata hai, wake se nahi."""
-        if keeper.tools_on():
-            keeper.set_tools(False)          # STATE hook khud update karega
-            log.warning("Windows lock hua - TOOLS apne aap OFF")
-        STATE.set_mic(config.TRAY_OFF, "PC lock hai")
+        callbacks.on_lock(self)
 
     def _on_tools_change(self, on: bool) -> None:
-        """`gatekeeper.Limiter` ka hook — TOOLS kahin se bhi badle, haalat yahin
-        se jaata hai. `_wait()` ka loop tray icon refresh kar dega."""
-        STATE.set_tools(on)
+        callbacks.on_tools_change(on, self)
 
     def _on_wake(self, phrase: str) -> None:
-        log.info("WAKE HIT: %r", phrase)
-        self.hud.open()
-        STATE.set_hud(True)
+        callbacks.on_wake(phrase, self)
 
     def _on_hotkey(self) -> None:
-        """Global hotkey (default Ctrl+Alt+S) - wake jaisa hi kaam: HUD kholo.
-        Wake word se bhi shortcut se bhi ek hi raasta (`hud.open()`)."""
-        log.info("HOTKEY HIT: %s", hotkey_mod.describe(config.HUD_HOTKEY))
-        self.hud.open()
-        STATE.set_hud(True)
+        callbacks.on_hotkey(self)
 
 
 def main(argv=None) -> int:

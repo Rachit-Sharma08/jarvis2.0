@@ -6,6 +6,44 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Phase 5 Step 1 (2 Oct 2026) - wake word "Sunday" (asli Vosk, offline)
+
+Shell (Step 3a) poora tha, wake sirf **stub** tha (`worker.READY = False`). Ab app
+shuru hote hi mic khul kar **"Sunday"** sunta hai - trigger milte hi HUD khul
+jaata hai. Awaaz 100% offline (Vosk), kuch bahar nahi jaata.
+
+- **Do alag STT, jaan-boojh kar:** wake word ke liye **Vosk**
+  (`models/vosk-model-small-en-us-0.15`, grammar me sirf 5 shabd), aur Hinglish
+  command ke liye **Groq Whisper** (`voice/stt.py`, Step 2 me lagega). Isi wajah se
+  470 MB ka Hindi model download karne ki zarurat hi nahi padi.
+- **Naye file:** `config_wake.py` (constants; `config.py` re-export karta hai) -
+  `wake/model.py` (load + cache + saaf error) - `wake/detect.py` (Vosk JSON ->
+  text) - `wake/phrase.py` (pure trigger) - `wake/audio.py` (mic ka **ek** owner
+  + energy VAD + PCM helpers) - `wake/session.py` (asli loop) - `wake/worker.py`
+  (module-level ek hi worker).
+- **Desktop wiring:** startup ki 4th line ab `wake: sun raha hai (sunday)` (ya
+  wajah: mic band / model missing). Wake chalu ho to mic ka pill + tray icon
+  `listening`. Tray ka **Mic Mute** worker ko pause karta hai (`set_paused`),
+  Win+L par wake chalta rehta hai (AGENTS.md ka niyam).
+- **Split kiya (200-line niyam):** `worker.py` 212 line tha -> `session.py` + patla
+  `worker.py`; `desktop/app.py` 221 -> naya `desktop/callbacks.py` (chaaron
+  callback: lock / tools / wake / hotkey) aur `startup.say_hud()` /
+  `say_wake()`; `test_wake.py` 216 -> `test_wake.py` + `test_wake_loop.py`.
+- **Test:** 28 -> **30 suite green**. Naya `tests/wakehelp.py` (fake recognizer /
+  listener / mic + `loud()`/`quiet()` PCM). Wake suite me **asli mic, Vosk model
+  aur sounddevice kabhi nahi** chalti - loop bhi fake se, `before = worker.wakes()`
+  pakad kar (count poore app ka hota hai).
+- **Do asli bug test me pakde:** (1) `phrase.FILLER` me `"[unk]"` likha tha par
+  `normalize()` bracket hata deta hai - asli filler `"unk"` hai; (2) purana
+  `test_desktop.py` asli `worker.start()` chala raha tha, yaani test me **asli
+  mic khul rahi thi** - ab fake se.
+- **GitHub:** private repo `github.com/rachithunyawrr/jarvis2.0` bana, poora history
+  push. Remote URL me token **nahi** - ek baar ke liye temp askpass script use
+  hui aur delete ho gayi. (Dono PAT ab chat me hain - kaam hote hi revoke karna.)
+
+**Abhi kya nahi hota (jaan-boojh kar):** wake ke baad command **nahi** sunta, "Ji,
+boliye" **nahi** bolta, sunke tool **nahi** chalta - teeno Step 2.
+
 ## Fix round 4 (2 Oct 2026) — tray icon promote + shortcut + global hotkey
 
 User ka sawaal: Windows 11 ki "Other system tray icons" list me "Sunday" nahi

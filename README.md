@@ -119,8 +119,12 @@ cd D:\prabh
 .\.venv\Scripts\python.exe -m desktop.shortcut install   # ya: remove / status
 ```
 
-Sunke chalana (`hello sunday`) **Step 1 me aayega** — abhi sirf shell hai, to
-HUD khologe ya `http://127.0.0.1:8000` khol lo.
+Sunke chalana **ab kaam karta hai** — app shuru hote hi mic khul kar "sunday"
+sunta hai. "Sunday, WhatsApp kholo" bolte hi HUD khul jaata hai. Details
+`VOICE.md` me; band karna ho to `.env` me `PRABH_WAKE=0`.
+
+> Abhi sirf **trigger** hota hai (HUD khulna). Command sunna, "Ji, boliye"
+> bolna aur phir brain se baat — wo Step 2 me aayega.
 
 Band karne ke liye tray me **Quit**. Sirf window band karne se app nahi rukta.
 
@@ -265,7 +269,9 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `desktop/shortcut.py`, `hud_shortcut.ps1` | Desktop ka "Sunday HUD" `.lnk` banao / hatao (`WScript.Shell`) |
 | `desktop/single.py` | Ek hi instance (doosra `"already running"` band ho jaata hai) |
 | `desktop/state.py`, `micperm.py`, `lockwatch.py` | Ek shared haalat, Windows mic permission check, lock ka pata |
-| `wake/worker.py` | Wake worker ka stub (Step 1 me asli Vosk sunna aayega) |
+| `wake/worker.py`, `session.py` | Wake word: module ka ek raasta + uska asli loop (thread, cooldown, mute) |
+| `wake/audio.py`, `detect.py`, `phrase.py`, `model.py` | Mic + energy VAD, Vosk recognizer, "sunday" pakadna, model load |
+| `config_wake.py` | Wake/VAD/command-window constants (`config.py` se re-export) |
 
 ---
 

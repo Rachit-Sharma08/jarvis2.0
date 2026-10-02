@@ -1,4 +1,4 @@
-# Tests (28 suites)
+# Tests (30 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -71,6 +71,8 @@ Ek-ek karke:
 | `test_desktop_tray.py` | Tray icon ke 5 rang, menu ke 5 button, shared state, mic permission key, lock heuristic |
 | `test_desktop_shortcut.py` | HUD ka backup raasta: `open_hud.plan()`, `shortcut.command()` list, Desktop path padhna, app/tray wiring — `.lnk` **kabhi banata nahi** |
 | `test_desktop_hotkey.py` | `hotkey.parse/describe` (pure) + `Hotkey` stub flow + **thread-ownership pakkaura** (`RegisterHotKey` aur pump ek hi thread) + hotkey file ka hygiene |
+| `test_wake.py` | Wake constants, PCM/RMS + energy VAD (pure), Vosk JSON par `detect`, "sunday" pakadna, model ke **error** raaste |
+| `test_wake_loop.py` | Worker ka poora loop **fake mic + fake listener** se: trigger, `heard` state, cooldown, mute-pause, crash-safe callbacks |
 | `test_bat.py` | `start_prabh.bat`: CRLF + ASCII + raw-bracket rule, aur asli `cmd` par launch line sach me chalti hai ya nahi |
 
 ### `test_desktop*.py` ke helpers
@@ -84,8 +86,23 @@ check karo (`hud_window.command(...)`, `launcher.next_step(...)`). Isi liye
 `launcher.next_step()` pure function hai — wapas me crash list deta hai aur
 `crashes` ko mutate nahi karta, to test me process chane ki zarurat nahi.
 
-### `test_hud.py` ke helpers
+### `test_wake*.py` ke helpers
 
+`tests/wakehelp.py` me `check()` / `show()` / `truthy()` / `wait()` + **teen fake**:
+`FakeRecognizer` (Vosk jaisa JSON), `FakeListener` (text ki list), `FakeMic`
+(chunk queue), aur `loud()` / `quiet()` (raw PCM banao). Naya wake test yahin se
+import kare.
+
+**Wake suite ka niyam:** asli **mic**, **Vosk model** aur `sounddevice` kabhi nahi
+chalti. Loop test me sirf **do** cheez patch hoti hain —
+`wake.session.detect.build` aur `wake.session.audio_mod.MicSource` — kyunki
+`Session.start()` bas yahi maangta hai. Model ke sirf **error** raaste check hote
+hain (`load()` chala kar 1 second + RAM lagana test ka kaam nahi).
+
+Dhyan do: `worker.wakes()` **poore app ka count** hai (reset nahi hota). Do test
+me aage-pahe compare kar rahe ho to pehle `before = worker.wakes()` pakad lo.
+
+### `test_hud.py` ke helpers
 Runner sirf hai; saare checks char helper me hain (har file `<200` lines):
 
 | Helper | Kya check karta hai |
@@ -111,6 +128,9 @@ socho, `hud_check_ui.py` UI ke liye hai aur `hud_check_api.py` server ke liye.
 - Mile hue helpers `tests/poolhelp.py` me hain — naya pool test wahin se import kare.
 - Desktop test me bhi `tests/desktophelp.py` se `check()` lo, aur startup entry
   (Run key) kabhi test me register mat karo.
+- **Source-text check bhi badalta hai** — koi file split/reorganize karo to purane
+  suite ka `app_src.count(...)` wala check fail hoga. Pakka raasta badlo, matlab
+  nayi file ka naam aur sach (jaise `desktop/callbacks.py`) check karo.
 - **Asli Desktop/registry kabhi mat chhedo** — `shortcut.install()`/`remove()`
   ko test me mat bulao, sirf `shortcut.command()` ki list check karo. Warna asli
   Desktop par `.lnk` ban jaata hai ya ghat jaata hai.

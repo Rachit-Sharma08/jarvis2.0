@@ -61,6 +61,7 @@ prabh/
   personas/sunday.txt, personas/prabh.txt
   config_desktop.py   -> tray rang, HUD size/path, crash backoff, exit codes, mic/lock helpers,
                         HUD_HOTKEY + HUD_SHORTCUT_NAME
+  config_wake.py      -> wake word, VAD, command window, WhatsApp call ke constants
   gatekeeper/keeper.py, rules.py, patterns.py, paths.py, approvals.py, limiter.py, audit.py
   tools/__init__.py, command.py, files.py, apps.py, system.py
   server/app.py      -> GET /, POST /chat, CSP headers + Referrer-Policy
@@ -76,11 +77,17 @@ prabh/
   voice/stt.py + stt_guard.py, voice/tts.py + tts_female.py + tts_*.py
   desktop/launcher.py -> app/tray/hud_window/single/state/micperm/lockwatch/startup.py
   desktop/actions.py  -> tray ke 5 button ka faisla (mute/HUD/TOOLS/restart/quit)
-  desktop/startup.py  -> startup ki 4 line (server up/tray started/HUD ready/wake: stub)
+  desktop/callbacks.py -> app ke 4 callback ka matlab (lock/tools/wake/hotkey), app.py se alag
+  desktop/startup.py  -> startup ki 4 line + say_hud()/say_wake() (line yahin banti hai)
   desktop/hotkey.py   -> global hotkey (Ctrl+Alt+S), sirf ctypes + RegisterHotKey
   desktop/open_hud.py -> shortcut + hotkey dono ka EK raasta (server zinda -> HUD)
   desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Sunday HUD" .lnk banao/hatao
-  wake/worker.py     -> abhi stub (READY=False); Step 1 me Vosk wala sunega
+  wake/worker.py     -> Step 1 ka module-level raasta (poori app me EK worker)
+  wake/session.py    -> asli loop: mic -> VAD -> Vosk -> trigger (thread, cooldown, pause)
+  wake/audio.py      -> sounddevice se 16 kHz mono (mic ka EK owner) + energy Vad + PCM
+  wake/model.py      -> Vosk model load + cache (khaali ya error = ModelMissing)
+  wake/detect.py     -> KaldiRecognizer ka wrapper: JSON -> saaf text
+  wake/phrase.py     -> "sunday" pakadna — pure functions
   start_prabh.bat    -> supervisor chalao (registry entry nahi, wo Step 3 ke aakhir me)
   ui/index.html, app.js (chat+ws glue), voice_ui.js (mic+speaker)
   ui/hud_base.css, hud_panel.css, hud_left.css, hud_center.css, hud_right.css, hud_bottom.css
@@ -89,7 +96,7 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (28 suite + poolhelp.py + desktophelp.py + hud_*.py — poori list TESTS.md me)
+  tests/ (30 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
 
@@ -242,7 +249,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 28 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 30 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -298,6 +305,28 @@ endpoint mat likho.
 - **Stale PID file lock milne par apne aap hatni chahiye** (`_clean_stale_pid()`). Windows par
   `msvcrt` lock marne par khud release ho jaata hai — asli stale **lock** rare hai, stale
   `.pid` file common hai.
+- **Wake worker ka ek hi raasta** `wake/worker.py`. Kahin bhi `wake.session.Session()`
+  mat banao — poori app me **ek** worker. `desktop/app.py` sirf `start/stop/state`,
+  tray ka MUTE sirf `worker.set_paused()`.
+- **Mic ka ek hi owner `wake/audio.py`.** Naya `sounddevice.InputStream` kahin aur mat
+  banao (`wake/session.py` bhi wahin se chunk leta hai). VAD + `chunk_to_rms()` bhi usi
+  file me — pure hain, is liye test me bina mic ke chal jaate hain.
+- **Wake test me asli mic / Vosk model / sounddevice kabhi mat chalao.** Fakes
+  `tests/wakehelp.py` me hain; `Session.start()` sirf **do** cheez maangta hai —
+  `wake.session.detect.build` aur `wake.session.audio_mod.MicSource` (wahi patch karo).
+  Model ke sirf **error** raaste check karo, `load()` chala kar 1s + RAM mat lagao.
+- **`worker.wakes()` poore app ka count hai** (reset nahi hota). Test me do baar
+  compare karna ho to pehle `before = worker.wakes()` pakad lo.
+- **Startup ki nayi line `desktop/startup.py` me banti hai** (`say_hud()` /
+  `say_wake()`); `app.py` sirf `ok/reason` ka faisla deta hai. Warna shabd 2 jagah
+  chala jaata hai aur source-check wala test fail hota hai.
+- **Git push ka token remote URL me kabhi nahi.** Push ke liye ek-kaam ka **temp
+  askpass** (repo ke bahar, `%TEMP%`) + `git -c credential.helper=`, phir turant
+  delete. `.git/config` me token nahi jaana chahiye — wahan sirf token-free URL.
+- **PowerShell se repo ki text file mat badlo.** `Get-Content -Raw` + `Set-Content`
+  UTF-8 file ko **double-encode** kar deta hai — poora diff bikhre hue `â` jaise
+  akshar se bhara ho jaata hai. File badalni hai to `edit` tool ya Python
+  (`encoding="utf-8"`) use karo.
 
 ---
 
@@ -339,12 +368,17 @@ endpoint mat likho.
 - **Phase 4 HUD poora ho gaya (1-2 Oct 2026).** Plan/record `CHANGELOG.md` me.
 - **Phase 5 Step 3a (desktop shell) ho gaya (2 Oct 2026)** — supervisor + tray + Edge HUD +
   single instance + wake stub, 25 suite green. Plan `PLAN.md`, record `CHANGELOG.md` me.
-- Baaqi Phase 5, isi order me: **Step 1** (Vosk wake word, model download ho chuka hai) →
-  **Step 2** (VAD + command + Python playback) → **Step 3** auto-start (registry tabhi jab
-  user "haan" bole). Face/trust/learn/maker baad me.
+- **Phase 5 Step 1 (Vosk wake word) ho gaya (2 Oct 2026)** — mic hamesha sunta hai, "Sunday" par
+  HUD khulta hai, tray MUTE sunna rokta hai, **30 suite green**. Detail `VOICE.md`,
+  record `CHANGELOG.md`.
+- Baaqi Phase 5, isi order me: **Step 2** (wake ke baad command sunna + TTS se "Ji, boliye"
+  + phir brain) → **Step 3** auto-start (registry tabhi jab user "haan" bole).
+  Face/trust/learn/maker baad me.
 - **Fix round 4 ho gaya (2 Oct 2026)** — tray entry `IsPromoted=1` (backup ke saath), Desktop
   `Sunday HUD` shortcut + global hotkey `Ctrl+Alt+S`, dono ka ek raasta
-  (`desktop/open_hud.py`), 28 suite green. Record `CHANGELOG.md` me.
+  (`desktop/open_hud.py`). Record `CHANGELOG.md` me.
+- **GitHub repo bana (2 Oct 2026)** — private `github.com/rachithunyawrr/jarvis2.0`, remote URL
+  me token **nahi**. Push ke liye ek-kaam ka temp askpass (repo ke bahar) + turant delete.
 - Ek hi cheez aur baaki hai: **Cartesia ki female voice id** (`CARTESIA_VOICE_*`). Na mile to Cartesia skip hoti
 hai — koi problem nahi, Edge Swara chalti hai.
 - Aage ka kaam user se pucho; koi chhupi hui task nahi hai.
@@ -483,3 +517,13 @@ green**, sab file `<200`.
   `desktop/shortcut.py` + `hud_shortcut.ps1`, `.env` se badalne wala `PRABH_HUD_HOTKEY`,
   `tests/test_desktop_hotkey.py` + `tests/test_desktop_shortcut.py` (test file
   200+ lines thi to split ki) — **28 suite green**.
+- **Phase 5 Step 1 (2 Oct 2026)** — Vosk wake word **asli**: `config_wake.py` (constants) +
+  `wake/` ka 6 file (`audio` = mic ka ek owner + VAD, `model`, `detect`, `phrase`,
+  `session` = loop, `worker` = module-level ek hi worker), grammar me sirf 5 shabd,
+  cooldown 1.5s, tray MUTE → `set_paused`, startup line `wake: sun raha hai (sunday)`.
+  200-line niyam ke liye `worker.py` → `session.py`, `desktop/app.py` → naya
+  `callbacks.py` + `startup.say_hud/say_wake`. Naye 7 niyam bullet (worker/mic/
+  wakes/startup-line/askpass/PowerShell). `tests/wakehelp.py` + `test_wake.py` +
+  `test_wake_loop.py` — **30 suite green**. Do asli bug pakde: `FILLER` me `"[unk]"`
+  bekaar tha, aur purana `test_desktop.py` **asli mic** khol raha tha. GitHub private
+  repo `rachithunyawrr/jarvis2.0` bana + poora history push.

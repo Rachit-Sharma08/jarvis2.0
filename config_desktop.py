@@ -114,7 +114,7 @@ TRAY_START_ATTEMPTS = 3
 STARTUP_SERVER = "server up"
 STARTUP_TRAY = "tray started"
 STARTUP_HUD = "HUD ready"
-STARTUP_WAKE = "wake: stub"
+STARTUP_WAKE = "wake"
 # Kitni der tak startup ka intezaar — phir "HUD ready: FAILED" bol kar aage badho.
 STARTUP_HTTP_TIMEOUT = 20.0
 

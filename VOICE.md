@@ -3,6 +3,9 @@
 Mic aur speaker ka kaam **browser** me hota hai. Server sirf awaaz ko text me badalta hai
 aur text ko awaaz me.
 
+> **Wake word (Phase 5 Step 1) alag hai** — wo mic **Python** me (`sounddevice`)
+> sunta hai taaki browser band ho tab bhi chale. Neeche "Wake word" section padho.
+
 ## Chalao
 
 1. Server chalu karo (`main.py`).
@@ -121,6 +124,48 @@ Whisper (sunne wala) Hindi + English dono samajhta hai, to naam bhi bol sakte ho
 - `"Sunday..."`, `"संडे..."` → Sunday
 - `"Prabh..."`, `"Prabhu..."`, `"प्रभ..."`, `"प्रभु..."` → Prabh
 
+## Wake word (Phase 5 Step 1) — "Sunday" bolkar bulao
+
+Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
+(`sounddevice`) — hamesha chalta hai, band kabhi nahi hota (duty cycle nahi).
+
+| Baat | Detail |
+|---|---|
+| Kaam | App shuru hote hi mic khulta hai. **"Sunday"** (ya "hello/hey/hi/okay sunday") bolte hi **HUD khul jaata hai**. |
+| Model | `models/vosk-model-small-en-us-0.15` — **Vosk**, 100% offline, awaaz bahar nahi jaati |
+| Grammar | Sirf 5 shabd sunta hai (`hello sunday`, `hey sunday`, `hi sunday`, `okay sunday`, `sunday`, `[unk]`) — is liye galat trigger kam aur CPU halka |
+| Audio | 16 kHz mono, 30 ms chunk, energy VAD (threshold `.env` se `PRABH_VAD`) |
+| Cooldown | Ek trigger ke baad **1.5 second** dobara nahi pakadta |
+| Mute | Tray ka **Mic Mute** sunna rok deta hai (mic khula rehta hai, sunta nahi) |
+| Band karo | `.env` me `PRABH_WAKE=0` — phir startup me `wake: PRABH_WAKE=0 se band hai` dikhega |
+| Startup line | `wake: sun raha hai (sunday)` — ya mic band/model missing ho to wajah |
+
+### Abhi kya **nahi** hota (Step 2 ka kaam)
+
+- ❌ Wake ke baad **command sunna** (aaj sirf HUD khulta hai)
+- ❌ **"Ji, boliye"** bolna (TTS se awaaz — `desktop/playback.py` Step 2 me)
+- ❌ Sunke **tool chalana** — ALLOW hamesha screen par button se hi hoga, awaaz se nahi
+
+### Model kahan hai / kya hua to
+
+Model `D:\prabh\models\` me hona chahiye. Ho to startup par khud load ho jaata hai.
+Na ho to ek hi baar download karo (ya `VOICE.md` me command dekho):
+
+```powershell
+# Model ka folder check (app band ho to)
+cd D:\prabh; .\.venv\Scripts\python.exe -c "import config; print(config.describe())"
+```
+
+`model=MISSING` aaye to app chalega, par wake nahi. Wajah log me:
+`logs/prabh.log` me `wake chalu nahi:` ya `Vosk model nahi mila`.
+
+### Test me kya hota hai
+
+`tests/test_wake.py` (constants, VAD, phrase, model error) aur
+`tests/test_wake_loop.py` (poora loop) — dono **asli mic aur Vosk model
+kabhi nahi** chalate, fakes se. Isi liye test laptop ki battery/CPU par asar nahi
+dale aur flaky nahi hote.
+
 ## Limit
 
 - Recording: **30 second** (server par 10 MB se bada audio reject).
@@ -140,6 +185,13 @@ Whisper (sunne wala) Hindi + English dono samajhta hai, to naam bhi bol sakte ho
 | `voice/tts_elevenlabs.py` | ElevenLabs provider |
 | `voice/tts_cartesia.py` | Cartesia provider |
 | `voice/tts_edge.py` | edge-tts provider (free, unlimited) |
+| `config_wake.py` | Wake word + VAD + command window ke constants |
+| `wake/worker.py` | Wake ka module-level raasta (ek hi worker, poori app me) |
+| `wake/session.py` | Worker ka asli loop: mic → VAD → Vosk → trigger (thread, cooldown) |
+| `wake/audio.py` | Mic ka ek owner (`sounddevice`) + energy VAD + PCM helpers |
+| `wake/detect.py` | Vosk `KaldiRecognizer` ka wrapper (JSON → saaf text) |
+| `wake/phrase.py` | "sunday" pakadna — pure functions |
+| `wake/model.py` | Vosk model load + cache, saaf Hinglish error |
 | `ui/voice_ui.js` | Mic + speaker wiring (chat `app.js` se alag) |
 | `ui/recorder.js` | `getUserMedia` + `MediaRecorder` + `track.stop()` |
 | `ui/speaker.js` | Audio play + autoplay-block message |

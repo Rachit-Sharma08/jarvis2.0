@@ -127,11 +127,36 @@ def test_tools_auto_off():
     print("  OK   crash-safe hook")
 
 
-def test_wake_stub():
-    print("WAKE STUB (Step 3a)")
-    check("start abhi nahi chalta", wake_worker.start(), False)
-    check("state off", wake_worker.state(), "off")
-    check("wake chalu nahi", wake_worker.READY, False)
+def test_wake_worker():
+    """Wake worker (Step 1) ka wiring — **asli mic kabhi nahi** khulta.
+
+    `start()` asli chalta to model load + mic khul jaata, is liye yahan
+    `wake/session.py` ke do cheez (model build + `MicSource`) fake se badal
+    kar sirf wiring check hota hai. Loop ka poora test `test_wake_loop.py`.
+    """
+    print("WAKE WORKER (Step 1)")
+    from wake import session as session_mod
+    from wakehelp import FakeListener, FakeMic
+
+    check("READY ab True hai", wake_worker.READY, True)
+    check("state shuru me off", wake_worker.state(), "off")
+    for name in ("start", "stop", "state", "listening", "set_paused", "wakes"):
+        check(f"worker.{name} hai", callable(getattr(wake_worker, name, None)), True)
+
+    saved = (session_mod.detect.build, session_mod.audio_mod.MicSource)
+    mic = FakeMic()
+    session_mod.detect.build = lambda: FakeListener()
+    session_mod.audio_mod.MicSource = lambda: mic
+    try:
+        check("start True", wake_worker.start(), True)
+        check("state listening", wake_worker.state(), "listening")
+        check("wake shabd config me", config.WAKE_WORDS, ("sunday",))
+        wake_worker.set_paused(True)
+        wake_worker.set_paused(False)
+    finally:
+        wake_worker.stop()
+        session_mod.detect.build, session_mod.audio_mod.MicSource = saved
+    check("stop ke baad off", wake_worker.state(), "off")
 
 
 def test_startup_lines():
@@ -142,11 +167,17 @@ def test_startup_lines():
     check("server up", config.STARTUP_SERVER, "server up")
     check("tray started", config.STARTUP_TRAY, "tray started")
     check("HUD ready", config.STARTUP_HUD, "HUD ready")
-    check("wake: stub", config.STARTUP_WAKE, "wake: stub")
+    check("wake", config.STARTUP_WAKE, "wake")
 
     src = (ROOT / "desktop/app.py").read_text(encoding="utf-8")
-    for key in ("STARTUP_SERVER", "STARTUP_TRAY", "STARTUP_HUD", "STARTUP_WAKE"):
-        check(f"app.py me {key} bolta hai", f"config.{key}" in src, True)
+    up = (ROOT / "desktop/startup.py").read_text(encoding="utf-8")
+    # Sirf app.py bolti hai (ya use helper bulata hai) — line ka shabd ek jagah.
+    check("app.py me server up bolta hai", "config.STARTUP_SERVER" in src, True)
+    check("app.py me tray bolta hai", "config.STARTUP_TRAY" in src, True)
+    check("app.py HUD helper use karta hai", "startup.say_hud(" in src, True)
+    check("app.py wake helper use karta hai", "startup.say_wake(" in src, True)
+    check("startup.py me HUD shabd", "config.STARTUP_HUD" in up, True)
+    check("startup.py me wake shabd", "config.STARTUP_WAKE" in up, True)
     # 'HUD ready' sirf ek jagah — server/app.py duplicate na bole.
     check("server/app.py duplicate log nahi",
           'log.info("HUD ready' in (ROOT / "server/app.py").read_text(encoding="utf-8"),
@@ -351,7 +382,7 @@ def test_hygiene():
 
 
 for fn in (test_config, test_hud_window, test_single_instance, test_launcher,
-           test_tools_auto_off, test_wake_stub, test_startup_lines,
+           test_tools_auto_off, test_wake_worker, test_startup_lines,
            test_log_ascii, test_stale_lock_diagnose, test_stale_pid_self_heal,
            test_tray_guard, test_hygiene):
     fn()
