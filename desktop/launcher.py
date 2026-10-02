@@ -146,6 +146,9 @@ def supervise(max_restarts: int = None, window: int = None) -> int:
 
         _console("CRASH #%d/%d (exit code %s). %d second baad dobara chalega."
                  % (len(crashes), limit, code, wait))
+        if code == config.EXIT_NO_TRAY:
+            _console("Wajah: tray icon nahi bana. Bina tray ke app band karna "
+                     "mumkin nahi hota, is liye app ruk gaya.")
         tail = _log_tail()
         if tail:
             _console("Wajah: %s" % tail)

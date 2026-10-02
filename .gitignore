@@ -27,3 +27,6 @@ models/
 
 # verification artifacts (Phase 4/5 ke live browser checks)
 .playwright-mcp/
+
+# system backups (registry .reg etc) - machine-specific, code nahi
+backup/

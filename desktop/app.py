@@ -18,6 +18,7 @@ import uvicorn
 
 import config
 from core import sysstats
+from desktop import actions as actions_mod
 from desktop import hud_window, lockwatch, micperm, single as single_mod, startup
 from desktop.state import STATE
 from desktop.tray import Tray
@@ -29,39 +30,11 @@ from wake import worker as wake_worker
 log = get_logger("app")
 
 
-class Actions:
-    """Tray ke 5 button. Faisla yahan hota hai, `desktop/tray.py` dumb hai."""
-
-    def __init__(self, app: "SundayApp"):
-        self.app = app
-
-    def toggle_mute(self) -> None:
-        muted = STATE.toggle_muted()
-        STATE.set_mic(config.TRAY_MUTED if muted else config.TRAY_OFF, "user ne mute kiya")
-        log.info("tray: mic mute=%s", muted)
-
-    def open_hud(self) -> None:
-        self.app.hud.open()
-        STATE.set_hud(True)
-
-    def toggle_tools(self) -> None:
-        on = keeper.set_tools(not keeper.tools_on())
-        log.info("tray: TOOLS=%s (auto-OFF %d min me)", on, config.TOOLS_AUTO_OFF_MINUTES)
-
-    def restart(self) -> None:
-        log.info("tray: restart maanga")
-        self.app.stop(config.EXIT_RESTART)
-
-    def quit(self) -> None:
-        log.info("tray: quit maanga")
-        self.app.stop(config.EXIT_QUIT)
-
-
 class SundayApp:
     def __init__(self, open_hud_at_start: bool = False):
         self.open_hud_at_start = bool(open_hud_at_start)
         self.hud = hud_window.HudWindow()
-        self.tray = Tray(Actions(self))
+        self.tray = Tray(actions_mod.Actions(self))
         self.lock = single_mod.Single()
         self.server = None
         self._stop = threading.Event()
@@ -73,13 +46,19 @@ class SundayApp:
         try:
             self.lock.acquire()
         except single_mod.AlreadyRunning as exc:
-            log.warning("app pehle se chal raha hai: %s", exc)
+            # `diagnose()` ne check kiya hai: PID zinda + GET / 200. Is liye ye
+            # message abhi bharosemand hai. Console par bhi — bat ka user yahi
+            # padhega, log nahi.
+            log.warning("%s", exc)
+            print(str(exc), flush=True)
             return config.EXIT_ALREADY_RUNNING
 
         try:
             self._preflight()
             self._start_server()
             self._start_tray()
+            if self._stop.is_set():          # tray nahi bana — aage mat chalo
+                return self._code
             self._await_hud()
             self._start_watchers()
             if not self.hud.available():
@@ -95,7 +74,7 @@ class SundayApp:
         self._code = config.EXIT_QUIT if code is None else code
         self._stop.set()
 
-    def tray_actions(self) -> Actions:
+    def tray_actions(self) -> actions_mod.Actions:
         return self.tray.actions
 
     # ---- hisse ----
@@ -120,11 +99,22 @@ class SundayApp:
         startup.say(config.STARTUP_SERVER, config.SERVER_ORIGIN)
 
     def _start_tray(self) -> None:
-        if not self.tray.start():
-            log.warning("tray nahi chala - app chal raha hai, sirf icon nahi dikhega")
-            startup.say(config.STARTUP_TRAY, "FAILED - icon nahi dikhega")
-        else:
-            startup.say(config.STARTUP_TRAY, config.TRAY_NAME)
+        """Tray icon ke bina app **chalte nahi rehne** dega.
+
+        Kabhi kabhi `pystray` pehli koshish me chhoot deta hai (Explorer restart,
+        D: slow disk). Is liye 3 koshish. phir bhi na bane to `EXIT_NO_TRAY` se
+        saaf exit — chup-chaap bina tray chalta hua app sabse bura hai, kyunki
+        usse band karne ka koi raasta hi nahi hota.
+        """
+        if not self.tray.start_retry(config.TRAY_START_ATTEMPTS):
+            startup.say(config.STARTUP_TRAY,
+                        "FAILED - %d koshish ke baad bhi icon nahi bana"
+                        % config.TRAY_START_ATTEMPTS)
+            log.error("tray icon nahi bana - app ko %d se band kar raha hoon",
+                      config.EXIT_NO_TRAY)
+            self.stop(config.EXIT_NO_TRAY)
+            return
+        startup.say(config.STARTUP_TRAY, config.TRAY_NAME)
         # Tools ka asli haalat (env se ON ho sakta hai) state me daalo.
         STATE.set_tools(keeper.tools_on())
         # TOOLS kahin se bhi badle - UI button, tray, lock, auto-off timer -

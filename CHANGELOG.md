@@ -6,6 +6,56 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Phase 5 Step 3a fix round 3 (2 Oct 2026) — stale-lock message + tray guard
+
+User ne live par do shikaayat ki: (1) dobara click karne par sirf "pehle se chal raha hai
+(pid=...)" aata tha, kuch samajh nahi aata tha; (2) tray icon overflow me chhupne par lagta
+tha ki app shuru hi nahi hua.
+
+**1. "Chal raha hai" ab proof par hai, sirf lock par nahi**
+
+- `desktop/single.py` me `pid_alive(pid, probe=None)` (Windows `OpenProcess` +
+  `PROCESS_QUERY_LIMITED_INFORMATION`, doosre platform par `os.kill`) aur
+  `http_alive(origin, opener=None)` (`GET /` ka status 200?) — dono probe injectable hain.
+- `Single.diagnose(pid_probe=None, http_check=None)` 4 haal alag-alag bolta hai:
+  - PID zinda + `GET /` 200 → "pehle se CHAL raha hai (pid=...)"
+  - PID zinda par 200 nahi → "app atki hai, Task Manager se band karo"
+  - PID murda par 200 → "port 8000 kisi aur ka hai, ye lock stale nahi"
+  - dono murda → "lock stale hai, ye instance apne aap lock pakad lega"
+- `os.kill(pid, 0)` jaan-boojh kar **nahi** likha — CPython isay `TerminateProcess` bana
+  sakta hai. Ye baat `AGENTS.md` me pakkaari gayi hai.
+- `_clean_stale_pid()` — lock milne ke baad mar ke bache `.pid` file apne aap hat jaati hai.
+  Windows par `msvcrt` lock marne par khud release hota hai, is liye asli stale *lock* rare
+  hai, stale `.pid` file hi common hai.
+- `desktop/app.py` ab ye message **console par bhi** bolta hai (`print(..., flush=True)`),
+  kyunki double-click karne wala user log nahi padhta.
+
+Live verify (asli app ke against): `owner_pid = 19584` →
+*"Sunday pehle se CHAL raha hai (pid=19584). Usi tray icon se Open HUD karo, ya Quit dabao."*
+aur `start_prabh.bat` dobara chalane par wahi message + exit 3.
+
+**2. Bina tray ke app ab chup-chaap nahi chalta**
+
+- `desktop/tray.py` me `retry_start(tray, attempts=3, delay=1.5, sleep=None)` — alag
+  function is liye ki test me `sleep` daal kar bina wait check ho jaaye.
+- 3 koshish ke baad bhi icon na bane to `config.EXIT_NO_TRAY = 4` se saaf exit; launcher
+  is par alag se bolta hai *"Wajah: tray icon nahi bana..."*. Bina tray ke app chalta rahe to
+  usse band karne ka koi raasta hi nahi hota — is liye ye pehle se theek nahi tha.
+- `run()` me `_start_tray()` ke baad `self._stop.is_set()` check — warna app server chalu
+  karke aage badh jaata tha.
+
+**3. Chhoti split**
+
+- `desktop/actions.py` naya — tray ke 5 button ka faisla (`app.py` se nikaala, taaki
+  `app.py` 200 line ke andar rahe).
+
+**Test** — `tests/test_desktop.py` me 3 naye block: `STALE LOCK DIAGNOSE` (helper + 4
+combination) · `STALE PID SELF-HEAL` (asli temp-dir end-to-end) · `TRAY GUARD` (retry count,
+exit code, source check). Sab probe injectable — koi asli process/socket nahi chhua gaya.
+**26 suite green.**
+
+---
+
 ## Phase 5 Step 3a (2 Oct 2026) — desktop shell (tray + supervisor + Edge HUD)
 
 Wake/face/trust/learn/maker ka poora plan `PLAN.md` + `PLAN-TRUST.md` me hai

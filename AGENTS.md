@@ -74,6 +74,7 @@ prabh/
   server/weather.py        -> Open-Meteo fetch + 15 min cache + WMO labels
   voice/stt.py + stt_guard.py, voice/tts.py + tts_female.py + tts_*.py
   desktop/launcher.py -> app/tray/hud_window/single/state/micperm/lockwatch/startup.py
+  desktop/actions.py  -> tray ke 5 button ka faisla (mute/HUD/TOOLS/restart/quit)
   desktop/startup.py  -> startup ki 4 line (server up/tray started/HUD ready/wake: stub)
   wake/worker.py     -> abhi stub (READY=False); Step 1 me Vosk wala sunega
   start_prabh.bat    -> supervisor chalao (registry entry nahi, wo Step 3 ke aakhir me)
@@ -275,6 +276,18 @@ endpoint mat likho.
   bana lo taaki test me process chane ki zarurat na pade.
 - Crash/backoff/exit-code ka faisla **pure function** me rakho (`next_step(jawab, ...)`),
   taaki supervisor loop se alag test ho sake.
+- **"Pehle se chal raha hai" jaisa koi bhi message `pid_alive()` + `GET /` 200 — dono check
+  karne ke baad hi bolna hai.** Sirf lock dekhna kaafi nahi. Ek hi raasta:
+  `desktop/single.py` ka `diagnose(pid_probe=None, http_check=None)` (test me dono probe
+  daalte hain, asli process/socket nahi chhua jaata).
+- **PID probe me `os.kill(pid, 0)` bilkul mat likhna** — CPython isay `TerminateProcess`
+  bana sakta hai. Safe raasta `pid_alive()` ka `_PROC_QUERY` + `OpenProcess`.
+- **App bina tray ke chalte mat rehne do.** `tray.retry_start()` 3 koshish; phir bhi icon na
+  bane to `config.EXIT_NO_TRAY` (4) se saaf exit. `run()` me `_start_tray()` ke baad
+  `self._stop.is_set()` check zaroori hai, warna app aage badh jaata hai.
+- **Stale PID file lock milne par apne aap hatni chahiye** (`_clean_stale_pid()`). Windows par
+  `msvcrt` lock marne par khud release ho jaata hai — asli stale **lock** rare hai, stale
+  `.pid` file common hai.
 
 ---
 
@@ -325,3 +338,9 @@ green**, sab file `<200`.
   (`desktop/startup.py`, `config_desktop.STARTUP_*`), `log_setup.ascii_text()`,
   naya `tests/test_bat.py` — **26 suite green**. Purana JARVIS auto-start
   (`HKCU\Run` me `electron.app.Electron`) sirf bataya, chhua nahi.
+- **Fix round 3 (2 Oct 2026)** — "pehle se chal raha hai" ab proof par: `pid_alive()`
+  (`OpenProcess`, `os.kill` nahi) + `GET /` 200 dono check, chaar alag message;
+  `_clean_stale_pid()` stale `.pid` hata deta hai; message console par bhi;
+  tray `retry_start()` 3 koshish ke baad `EXIT_NO_TRAY` (4) se saaf exit +
+  `run()` me `_stop.is_set()` check; `desktop/actions.py` naya split
+  (`app.py` 189 lines) — **26 suite green**.

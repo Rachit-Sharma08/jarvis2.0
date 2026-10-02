@@ -89,6 +89,11 @@ RESTART_BACKOFF = (2, 5, 10, 20, 30)
 EXIT_QUIT = 0
 EXIT_RESTART = 20
 EXIT_ALREADY_RUNNING = 3
+# Tray icon nahi bana to app band. Bina tray ke app chalta rahe to usse band
+# karne ka koi raasta hi nahi hota - is liye ye alag exit code hai.
+EXIT_NO_TRAY = 4
+# Tray icon banane ki kitni koshish (pystray kabhi kabhi pehli baar chhoot deta hai).
+TRAY_START_ATTEMPTS = 3
 
 # ---- Startup ke 4 standard line ----
 # Ye chaar line hamesha isi shabd me aati hain — console par bhi aur

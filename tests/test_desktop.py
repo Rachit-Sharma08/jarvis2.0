@@ -179,6 +179,162 @@ def test_log_ascii():
     check("par woh message me hai", probe[:6] in new.decode("ascii", "replace"), True)
 
 
+def test_stale_lock_diagnose():
+    """"pehle se chal raha hai" sirf tab bolna hai jab PID zinda ho aur GET /
+    200 de. Warna message stale/atka hona chahiye — dono probe daal kar test
+    hota hai, asli process ya socket nahi chhua jaata."""
+    print("STALE LOCK DIAGNOSE")
+    import tempfile
+    from desktop.single import Single, http_alive, pid_alive
+
+    # Ek hi temp dir poore test tak — `fake_single()` me `with` block khatam hote
+    # hi file mita di jaati, to `owner_pid()` 0 milta aur test galat fail hota.
+    holder = tempfile.TemporaryDirectory()
+
+    def fake_single(pid_text, name="a"):
+        lock = Path(holder.name) / ("prabh-%s.lock" % name)
+        lock.write_bytes(b"0")
+        s = Single(lock)
+        s.pid_path.write_text(pid_text, encoding="utf-8")
+        return s
+
+    # --- pid_alive / http_alive ke chhote helper ---
+    check("pid 0 marda hai", pid_alive(0), False)
+    check("pid -1 marda hai", pid_alive(-1), False)
+    check("probe se zinda", pid_alive(5, probe=lambda p: p == 5), True)
+    check("probe se murda", pid_alive(5, probe=lambda p: False), False)
+
+    class Ok:
+        status = 200
+
+        def __enter__(self): return self
+
+        def __exit__(self, *a): return False
+    check("http 200 = zinda", http_alive("http://x", opener=lambda u, timeout=0: Ok()), True)
+
+    def boom(u, timeout=0): raise OSError("refused")
+    check("http fail = murda", http_alive("http://x", opener=boom), False)
+
+    class Bad:
+        status = 503
+
+        def __enter__(self): return self
+
+        def __exit__(self, *a): return False
+    check("http 503 = murda",
+          http_alive("http://x", opener=lambda u, timeout=0: Bad()), False)
+
+    # --- 4 asli combinations ---
+    alive = lambda p: True
+    dead = lambda p: False
+    good = lambda *a, **k: Ok()          # HTTP 200 de raha hai
+    bad = lambda *a, **k: boom("")       # HTTP jawab nahi de raha
+
+    msg = fake_single("123\n").diagnose(alive, good)
+    check("zinda + 200 -> CHAL raha hai", "CHAL raha hai" in msg, True)
+    check("  PID bataya", "pid=123" in msg, True)
+
+    msg = fake_single("123\n").diagnose(alive, bad)
+    check("zinda par HUD nahi -> atka", "atki hai" in msg, True)
+    check("  'stale' nahi bola", "stale" in msg, False)
+
+    msg = fake_single("123\n").diagnose(dead, good)
+    check("PID murda + port kisi ka", "port 8000" in msg, True)
+
+    msg = fake_single("123\n").diagnose(dead, bad)
+    check("dono dead -> stale", "stale" in msg, True)
+
+    msg = fake_single("").diagnose(dead, bad)
+    check("PID file hi nahi -> stale", "stale" in msg, True)
+    check("  koi 'pehle se' nahi", "pehle se CHAL" in msg, False)
+
+
+def test_stale_pid_self_heal():
+    """Asli stale PID file: mar ke baad bacha hua `.pid`. Lock milne ke baad
+    apne aap hat jaana chahiye warna user ko hamesha 'pehle se chal raha hai'
+    dikhta rahega. Test apne temp dir me hai - asli `data/` chhua nahi jaata."""
+    print("STALE PID SELF-HEAL")
+    import os
+    import tempfile
+
+    from desktop.single import Single
+
+    # 99999999 ka koi process nahi hota - safe "marda" PID.
+    dead_pid = 99999999
+    tmp = tempfile.TemporaryDirectory()
+    lock = Path(tmp.name) / "prabh.lock"
+    lock.write_bytes(b"0")
+    s = Single(lock)
+    s.pid_path.write_text("%d\n" % dead_pid, encoding="utf-8")
+    check("shuru me purana PID pada hai", s.owner_pid(), dead_pid)
+
+    s.acquire()                      # koi live process nahi -> lock mil jayegi
+    check("lock mili", s.owner_pid(), os.getpid())
+    check("purana PID hat gaya", str(dead_pid) in s.pid_path.read_text("utf-8"), False)
+
+    # ab jab lock HELD hai, doosra instance ko saaf message milna chahiye
+    other = Single(lock)
+    try:
+        other.acquire()
+        check("doosra instance lock nahi pakad paaya", False, True)
+    except Exception as exc:
+        msg = str(exc)
+        check("doosre ko 'stale' nahi bola", "stale" in msg, False)
+        check("doosre ko 'CHAL raha hai' bola", "CHAL raha hai" in msg, True)
+        check("  apna PID bataya", "pid=%d" % os.getpid() in msg, True)
+    finally:
+        s.release()
+    check("release ke baad doosra lock pakad paata hai",
+          other.acquire() is other, True)
+    other.release()
+    tmp.cleanup()
+
+
+def test_tray_guard():
+    """Bina tray ke app na chalta rahe — 3 koshish, phir saaf exit."""
+    print("TRAY GUARD")
+    from desktop.tray import retry_start
+
+    check("EXIT_NO_TRAY alag code hai", config.EXIT_NO_TRAY, 4)
+    check("EXIT_NO_TRAY 0/3/20 se alag hai",
+          config.EXIT_NO_TRAY in (0, 3, config.EXIT_RESTART), False)
+    check("TRAY_START_ATTEMPTS = 3", config.TRAY_START_ATTEMPTS, 3)
+
+    # retry_start alag function hai — asli pystray chalu kiye bina test hota hai.
+    tries, waits = [], []
+
+    class StubTray:
+        def __init__(self, succeed_at=None):
+            self.succeed_at = succeed_at
+
+        def start(self):
+            tries.append(1)
+            return self.succeed_at is not None and len(tries) >= self.succeed_at
+
+    check("3 koshish ke baad bhi fail",
+          retry_start(StubTray(), 3, 1.5, sleep=waits.append), False)
+    check("  3 hi koshish", len(tries), 3)
+    check("  beech me 2 baar ruka", waits, [1.5, 1.5])
+
+    tries.clear()
+    check("2nd koshish me ban gaya",
+          retry_start(StubTray(2), 3, 0, sleep=waits.append), True)
+    check("  2 hi koshish", len(tries), 2)
+
+    tries.clear()
+    check("pehli hi me ban jaye to 1 koshish",
+          retry_start(StubTray(1), 3, 0, sleep=waits.append), True)
+    check("  1 koshish", len(tries), 1)
+
+    src = (ROOT / "desktop/app.py").read_text(encoding="utf-8")
+    check("app start_retry use karta hai", "start_retry(" in src, True)
+    check("app EXIT_NO_TRAY se band karta hai", "EXIT_NO_TRAY" in src, True)
+    check("app AlreadyRunning ka message console par bolta hai",
+          "print(str(exc), flush=True)" in src, True)
+    lsrc = (ROOT / "desktop/launcher.py").read_text(encoding="utf-8")
+    check("launcher tray-wajah bhi bolta hai", "EXIT_NO_TRAY" in lsrc, True)
+
+
 def test_hygiene():
     print("HYGIENE")
     gitignore = (ROOT / ".gitignore").read_text(encoding="utf-8")
@@ -188,14 +344,16 @@ def test_hygiene():
           "PRABH_SUNDAY_ONLY" in (ROOT / ".env.example").read_text(encoding="utf-8"), True)
     for path in ("desktop/app.py", "desktop/launcher.py", "desktop/tray.py",
                  "desktop/hud_window.py", "desktop/state.py",
-                 "desktop/startup.py", "config_desktop.py", "log_setup.py"):
+                 "desktop/startup.py", "desktop/actions.py",
+                 "desktop/single.py", "config_desktop.py", "log_setup.py"):
         lines = len((ROOT / path).read_text(encoding="utf-8").splitlines())
         check(f"{path} <200 lines ({lines})", lines < 200, True)
 
 
 for fn in (test_config, test_hud_window, test_single_instance, test_launcher,
            test_tools_auto_off, test_wake_stub, test_startup_lines,
-           test_log_ascii, test_hygiene):
+           test_log_ascii, test_stale_lock_diagnose, test_stale_pid_self_heal,
+           test_tray_guard, test_hygiene):
     fn()
 
 finish("Saare desktop shell test pass.")

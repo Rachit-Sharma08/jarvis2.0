@@ -17,6 +17,7 @@ rehta hai, sirf rang badalta hai.
 """
 
 import threading
+import time
 
 import pystray
 from pystray import Menu, MenuItem
@@ -27,6 +28,24 @@ from desktop.state import STATE
 from log_setup import get_logger
 
 log = get_logger("tray")
+
+
+def retry_start(tray, attempts: int = 3, delay: float = 1.5, sleep=None) -> bool:
+    """`tray.start()` ko `attempts` baar try karo — beech me `delay` ruko.
+
+    `pystray` kabhi kabhi pehli koshish me chhoot deta hai (Explorer restart, D:
+    slow disk). Ye alag function is liye hai ki test me `sleep` daal kar
+    bina asli wait kiye check ho jaaye.
+    """
+    wait = time.sleep if sleep is None else sleep
+    for n in range(1, max(1, attempts) + 1):
+        if tray.start():
+            return True
+        if n < attempts:
+            log.warning("tray koshish %d/%d fail - %s second baad phir",
+                        n, attempts, delay)
+            wait(delay)
+    return False
 
 
 class Tray:
@@ -78,6 +97,10 @@ class Tray:
             return False
         log.info("tray shuru (%s)", config.TRAY_NAME)
         return True
+
+    def start_retry(self, attempts: int = 3, delay: float = 1.5) -> bool:
+        """Icon pehli koshish me na bane to 2-3 baar phir try karo."""
+        return retry_start(self, attempts, delay)
 
     def stop(self) -> None:
         with self._lock:
