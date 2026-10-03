@@ -16,6 +16,10 @@ import os
 import shutil
 from pathlib import Path
 
+# Naam ek hi jagah se (Step 1). Is file me tray/shortcut ka naam isi se banta
+# hai — "Jarvis" dobara mat likho.
+from config_name import ASSISTANT_NAME
+
 BASE_DIR = Path(__file__).resolve().parent
 
 # Runtime data. `.gitignore` me hai — face data, lock file, browser profile
@@ -31,7 +35,7 @@ LOCK_FILE = DATA_DIR / "prabh.lock"
 HUD_PATH = "/"
 HUD_WIDTH = 1200
 HUD_HEIGHT = 720
-# Apna alag profile — isse Sunday ka browser instance tumhare normal browsing
+# Apna alag profile — isse Jarvis ka browser instance tumhare normal browsing
 # se alag rehta hai. Doosri baar `--app` bulao to browser isi profile me
 # naya window nahi banata, purane ko focus karke khud exit ho jaata hai.
 HUD_PROFILE_DIR = DATA_DIR / "hud-profile"
@@ -42,11 +46,11 @@ HUD_OPEN_AT_START = os.getenv("PRABH_HUD_AT_START", "0") == "1"
 # ---- HUD ke do aur raasta (tray par nirbhar na rahein) ----
 # Tray icon Windows ke overflow `^` me chhup jaata hai (ye Windows ka normal
 # behaviour hai, pystray ki galti nahi), is liye ek teesra raasta zaroori hai:
-#   1. Desktop ka shortcut "Sunday HUD"  -> `desktop/shortcut.py`
+#   1. Desktop ka shortcut "Jarvis HUD"  -> `desktop/shortcut.py`
 #   2. Global hotkey (default Ctrl+Alt+S) -> `desktop/hotkey.py`
 # Dono ka **ek hi kaam** `desktop/open_hud.py` karta hai: server zinda hai to
 # HUD window khol do, warna saaf message. Doosra koi raasta kabhi mat banao.
-HUD_SHORTCUT_NAME = "Sunday HUD"
+HUD_SHORTCUT_NAME = f"{ASSISTANT_NAME} HUD"
 # `.env` me PRABH_HUD_HOTKEY=<ctrl+alt+shift+s> se badal do. Galat ya khali
 # value par hotkey chalti hi nahi — app bilkul safe rehta hai.
 HUD_HOTKEY = os.getenv("PRABH_HUD_HOTKEY", "ctrl+alt+s")
@@ -79,14 +83,16 @@ TRAY_COLORS = {
     TRAY_MUTED: "#f5a623",
     TRAY_ERROR: "#e0483c",
 }
+# Tray ka tooltip. Ye **user ko dikhta hai**, isliye naam yahan se aata hai
+# (`ASSISTANT_NAME`) — TRAY_NAME sirf pystray ka internal icon-id hai.
 TRAY_TITLE = {
-    TRAY_OFF: "Sunday — band",
-    TRAY_IDLE: "Sunday — suna nahi raha",
-    TRAY_LISTENING: "Sunday — sun raha hai",
-    TRAY_MUTED: "Sunday — mic mute",
-    TRAY_ERROR: "Sunday — mic error",
+    TRAY_OFF: f"{ASSISTANT_NAME} — band",
+    TRAY_IDLE: f"{ASSISTANT_NAME} — suna nahi raha",
+    TRAY_LISTENING: f"{ASSISTANT_NAME} — sun raha hai",
+    TRAY_MUTED: f"{ASSISTANT_NAME} — mic mute",
+    TRAY_ERROR: f"{ASSISTANT_NAME} — mic error",
 }
-TRAY_NAME = "Sunday"
+TRAY_NAME = ASSISTANT_NAME
 
 # ---- Supervisor: crash par restart ----
 # Child (desktop.app) crash ho to supervisor use dobara chala deta hai.

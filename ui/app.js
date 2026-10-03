@@ -6,6 +6,9 @@
 // hai jo index.html me pehle se hai. Ye chhota rakhne ka reason yahi hai.
 
 const TOKEN = (document.querySelector('meta[name="prabh-token"]') || {}).content || "";
+// Naam config se (config_name.py) — `prabh-name` meta se padho, fallback rakho.
+const NAME = (document.querySelector('meta[name="prabh-name"]') || {}).content || "Jarvis";
+const LABEL = NAME.toUpperCase();
 const logEl = document.getElementById("messages");
 const inputEl = document.getElementById("cmd");
 const micBtn = document.getElementById("mic");
@@ -16,7 +19,7 @@ const noticeEl = document.getElementById("notice");
 const status = window.PRABH_STATUS;
 const orb = window.PRABH_ORB;
 
-let currentMode = "SUNDAY";
+let currentMode = "sunday";
 let busy = false;
 
 function addMessage(role, text, label) {
@@ -25,7 +28,7 @@ function addMessage(role, text, label) {
 
   const who = document.createElement("span");
   who.className = "who";
-  who.textContent = role === "user" ? "YOU" : (label || "PRABH");
+  who.textContent = role === "user" ? "YOU" : (label || LABEL);
   row.appendChild(who);
 
   const body = document.createElement("div");
@@ -102,9 +105,12 @@ function handleEvent(ev) {
     if (window.PRABH_DESKTOP) window.PRABH_DESKTOP.render(ev.data);
   } else if (ev.type === "log") {
     if (ev.data && ev.data.mode) {
-      currentMode = ev.data.mode.toUpperCase();
-      orb.setMode(currentMode);
-      status.setMode(currentMode);
+      // `currentMode` **mode id** hai (lowercase, jaise "sunday") - TTS isi ko
+      // chahiye, warna `voice_for(provider, "SUNDAY")` match hi nahi karta.
+      // Orb/brand ko dikhne wala naam chahiye, wo LABEL se aata hai.
+      currentMode = String(ev.data.mode).toLowerCase();
+      orb.setMode(LABEL);
+      status.setMode(LABEL);
     }
     console.log("[prabh]", ev.level, ev.text);
   }
@@ -169,7 +175,7 @@ document.getElementById("send").addEventListener("click", send);
 inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
 
 // Mode + brain pill load; brain har 15s refresh (pool badal sakta hai).
-status.setMode(currentMode);
-orb.setMode(currentMode);
+status.setMode(LABEL);
+orb.setMode(LABEL);
 loadBrain();
 brainTimer = setInterval(loadBrain, 15000);

@@ -8,7 +8,7 @@ me wo chaar kaam hain jinhe mic chahiye aur jinme koi brain/policy nahi hai:
    is liye capture aur aage ka TTS dono ko ye event rokta hai.
 2. `drain()` — mic ki queue khaali. Do jagah zaroori hai: bolne se **pehle**
    (purana audio + "Ji, boliye" ki apni awaaz) aur bolne ke **baad** (TTS ka
-   shor — warna `Session._loop` use `sunday` samajh kar dobara trigger kar
+   shor — warna `Session._loop` use wake shabd samajh kar dobara trigger kar
    deta tha).
 3. `warmup()` — mic baithne do (`COMMAND_WARMUP_SECONDS`) phir queue khaali.
    Ye `COMMAND_PRE_ROLL_SECONDS` se alag hai: pre-roll command ke *andar*

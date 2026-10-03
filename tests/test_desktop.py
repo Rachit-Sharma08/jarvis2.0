@@ -32,7 +32,8 @@ SOURCE_FILES = ("desktop/app.py", "desktop/launcher.py", "desktop/tray.py",
                 "desktop/open_hud.py", "desktop/hotkey.py", "desktop/shortcut.py",
                 "wake/session.py", "wake/utterance.py", "wake/worker.py",
                 "wake/command.py", "wake/listen.py",
-                "config.py", "config_desktop.py", "config_wake.py", "log_setup.py")
+                "config.py", "config_name.py", "config_tools.py",
+                "config_desktop.py", "config_wake.py", "log_setup.py")
 
 
 def test_config():

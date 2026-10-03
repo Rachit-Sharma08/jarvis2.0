@@ -128,19 +128,20 @@ class Single:
         pid = self.owner_pid()
         pid_ok = pid_alive(pid, pid_probe)
         http_ok = http_alive(config.SERVER_ORIGIN, opener=http_check)
+        who = config.ASSISTANT_NAME
         if pid_ok and http_ok:
-            return ("Sunday pehle se CHAL raha hai (pid=%d). Usi tray icon se "
-                    "Open HUD karo, ya Quit dabao." % pid)
+            return ("%s pehle se CHAL raha hai (pid=%d). Usi tray icon se "
+                    "Open HUD karo, ya Quit dabao." % (who, pid))
         if pid_ok:
-            return ("Sunday ka process (pid=%d) zinda hai lekin HUD nahi de "
+            return ("%s ka process (pid=%d) zinda hai lekin HUD nahi de "
                     "raha - app atki hai. Task Manager se us pid ko band karo, "
-                    "phir dobara chalao." % pid)
+                    "phir dobara chalao." % (who, pid))
         if http_ok:
-            return ("Sunday ka koi process nahi (pid=%d murda) lekin port 8000 "
+            return ("%s ka koi process nahi (pid=%d murda) lekin port 8000 "
                     "kisi aur ka hai - ye lock stale nahi, dusra app us port "
-                    "par hai." % pid)
-        return ("Sunday ka koi live process nahi (pid=%d) - lock stale hai. "
-                "Ye naya instance apne aap lock pakad lega." % pid)
+                    "par hai." % (who, pid))
+        return ("%s ka koi live process nahi (pid=%d) - lock stale hai. "
+                "Ye naya instance apne aap lock pakad lega." % (who, pid))
 
     def _clean_stale_pid(self) -> None:
         """Lock mil gayi, matlab koi live process nahi. Purana `.pid` (mar ke

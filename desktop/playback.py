@@ -1,6 +1,6 @@
 """Speaker ka ek raasta — TTS bytes ko bajao (Phase 5 Step 2).
 
-Browser ka purana `ui/speaker.js` sirf HUD ke liye bacha hai. Sunday ki apni
+Browser ka purana `ui/speaker.js` sirf HUD ke liye bacha hai. Jarvis ki apni
 awaaz (wake ke baad "Ji, boliye", aur brain ke jawab) Python me yahin se aati
 hai — `desktop/playback.py`.
 

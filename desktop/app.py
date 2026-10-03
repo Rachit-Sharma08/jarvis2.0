@@ -33,7 +33,7 @@ from wake import worker as wake_worker
 log = get_logger("app")
 
 
-class SundayApp:
+class SundayApp:   # naam Step 1 me user-facing hua, class id wahi rakha
     def __init__(self, open_hud_at_start: bool = False):
         self.open_hud_at_start = bool(open_hud_at_start)
         self.hud = hud_window.HudWindow()

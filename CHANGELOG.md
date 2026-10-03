@@ -1,4 +1,4 @@
-﻿# Changelog (Prabh ka pura record)
+﻿# Changelog (Jarvis ka pura record)
 
 `AGENTS.md` sirf **niyam** rakhta hai; kaam ka poora record yahan hai. Ek line =
 ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
@@ -6,7 +6,39 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
-## Phase 5 Step 2c (3 Oct 2026) - wake ke baad poora command
+## Step 1 (3 Oct 2026) - naam "Sunday" -> "Jarvis"
+
+Sirf **naam** badla, **id nahi**. `config.SUNDAY_ONLY`, `PRABH_SUNDAY_ONLY`,
+`ELEVENLABS_VOICE_SUNDAY` aur `CARTESIA_VOICE_SUNDAY` aise hi hain - `.env`
+ki keys aur voice id toot jaati agar id bhi rename karte.
+
+**Wake word:** ab `hello jarvis`, `hey jarvis`, `jarvis` (+ `[unk]`) sunta hai.
+Purane 5 "sunday" shabd `config_name.LEGACY_WAKE_PHRASES` me chhupaye hain,
+**default band**; `.env` me `PRABH_WAKE_LEGACY=1` se wapas aa jaate hain.
+
+**Ek hi raasta:** naya `config_name.py` (`ASSISTANT_NAME`/`DISPLAY_NAME` +
+wake shabd). UI ka naam `index.html` ke placeholder se aata hai jo
+`server/app.py` ke naye **pure** `fill_html()` se bharta hai (test isi ko
+chala-ta hai, asli server nahi); JS usi ko `meta[name="prabh-name"]` se
+padhta hai; tray tooltip aur `Jarvis HUD.lnk` `ASSISTANT_NAME` se bante hain.
+
+**Do asli galti pakdi:**
+1. `ui/app.js` me `currentMode = ev.data.mode.toUpperCase()` — wahi value
+   `voice.speak()` me jaati thi, aur `voice_for(provider, "SUNDAY")` match hi
+   nahi karta tha (default mode ka provider chup-chaap chhoot jaata). Ab
+   `currentMode` **lowercase id** hai, display ke liye alag `LABEL`.
+2. Persona file ka naam `jarvis.txt` hua, is liye `PERSONA_FILES` map bana —
+   warna `persona_for("sunday")` File-not-found deta.
+
+**Test:** naya `tests/test_name_jarvis.py` (14 check) - wake phrase variants +
+near-miss (`jarvisly`, `sunay` nahi), grammar, legacy off/on, persona, tray,
+`fill_html()`, aur UI grep. Purane 9 test file update hue (fake listener naye
+shabd par trigger hi nahi karta, warna chup-chaap fail hote).
+
+Docs sync: `README.md`, `VOICE.md`, `TOOLS.md`, `TESTS.md`, `CLAUDE.md`,
+`AGENTS.md` (current rules; §8.1 + change history jaise ki taisa).
+
+---
 
 Step 2a ne command **kaat** li, 2b ne awaaz **baja** di. Ab dono jury/judge se
 jud gaye: "Sunday" ke baad Sunday sunta hai, aapki baat sunta hai, brain se

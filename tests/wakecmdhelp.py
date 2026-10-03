@@ -87,7 +87,7 @@ def engine_say(confirm=False):
     out = [events.status("thinking")]
     if confirm:
         out.append(events.confirm("cid1", "write_file", "D:/prabh/test.txt", 60, "h1"))
-    out.append(events.message("assistant", "Aaj ka din kya hai?", "SUNDAY"))
+    out.append(events.message("assistant", "Aaj ka din kya hai?", "JARVIS"))
     out.append(events.status("idle"))
     return out
 

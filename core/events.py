@@ -8,7 +8,7 @@ def status(value: str) -> dict:
 
 
 def message(role: str, text: str, label: str = "") -> dict:
-    """Role ke saath message. `label` = SUNDAY / PRABH (jawab ke upar dikhta hai)."""
+    """Role ke saath message. `label` = JARVIS / PRABH (jawab ke upar dikhta hai)."""
     event = {"type": "message", "role": role, "text": text}
     if label:
         event["label"] = label

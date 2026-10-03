@@ -1,4 +1,4 @@
-"""Desktop ka "Sunday HUD" shortcut - banao ya hatao.
+"""Desktop ka "Jarvis HUD" shortcut - banao ya hatao.
 
 Tray icon Windows ke overflow `^` me chhup jaata hai (ye Windows ka normal
 behaviour hai, pystray ki galti nahi). Is liye tray ke alawa **ek aur**
@@ -61,7 +61,7 @@ def target() -> str:
 
 
 def description() -> str:
-    return "Sunday ka HUD window kholo (server chalu hona chahiye)"
+    return "%s ka HUD window kholo (server chalu hona chahiye)" % config.ASSISTANT_NAME
 
 
 def command(mode: str, link: Path = None, script_path: Path = None,
@@ -121,7 +121,7 @@ def main(argv=None) -> int:
         print("Sirf ye chal sakta hai: install | remove | status")
         return 1
     ok, reason = {"install": install, "remove": remove, "status": status}[action]()
-    print(f"Sunday HUD shortcut {action}: {reason}")
+    print(f"{config.ASSISTANT_NAME} HUD shortcut {action}: {reason}")
     return 0 if ok or reason == "missing" else 1
 
 

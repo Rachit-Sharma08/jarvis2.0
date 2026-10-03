@@ -41,14 +41,15 @@ hai.
 ```
 prabh/
   main.py            -> server chalu (sirf 127.0.0.1)
-  config.py          -> .env + settings + tool risk + allowed folders + blocked patterns
+  config.py          -> .env + settings + allowed folders + blocked patterns + re-exports
+  config_tools.py    -> tool risk, allowed folders, blocked patterns (config.py re-export)
   config_brain.py    -> provider keys, models, token, timeout (config.py re-export)
   config_voice.py    -> voice/TTS/STT constants + voice_for() (config.py re-export)
   config_hud.py      -> HUD rang, weather (Delhi/15min cache), stats interval, 6 quick button
   log_setup.py       -> logs/prabh.log
   core/engine.py     -> message -> mode -> brain -> (tool loop) -> events
   core/events.py     -> status/message/log/activity/confirm
-  core/modes.py      -> naam se mode + persona + label (SUNDAY/PRABH)
+  core/modes.py      -> naam se mode + persona + label (JARVIS/PRABH)
   core/timing.py     -> Stopwatch (stage + total ms)
   core/sysstats.py   -> psutil: CPU/RAM/battery/disk/network (1.5s cache, prime())
   brain/pool.py + pool_config.py -> POOL order (sirf yahin brain ka raasta)
@@ -58,10 +59,12 @@ prabh/
   brain/probe.py     -> manual strict-JSON probe + 24h cache (startup par NAHI)
   brain/checkup.py   -> start par sirf free /models list check
   brain/prompt.py    -> persona + tool JSON rules + strict parser
-  personas/sunday.txt, personas/prabh.txt
+  personas/jarvis.txt, personas/prabh.txt
   config_desktop.py   -> tray rang, HUD size/path, crash backoff, exit codes, mic/lock helpers,
                         HUD_HOTKEY + HUD_SHORTCUT_NAME
   config_wake.py      -> wake word, VAD, command window, WhatsApp call ke constants
+  config_name.py      -> assistant ka naam (ASSISTANT_NAME/DISPLAY_NAME) + wake shabd
+                         (+ purane "sunday" shabd LEGACY_WAKE_PHRASES me, default band)
   gatekeeper/keeper.py, rules.py, patterns.py, paths.py, approvals.py, limiter.py, audit.py
   tools/__init__.py, command.py, files.py, apps.py, system.py
   server/app.py      -> GET /, POST /chat, CSP headers + Referrer-Policy
@@ -82,7 +85,7 @@ prabh/
   desktop/hotkey.py   -> global hotkey (Ctrl+Alt+S), sirf ctypes + RegisterHotKey
   desktop/playback.py -> Step 2 speaker: TTS bytes -> miniaudio PCM -> sounddevice
   desktop/open_hud.py -> shortcut + hotkey dono ka EK raasta (server zinda -> HUD)
-  desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Sunday HUD" .lnk banao/hatao
+  desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Jarvis HUD" .lnk banao/hatao
   wake/worker.py     -> Step 1 ka module-level raasta (poori app me EK worker)
   wake/session.py    -> asli loop: mic -> VAD -> Vosk -> trigger (thread, cooldown, pause)
   wake/utterance.py + wake/wav.py -> Step 2a: command capture + WAV
@@ -91,7 +94,7 @@ prabh/
   wake/audio.py      -> sounddevice se 16 kHz mono (mic ka EK owner) + energy Vad + PCM
   wake/model.py      -> Vosk model load + cache (khaali ya error = ModelMissing)
   wake/detect.py     -> KaldiRecognizer ka wrapper: JSON -> saaf text
-  wake/phrase.py     -> "sunday" pakadna — pure functions
+  wake/phrase.py     -> "jarvis" pakadna — pure functions
   start_prabh.bat    -> supervisor chalao (registry entry nahi, wo Step 3 ke aakhir me)
   ui/index.html, app.js (chat+ws glue), voice_ui.js (mic+speaker)
   ui/hud_base.css, hud_panel.css, hud_left.css, hud_center.css, hud_right.css, hud_bottom.css
@@ -120,7 +123,7 @@ prabh/
 
 - **`on_wake(phrase, mic, stop)`** — `wake/session.py` ka `_fire()` teeno deta
   hai, kahin aur se mic **kabhi** mat lo. Ye **synchronous** hai (wake thread par),
-  is liye command poore chal jaane tak sunna ruka rehta hai aur dobara "Sunday"
+  is liye command poore chal jaane tak sunna ruka rehta hai aur dobara "Jarvis"
   trigger nahi hoga.
 - **Mic ke chaar kaam `wake/listen.py` me** (`drain`/`warmup`/`capture`/`to_text`),
   flow `wake/command.py` me. `listen` ko brain/policy ki knowledge mat do — mute
@@ -131,7 +134,7 @@ prabh/
   to `_HELD` clear ho jaata hai — **MUTE haar nahi maarta**.
 - **Bole hue to aawaaz dobara trigger na ho:** `run()` ke `finally` me mic queue
   `drain()` hoti hai *tabhi* hold chhoda jaata hai. Warna `Session._loop` TTS ko
-  `sunday` samajh kar phir uth jaata.
+  `jarvis` samajh kar phir uth jaata.
 - **`via="voice"`** — wake se aaye har engine event par ye lagta hai aur
   `ui/app.js` us par **browser TTS skip** karta hai (warna do awaaz). Likh kar
   bheja hua message ka raasta badalta nahi — wo waise hi bolega.
@@ -175,7 +178,7 @@ prabh/
 - **Mic permission check.** `desktop/micperm.py` se shuru me check karo, error ko
   `STATE.set_mic("error", reason)` me daal ke tray + HUD dono dikhao.
 - **Lock pe TOOLS off, app nahi.** Locked hone par bhi wake/rendering chalta rahega.
-- **Sirf Sunday.** `PRABH_SUNDAY_ONLY=1` (`config.SUNDAY_ONLY`). Prabh ka code
+- **Sirf Jarvis.** `PRABH_SUNDAY_ONLY=1` (`config.SUNDAY_ONLY`). Prabh ka code
   maujood hai; mode switch flag se band hai. Test me flag off karke switch chalta
   hai ye bhi verify karte rahna.
 
@@ -201,7 +204,7 @@ kholo aur `getBoundingClientRect` + computed style + network log dekho.
 2. **Grid overflow** — `grid-template-columns: 24% 50% 26%` + `gap` + `padding` =
    1366 viewport par 1372px (scroll bar). Ab `minmax(0, 24fr) minmax(0, 50fr) minmax(0, 26fr)`.
 3. **Teen alag `Engine()`** — `app.py`, `ws_routes.py`, `hud_routes.py` — mode drift
-   (`/chat` me PRABH, quick button SUNDAY). Ab ek `server/state.py`.
+   (`/chat` me PRABH, quick button JARVIS). Ab ek `server/state.py`.
 4. **Orb core kaali thi** — CSS `fill: radial-gradient()` SVG me valid NAHI hai.
    Ab `index.html` me `<radialGradient id="coreGrad">`.
 5. **SYSTEM pill startup par OFFLINE** — `active_tier: null` (abhi koi message nahi).
@@ -220,7 +223,7 @@ kholo aur `getBoundingClientRect` + computed style + network log dekho.
   `tests/verify_image_assets.py` **abhi likha nahi gaya**, ye baaki kaam hai.
   Guess par bharosa na karna.
 
-- **Tool ka ek hi raasta**: `engine.run_tool()` → `keeper.review()` → `tools.execute()`. Sunday aur Prabh
+- **Tool ka ek hi raasta**: `engine.run_tool()` → `keeper.review()` → `tools.execute()`. Jarvis aur Prabh
 dono isi se guzarte hain. Engine me doosra raasta kabhi mat banao.
 - **Brain ka ek hi raasta**: `engine` → `brain.pool.ask()`. Provider list sirf `brain/pool_config.py` me
 badlo, engine ya brain me hard-code order mat likho.
@@ -274,7 +277,7 @@ nahi padhe ja sakte.
 ## 5. VOICE KE KHAS NIYAM
 
 - TTS chain: **elevenlabs → cartesia → edge-tts** (`config.TTS_CHAIN`). Key/voice id na ho ya error/limit aaye to agla try karo; teeno fail ho to saaf error. Bolne se pehle `voice/tts.py` ka `clean()`.
-- **Dono** mode ki awaaz **female** (Sunday bhi). Male id, male default fallback aur dead male constant sab hata diye gaye hain. Female id `voice/tts_female.py` ki allowlist me honi chahiye — nahi to wo provider skip.
+- **Dono** mode ki awaaz **female** (Jarvis bhi). Male id, male default fallback aur dead male constant sab hata diye gaye hain. Female id `voice/tts_female.py` ki allowlist me honi chahiye — nahi to wo provider skip.
 - TTS max **500 character**; recording max **30 second**; audio max **10 MB**. `recorder.js` me mic band karne ke liye **`track.stop()`** (`release()` jaisa kuch nahi hota) — har raaste par: recording khatam, error, MUTE, STOP.
 - STT: browser duration bheje (`x-audio-ms`), `<600ms` reject; `voice/stt_guard.py` silence/khaali aur non-Hindi/English script bhi rokta hai. `language="hi"` **mat bhejo** — romanized Hinglish Devanagari me bigad jaata tha; auto detection sahi rehti hai. Poori detail → **`VOICE.md`**.
 ---
@@ -406,6 +409,30 @@ endpoint mat likho.
   UTF-8 file ko **double-encode** kar deta hai — poora diff bikhre hue `â` jaise
   akshar se bhara ho jaata hai. File badalni hai to `edit` tool ya Python
   (`encoding="utf-8"`) use karo.
+- **Assistant ka naam ek hi jagah se: `config_name.py`.** UI/tray/shortcut/docs me
+  "Jarvis" **hard-code mat karo**. Saccha raasta: `config_name.ASSISTANT_NAME` /
+  `DISPLAY_NAME`. UI me `index.html` placeholder rakho (`__PRABH_ASSISTANT_NAME__` /
+  `__PRABH_DISPLAY_NAME__`), `server/app.py` ke `fill_html()` se bharo, aur JS me
+  `meta[name="prabh-name"]` se padho. `config_desktop.py` me `HUD_SHORTCUT_NAME` /
+  `TRAY_TITLE` / `TRAY_NAME` f-string se bante hain.
+- **Mode id `"sunday"` jaan-boojh kar mat badlo.** Step 1 me naam badla, **id nahi**
+  — `config.SUNDAY_ONLY`, `PRABH_SUNDAY_ONLY`, `ELEVENLABS_VOICE_SUNDAY`,
+  `CARTESIA_VOICE_SUNDAY` abhi bhi `sunday` hi hain. Ye internal hai (screen par
+  nahi aata); rename karne se env keys aur voice id toot jaayengi.
+- **`currentMode` JS me lowercase mode **id** rakho, label nahi.** `ui/app.js` me
+  `ev.data.mode.toUpperCase()` ki wajah se wahi value `voice.speak()` me jaati thi —
+  `voice_for(provider, "SUNDAY")` match hi nahi karta, provider chhoot jaata hai.
+  Display ke liye meta se padha hua `LABEL` alag rakho.
+- **UI grep test me teen exception jaan-boojh kar:** comment line, quoted mode id
+  `"sunday"`, aur `hud_clock.js` ka `DAYS` array (calendar ka din, assistant ka naam
+  nahi). `tests/test_name_jarvis.py` ye teen chhodta hai, baaki har "Sunday" FAIL
+  hota hai. Ye test khud bhi pakadta hai — ek baar `hud_stats.js` me `"Sunday"`
+  daal ke FAIL dekh liya tha.
+- **Naam badalne par test bhi badalna mat bhoolna.** Sirf UI nahi — `test_wake.py`,
+  `test_wake_loop.py`, `test_wake_worker.py` ke fake bhi naye shabd bolte hain, aur
+  `test_desktop_tray.py` / `test_desktop_shortcut.py` tooltip/shortcut naam check
+  karte hain. Purana test chup-chaap fail ho sakta hai kyunki fake listener naye
+  shabd par trigger hi nahi karta.
 
 ---
 

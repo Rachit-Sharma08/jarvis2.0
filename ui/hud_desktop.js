@@ -4,7 +4,7 @@
 // (desktop/state.py). Yahan sirf ek pill update hota hai: mic + wake.
 //
 // Ye SIRF state dikhata hai. Mic yahan se ON/OFF nahi hota — wo tray icon
-// ya "hello sunday" se hota hai. Browser ka apna MIC button alag hai
+// ya "hello jarvis" se hota hai. Browser ka apna MIC button alag hai
 // (wo page ke andar record karta hai).
 //
 // Text: `textContent` hi — innerHTML kabhi nahi (AGENTS.md ka UI niyam).

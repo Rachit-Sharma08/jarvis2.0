@@ -1,6 +1,6 @@
 """Wake phrase pakadna — pure functions. Na audio, na model, na Vosk.
 
-Grammar me sirf 5 shabd hain (`config_wake.WAKE_GRAMMAR`), is liye fuzzy match
+Grammar me sirf 4 shabd hain (`config_wake.WAKE_GRAMMAR`), is liye fuzzy match
 ki zarurat nahi. Bas itna karna hai:
 
 1. `normalize()` — punctuation hatao, case hatao, space theek karo
@@ -19,7 +19,7 @@ GREETING = ("hello", "hey", "hi", "okay", "ok", "helo", "helo")
 
 
 def normalize(text: str) -> str:
-    """`"Hello, Sunday!"` -> `"hello sunday"`"""
+    """`"Hello, Jarvis!"` -> `"hello jarvis"`"""
     cleaned = str(text or "").lower()
     for ch in ".,!?;:-_\"'()[]":
         cleaned = cleaned.replace(ch, " ")
@@ -43,7 +43,7 @@ def hit(text: str) -> bool:
 def phrase(text: str) -> str:
     """Wake shabd wala hissa — greeting sahit. `''` agar wake word hi na ho.
 
-    `"hey sunday kholo"` -> `"hey sunday"` (trigger ke liye yahi chahiye).
+    `"hey jarvis kholo"` -> `"hey jarvis"` (trigger ke liye yahi chahiye).
     """
     words = tokens(text)
     for i, word in enumerate(words):

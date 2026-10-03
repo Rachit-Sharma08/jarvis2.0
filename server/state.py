@@ -3,9 +3,9 @@
 Pehle `server/app.py`, `server/ws_routes.py` aur `server/hud_routes.py` — teeno
 apna alag `Engine()` bana rahe the. Iska matlab:
 
-- `/chat` se mode PRABH kar do, lekin WebSocket wala engine abhi bhi SUNDAY
+- `/chat` se mode PRABH kar do, lekin WebSocket wala engine abhi bhi default
   rahega (aur ulta).
-- `/hud/quick` ke tools hamesha SUNDAY persona ke hisaab se chaleenge.
+- `/hud/quick` ke tools hamesha default persona ke hisaab se chaleenge.
 - Ek hi request par do engine ke gatekeeper state alag-alag honge.
 
 Engine me mode, tool-loop state aur active tool rehta hai — is liye yeh ek

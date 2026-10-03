@@ -2,7 +2,7 @@
 
 Step 2c ka test do file me hai. Yeh wala **mic aur pause** sambhalta hai:
 
-- `drain()` purana queue phenkta hai (Sunday apni awaaz na sun le)
+- `drain()` purana queue phenkta hai (Jarvis apni awaaz na sun le)
 - `warmup()` mic ke khulne ka wait, aur wo bhi drain karta hai
 - `stop` lagane par `drain`/`warmup`/`capture`/`to_text`/`speak` sab ruk jaate hain
 - command ke dauran mic **hold** rehta hai, aur MUTE aane par hold absorb ho jaata

@@ -5,7 +5,7 @@
 
 Do naam wala AI assistant:
 
-- **Sunday** (public mode) — halka professional, chhote aur saaf jawab.
+- **Jarvis** (default mode) — halka professional, chhote aur saaf jawab.
 - **Prabh** (private mode) — pyaar se, dostana, khula Hinglish.
 
 Browser me chalta hai, Windows 10/11 par, sab kuch free tools se. Mic se baat kar sakta
@@ -75,12 +75,12 @@ Cartesia https://cartesia.ai/dashboard
 
 ## 2. Chalao
 
-### Raasta A — Sunday (recommended, naya)
+### Raasta A — Jarvis (recommended, naya)
 
 `start_prabh.bat` par double-click. Ye:
 
 1. ek supervisor (launcher) chalao,
-2. Sunday app ke andar server + **tray icon** + HUD window khulta hai,
+2. Jarvis app ke andar server + **tray icon** + HUD window khulta hai,
 3. crash ho to supervisor dobara chala deta hai (5 baar, phir ruk jaata hai).
 
 Tray icon (taskbar ke right side, chhupa karo tab par):
@@ -102,8 +102,8 @@ HUD kholne ke **teen** raasta hain, teeno ek hi kaam karte hain:
 
 | Raasta | Kaise |
 | --- | --- |
-| Tray ka menu | `^` par click → Sunday → **Open HUD** |
-| Desktop shortcut | Desktop par **"Sunday HUD"** par double-click |
+| Tray ka menu | `^` par click → Jarvis → **Open HUD** |
+| Desktop shortcut | Desktop par **"Jarvis HUD"** par double-click |
 | Global hotkey | **Ctrl + Alt + S** (poore Windows me) |
 
 Hotkey badalna ho to `.env` me `PRABH_HUD_HOTKEY=<ctrl+alt+shift+s>` (ek letter
@@ -120,11 +120,11 @@ cd D:\prabh
 ```
 
 Sunke chalana **ab poora kaam karta hai** — app shuru hote hi mic khul kar
-"sunday" sunta hai. "Sunday" bolte hi HUD khulta hai, Sunday **"Ji, boliye"**
+"jarvis" sunta hai. "Jarvis" bolte hi HUD khulta hai, Jarvis **"Ji, boliye"**
 bolta hai, aap apni baat bolo, aur jawab **awaaz me** aa jaata hai.
 
 ```
-Sunday  ->  "Ji, boliye"  ->  aapki baat (2 s chup par band, 30 s max)
+Jarvis  ->  "Ji, boliye"  ->  aapki baat (2 s chup par band, 30 s max)
         ->  brain  ->  HUD par jawab + awaaz
 ```
 
@@ -209,7 +209,7 @@ $page = Invoke-WebRequest http://localhost:8000 -UseBasicParsing
 $token = [regex]::Match($page.Content, 'name="prabh-token" content="([^"]+)"').Groups[1].Value
 Invoke-RestMethod http://localhost:8000/chat -Method Post `
   -Headers @{ Origin = "http://localhost:8000"; "x-prabh-token" = $token } `
-  -ContentType "application/json" -Body '{"text":"Sunday, hi"}'
+  -ContentType "application/json" -Body '{"text":"Jarvis, hi"}'
 ```
 
 ---
@@ -219,10 +219,10 @@ Invoke-RestMethod http://localhost:8000/chat -Method Post `
 Command box me likho aur **SEND** dabao (ya Enter).
 
 - Mode badalne ke liye message ke **shuru me** naam likho:
-  - `Sunday, ek hafta ka plan bana` → Sunday mode
+  - `Jarvis, ek hafta ka plan bana` → Jarvis mode
   - `Prabh, aaj mood kharab hai` → Prabh mode
 - Jaise hi ek naam likhoge, mode badal jayega aur wahi rehta rahega jab tak doosra naam na likho.
-- Default mode **Sunday** hai.
+- Default mode **Jarvis** hai.
 
 Beeche me gol orb aur uske neeche status dikhta hai: `IDLE` -> `THINKING` -> `SPEAKING` -> `IDLE`.
 Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hisaab.
@@ -272,18 +272,18 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `ui/hud_desktop.js` | Top bar ka DESKTOP pill (mic + wake ka haalat, sirf dikhata hai) |
 | `ui/tools.js`, `ui/recorder.js`, `ui/speaker.js` | Confirm card, ACTIVITY jodi, mic record, audio play |
 | `ui/fonts/` | Local woff2 fonts + OFL license |
-| `personas/sunday.txt`, `personas/prabh.txt` | Dono ka character |
+| `personas/jarvis.txt`, `personas/prabh.txt` | Dono ka character |
 | `desktop/launcher.py` | Supervisor: app crash ho to dobara (pehle `start_prabh.bat` se chalta hai) |
-| `desktop/app.py` | Sunday app: server thread + tray + HUD + mic permission + lock watcher |
+| `desktop/app.py` | Jarvis app: server thread + tray + HUD + mic permission + lock watcher |
 | `desktop/tray.py`, `trayicon.py` | Tray menu (Mute / Open HUD / TOOLS / Restart / Quit) + rang se bana icon |
 | `desktop/hud_window.py` | Edge `--app` me HUD window (apna profile, 1200x720) |
 | `desktop/hotkey.py` | Global hotkey (default Ctrl+Alt+S) — sirf `ctypes`, koi naya package nahi |
 | `desktop/open_hud.py` | Shortcut **aur** hotkey dono ka ek hi raasta: server zinda hai to HUD khulo |
-| `desktop/shortcut.py`, `hud_shortcut.ps1` | Desktop ka "Sunday HUD" `.lnk` banao / hatao (`WScript.Shell`) |
+| `desktop/shortcut.py`, `hud_shortcut.ps1` | Desktop ka "Jarvis HUD" `.lnk` banao / hatao (`WScript.Shell`) |
 | `desktop/single.py` | Ek hi instance (doosra `"already running"` band ho jaata hai) |
 | `desktop/state.py`, `micperm.py`, `lockwatch.py` | Ek shared haalat, Windows mic permission check, lock ka pata |
 | `wake/worker.py`, `session.py` | Wake word: module ka ek raasta + uska asli loop (thread, cooldown, mute) |
-| `wake/audio.py`, `detect.py`, `phrase.py`, `model.py` | Mic + energy VAD, Vosk recognizer, "sunday" pakadna, model load |
+| `wake/audio.py`, `detect.py`, `phrase.py`, `model.py` | Mic + energy VAD, Vosk recognizer, "jarvis" pakadna, model load |
 | `config_wake.py` | Wake/VAD/command-window constants (`config.py` se re-export) |
 
 ---

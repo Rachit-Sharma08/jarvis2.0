@@ -34,7 +34,8 @@ class VoiceUI {
     this.opts.status("idle");
   }
 
-  // Jawab bolwana. Mode ke hisaab se awaaz chunta hai (sunday / prabh).
+  // Jawab bolwana. Mode ke hisaab se awaaz chunta hai (mode id: sunday / prabh —
+// user ko sirf naam dikhta hai: Jarvis).
   speak(text, mode) {
     this.speaker.speak(text, String(mode).toLowerCase());
   }

@@ -58,7 +58,7 @@ def test_tray_menu():
     check("status + 5 button + hint", len(labels), 9)   # 7 asli + 2 divider
     for wanted in ("Mic Mute", "Open HUD", "TOOLS", "Restart", "Quit"):
         check(f"'{wanted}' hai", wanted in labels, True)
-    check("pehla item haalat", labels[0].startswith("Sunday"), True)
+    check("pehla item haalat", labels[0].startswith("Jarvis"), True)
     check("Quit sabse neeche", labels[-1], "Quit")
     # Hotkey ki tafseer - sirf text, click se kuch nahi hota (disabled item)
     hints = [t for t in labels if t.startswith("  ya phir")]

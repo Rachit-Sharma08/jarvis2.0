@@ -1,4 +1,4 @@
-"""HUD ke backup raaste ka dusra raasta - Desktop "Sunday HUD" shortcut.
+"""HUD ke backup raaste ka dusra raasta - Desktop "Jarvis HUD" shortcut.
 
 Sirf **command / path / wiring** check karta hai. Asli `.lnk` **kabhi nahi**
 banata ya delete hota hai (warna user ka asli Desktop badal jaata), asli Edge
@@ -35,7 +35,7 @@ def test_open_hud():
 
 def test_shortcut_command():
     print("SHORTCUT (sirf command check)")
-    link = Path("D:/fake-Desktop") / "Sunday HUD.lnk"
+    link = Path("D:/fake-Desktop") / "Jarvis HUD.lnk"
     cmd = shortcut.command("install", link)
     check("shell=False ki list hai", isinstance(cmd, list), True)
     check("pehla powershell", cmd[0], "powershell.exe")
@@ -85,7 +85,7 @@ def test_wiring():
     check("tray menu me hint hai",
           "hotkey_mod.describe(config.HUD_HOTKEY)" in
           (ROOT / "desktop/tray.py").read_text(encoding="utf-8"), True)
-    check("config me shortcut ka naam", config.HUD_SHORTCUT_NAME, "Sunday HUD")
+    check("config me shortcut ka naam", config.HUD_SHORTCUT_NAME, "Jarvis HUD")
     check("config me hotkey", config.HUD_HOTKEY, "ctrl+alt+s")
     check(".env.example me hotkey",
           "PRABH_HUD_HOTKEY" in (ROOT / ".env.example").read_text(encoding="utf-8"), True)

@@ -46,7 +46,7 @@ mic turant chhod diya jaata hai (browser ka mic indicator band ho jaata hai).
 
 ## Har mode ki awaaz — DONO female
 
-Round 2 ke baad **Sunday ki awaaz bhi female** hai. Pehle Sunday par ElevenLabs ka
+Round 2 ke baad **Jarvis ki awaaz bhi female** hai. Pehle default mode par ElevenLabs ka
 male (George) default pada tha; wo hata diya gaya hai.
 
 | Provider | Chain me kab | Female check |
@@ -121,28 +121,28 @@ lamba bolo", brain call hota hi nahi.
 
 Whisper (sunne wala) Hindi + English dono samajhta hai, to naam bhi bol sakte ho:
 
-- `"Sunday..."`, `"संडे..."` → Sunday
+- `"Jarvis..."`, `"संडे..."` → Jarvis
 - `"Prabh..."`, `"Prabhu..."`, `"प्रभ..."`, `"प्रभु..."` → Prabh
 
-## Wake word (Phase 5 Step 1) — "Sunday" bolkar bulao
+## Wake word (Phase 5 Step 1) — "Jarvis" bolkar bulao
 
 Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
 (`sounddevice`) — hamesha chalta hai, band kabhi nahi hota (duty cycle nahi).
 
 | Baat | Detail |
 |---|---|
-| Kaam | App shuru hote hi mic khulta hai. **"Sunday"** (ya "hello/hey/hi/okay sunday") bolte hi **HUD khul jaata hai**. |
+| Kaam | App shuru hote hi mic khulta hai. **"Jarvis"** (ya "hello/hey jarvis") bolte hi **HUD khul jaata hai**. |
 | Model | `models/vosk-model-small-en-us-0.15` — **Vosk**, 100% offline, awaaz bahar nahi jaati |
-| Grammar | Sirf 5 shabd sunta hai (`hello sunday`, `hey sunday`, `hi sunday`, `okay sunday`, `sunday`, `[unk]`) — is liye galat trigger kam aur CPU halka |
+| Grammar | Sirf 3 shabd sunta hai (`hello jarvis`, `hey jarvis`, `jarvis`, `[unk]`) — is liye galat trigger kam aur CPU halka |
 | Audio | 16 kHz mono, 30 ms chunk, energy VAD (threshold `.env` se `PRABH_VAD`) |
 | Cooldown | Ek trigger ke baad **1.5 second** dobara nahi pakadta |
 | Mute | Tray ka **Mic Mute** sunna rok deta hai (mic khula rehta hai, sunta nahi) |
 | Band karo | `.env` me `PRABH_WAKE=0` — phir startup me `wake: PRABH_WAKE=0 se band hai` dikhega |
-| Startup line | `wake: sun raha hai (sunday)` — ya mic band/model missing ho to wajah |
+| Startup line | `wake: sun raha hai (jarvis)` — ya mic band/model missing ho to wajah |
 
 ### Command sunna + bolna (Step 2c) — poora
 
-Ab wake ke baad **poora command** chalta hai. "Sunday" bolo, Sunday "Ji, boliye"
+Ab wake ke baad **poora command** chalta hai. "Jarvis" bolo, Jarvis "Ji, boliye"
 bolega, aap apni baat bolo, aur jawab **awaaz me** aayega:
 
 | Kya | Kahan |
@@ -189,7 +189,7 @@ bolte hain.
   seedha Groq STT ko. Wake word (Vosk) poora **offline** hai, koi recording
   provider ko nahi jaati.
 - Mic band karte waqt jo chunk queue bacha hota hai use pehle phenka jaata hai
-  (`listen.drain()`) — warna Sunday apni hi awaaz sun kar dobara trigger hota.
+  (`listen.drain()`) — warna Jarvis apni hi awaaz sun kar dobara trigger hota.
 
 ### Speaker ke do pakkaurey (Step 2)
 
@@ -224,7 +224,7 @@ cd D:\prabh
 ```
 
 Poora voice flow (mic + STT + brain + awaaz) test karne ke liye app chala kar
-"Sunday" bolo — `logs/prabh.log` me har stage ka time (`ack / warmup / capture /
+"Jarvis" bolo — `logs/prabh.log` me har stage ka time (`ack / warmup / capture /
 stt / brain / speak`) ek line me dikhta hai.
 
 ### Model kahan hai / kya hua to
@@ -273,7 +273,7 @@ ki battery/CPU par asar nahi dale aur flaky nahi hote.
 | `wake/session.py` | Worker ka asli loop: mic → VAD → Vosk → trigger (thread, cooldown) |
 | `wake/audio.py` | Mic ka ek owner (`sounddevice`) + energy VAD + PCM helpers |
 | `wake/detect.py` | Vosk `KaldiRecognizer` ka wrapper (JSON → saaf text) |
-| `wake/phrase.py` | "sunday" pakadna — pure functions |
+| `wake/phrase.py` | "jarvis" pakadna — pure functions |
 | `wake/model.py` | Vosk model load + cache, saaf Hinglish error |
 | `ui/voice_ui.js` | Mic + speaker wiring (chat `app.js` se alag) |
 | `ui/recorder.js` | `getUserMedia` + `MediaRecorder` + `track.stop()` |

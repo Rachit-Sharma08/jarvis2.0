@@ -1,5 +1,5 @@
-// TOP BAR: mode ka naam (P.R.A.B.H / S.U.N.D.A.Y), ● LISTENING status pill,
-// SYSTEM ONLINE/DEGRADED/OFFLINE pill, aur uske paas active provider + model.
+// TOP BAR: mode ka naam (J.A.R.V.I.S), ● LISTENING status pill, SYSTEM
+// ONLINE/DEGRADED/OFFLINE pill, aur uske paas active provider + model.
 //
 // IMPORTANT: provider/model ka text KABHI hard-code nahi — hamesha
 // /brain/status se aata hai. Agar server na bataye to khaali rahega.
@@ -24,10 +24,16 @@
     speaking: "● SPEAKING"
   };
 
+  // Naam `meta[name="prabh-display"]` se (config-driven, config_name.py).
+  // Server `label()` bhejta hai ("J.A.R.V.I.S"); agar kabhi sirf mode id
+  // ("sunday") mile to display-name wapas use karo, purana naam nahi dikhe.
+  const META = (n) => ((document.querySelector('meta[name="' + n + '"]') || {}).content || "");
+  const DISPLAY = META("prabh-display") || "J.A.R.V.I.S";
+  const NAME = META("prabh-name") || "Jarvis";
+
   // mode -> title. Spaced letters reference photo jaisa.
   function brandFor(mode) {
-    const name = String(mode || "sunday").toUpperCase();
-    return name.split("").join(".");
+    return DISPLAY;
   }
 
   function setStatus(value) {
@@ -37,7 +43,10 @@
   }
 
   function setMode(mode) {
-    const key = String(mode || "sunday").toLowerCase();
+    const raw = String(mode || "").toLowerCase();
+    // Andar ka id "sunday" hai (Step 1 me naam badla, id nahi) - brand hamesha
+    // display-name rahe, id nahi.
+    const key = (raw === "sunday" || raw === "") ? "jarvis" : raw;
     if (brandEl) brandEl.textContent = brandFor(key);
     return key;
   }

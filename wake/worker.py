@@ -5,7 +5,7 @@ MUTE se). Andar ka saala kaam `wake/session.py` ke `Session` me hai — yahan
 bas ek singleton rakh kar aage bhej diya gaya hai.
 
 Step 2 me ye worker sirf sunta hai: mic khula rehta hai, Vosk text laata hai,
-"sunday" milte hi `on_wake(phrase, mic, stop)` + `on_state("heard")`.
+wake shabd milte hi `on_wake(phrase, mic, stop)` + `on_state("heard")`.
 
 Pause ke do **alag** kaam hain, is liye do alag khaali rakhi hain:
 

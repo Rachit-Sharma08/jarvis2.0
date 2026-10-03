@@ -23,12 +23,12 @@ from wakehelp import check, finish, loud, make_listener, quiet, show, truthy
 def test_config():
     print("WAKE CONFIG")
     check("wake ON/OFF bool", isinstance(config.WAKE_ENABLED, bool), True)
-    check("wake word", config.WAKE_WORDS, ("sunday",))
+    check("wake word", config.WAKE_WORDS, ("jarvis",))
     truthy("model folder mila", config.model_path())
     show(f"model = {config.model_path().split(chr(92))[-1]}")
     import json
     words = json.loads(config.WAKE_GRAMMAR)
-    truthy("grammar me sunday", "sunday" in words)
+    truthy("grammar me jarvis", "jarvis" in words)
     truthy("grammar me filler", "[unk]" in words)
     check("sample rate", config.SAMPLE_RATE, 16000)
     check("block 30ms", audio.BLOCK_SECONDS, 0.03)
@@ -88,10 +88,10 @@ def test_audio():
 
 def test_detect():
     print("DETECT (fake recognizer)")
-    listener, fake = make_listener(["hello sunday"], partial="hey sund")
-    check("final text", listener.feed(b"\x01\x02"), "hello sunday")
+    listener, fake = make_listener(["hello jarvis"], partial="hey jarv")
+    check("final text", listener.feed(b"\x01\x02"), "hello jarvis")
     check("khatam ho gaya to ''", listener.feed(b"\x01\x02"), "")
-    check("partial", listener.partial(), "hey sund")
+    check("partial", listener.partial(), "hey jarv")
     check("bytes recognizer tak gaye", fake.bytes_fed, 4)
     listener.reset()
     check("reset count", fake.resets, 1)
@@ -101,27 +101,27 @@ def test_detect():
     check("ajeeb JSON par crash nahi", broken.feed(b"\x01\x02"), "")
     empty, _ = make_listener(raw_text="")
     check("khaali JSON", empty.partial(), "")
-    check("grammar config se aaya", "sunday" in listener.grammar, True)
+    check("grammar config se aaya", "jarvis" in listener.grammar, True)
 
 
 def test_phrase():
     print("PHRASE (pure)")
-    check("hit: hey sunday", phrase.hit("Hey Sunday, WhatsApp kholo"), True)
-    check("hit: sirf sunday", phrase.hit("sunday"), True)
-    check("hit: filler ke saath", phrase.hit("[unk] sunday"), True)
-    check("hit: punctuation", phrase.hit("hello, sunday!"), True)
-    check("hit: 'sundayly' nahi", phrase.hit("sundayly"), False)
-    # Vaakya ke beech me "sunday" bhi pakadte hain - "my sunday shoes" bhi
+    check("hit: hey jarvis", phrase.hit("Hey Jarvis, WhatsApp kholo"), True)
+    check("hit: sirf jarvis", phrase.hit("jarvis"), True)
+    check("hit: filler ke saath", phrase.hit("[unk] jarvis"), True)
+    check("hit: punctuation", phrase.hit("hello, jarvis!"), True)
+    check("hit: 'jarvisly' nahi", phrase.hit("jarvisly"), False)
+    # Vaakya ke beech me "jarvis" bhi pakadte hain - "my jarvis shoes" bhi
     # trigger karega. Ye sahi hai: HUD khulna bekaar nahi, aur production me
     # grammar sirf 5 shabd hi deta hai (isliye ajeeb sentence aata hi nahi).
-    check("hit: vaakya me bhi", phrase.hit("my sunday shoes"), True)
+    check("hit: vaakya me bhi", phrase.hit("my jarvis shoes"), True)
     check("hit: khaali", phrase.hit(""), False)
     check("hit: None", phrase.hit(None), False)
-    check("phrase me greeting", phrase.phrase("hey sunday kholo"), "hey sunday")
-    check("phrase sirf shabd", phrase.phrase("Sunday"), "sunday")
+    check("phrase me greeting", phrase.phrase("hey jarvis kholo"), "hey jarvis")
+    check("phrase sirf shabd", phrase.phrase("Jarvis"), "jarvis")
     check("phrase nahi mila", phrase.phrase("kuch aur"), "")
-    check("normalize", phrase.normalize("  Hello,  Sunday! "), "hello sunday")
-    check("tokens filler hataye", phrase.tokens("[unk] hey sunday"), ["hey", "sunday"])
+    check("normalize", phrase.normalize("  Hello,  Jarvis! "), "hello jarvis")
+    check("tokens filler hataye", phrase.tokens("[unk] hey jarvis"), ["hey", "jarvis"])
 
 
 def test_model_errors():

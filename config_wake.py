@@ -2,23 +2,26 @@
 
 Ye Step 1 ka hissa hai. Do alag STT jaan-boojh kar:
 
-1. **Wake word ("Sunday")** — local Vosk, `models/vosk-model-small-en-us-0.15`.
-   English model hi sahi hai kyunki "Sunday" ek English shabd hai. Awaaz kabhi
-   bahar nahi jaati, 100% offline.
+1. **Wake word ("Jarvis")** — local Vosk, `models/vosk-model-small-en-us-0.15`.
+   English model hi sahi hai kyunki "Jarvis" ek English shabd hai. Awaaz kabhi
+   bahar nahi jaati, 100% offline. Shabd `config_name.py` se aate hain —
+   purane "sunday" shabd wahan alag list me, default band.
 
 2. **Command ("whatsapp kholo", "Ramesh ko phone karo")** — `voice/stt.py` ka
    Groq Whisper (`whisper-large-v3-turbo`). Ye Hinglish ka asli expert hai.
-   `language` jaan-boojh kar NAHI bhejte (wahi galti Round 2 me hui thi).
 
 Is liye Hinglish ke liye koi 470 MB model download karne ki zarurat nahi —
-dono cheezein pehle se maujood hain. `wake/commands.py` ke liye bhi
-`WAKE_COMMAND_HINTS` me wahi shabd jo user bolta hai.
+dono cheezein pehle se maujood hain.
 
 Rule: is file me koi API key nahi. Wake ka model path `BASE_DIR/models` me hai.
 """
 
 import os
 from pathlib import Path
+
+from config_name import (
+    LEGACY_WAKE_PHRASES, WAKE_PHRASES, legacy_enabled, wake_grammar, wake_words,
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 MODEL_DIR = BASE_DIR / "models"
@@ -33,11 +36,10 @@ WAKE_MODEL_DIR = str(MODEL_DIR / "vosk-model-small-en-us-0.15")
 WAKE_MODEL_ALT_DIR = str(MODEL_DIR / "vosk-model-small-hi-0.22")
 
 # Vosk ke saath grammar: sirf ye shabd hi pehchanega. Isse do fayde —
-# galat trigger kam, aur CPU halka (68 MB model me se sirf 4 shabd).
-WAKE_WORDS = ("sunday",)
-WAKE_GRAMMAR = (
-    '["hello sunday", "hey sunday", "hi sunday", "okay sunday", "sunday", "[unk]"]'
-)
+# galat trigger kam, aur CPU halka. Asli list `config_name.py` me hai
+# (Step 1: "jarvis"; purane "sunday" shabd `LEGACY_WAKE_PHRASES` me, band).
+WAKE_WORDS = wake_words()
+WAKE_GRAMMAR = wake_grammar()
 
 # ---- audio ----
 SAMPLE_RATE = 16000          # Vosk isko hi maangta hai (16 kHz mono)
@@ -52,7 +54,7 @@ VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.012"))
 VAD_SILENCE_BLOCKS = 12      # ~0.36 s khamoshi = VAD ke baad band
 VAD_HANGOVER_BLOCKS = 30     # ~0.9 s — VAD ke dauraan awaaz mat kaato
 
-# Ek hi "sunday" me do trigger na ho. Wake hit ke baad itni der queue khaali
+# Ek hi "jarvis" me do trigger na ho. Wake hit ke baad itni der queue khaali
 # karte hue aawaaz fenk-te hain (recognition nahi) — taaki TTS/bijli ka shor
 # ya apna hi naam dobara na pakde.
 WAKE_COOLDOWN_SECONDS = 1.5
@@ -64,12 +66,12 @@ COMMAND_MAX_SECONDS = 30           # wake ke baad itni der suno (safety limit)
 COMMAND_MIN_SECONDS = 0.6    # itni ASLI awaaz chahiye, khamoshi ginti nahi
 COMMAND_END_SILENCE_SECONDS = float(os.getenv("PRABH_CMD_SILENCE", "2.0"))
 COMMAND_HANGOVER_SECONDS = 0.4     # beech ka chhota ruk na kaato (wake se chhota)
-COMMAND_PRE_ROLL_SECONDS = 0.4     # "Sunday" ke aakhri shabd bhi pakad lo
+COMMAND_PRE_ROLL_SECONDS = 0.4     # "Jarvis" ke aakhri shabd bhi pakad lo
 COMMAND_WAIT_SECONDS = 5.0         # pehla shabd aaya hi nahi -> "sun nahi aaya"
 COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-ta hai
 
 # Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye — is liye
-# "Sunday, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
+# "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
 PLAYBACK_MUTE_MIC = True
 
 # ---- wake ke jawab ----
@@ -123,9 +125,10 @@ def wake_available() -> bool:
 def describe() -> str:
     """Log + `--wake-info` ke liye ek line."""
     folder = model_path()
-    return "wake=%s word=%s model=%s stt=%s" % (
+    return "wake=%s word=%s%s model=%s stt=%s" % (
         "ON" if WAKE_ENABLED else "OFF",
         "/".join(WAKE_WORDS),
+        "+legacy" if legacy_enabled() else "",
         Path(folder).name if folder else "MISSING",
         config_stt_name(),
     )

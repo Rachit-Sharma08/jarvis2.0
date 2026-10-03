@@ -40,7 +40,7 @@ def say_hud(ok: bool, reason: str = "") -> None:
 
 
 def say_wake(ok: bool, reason: str = "") -> None:
-    """`wake: sun raha hai (sunday)` ya `wake: <wajah>` (mic band/model missing)."""
+    """`wake: sun raha hai (jarvis)` ya `wake: <wajah>` (mic band/model missing)."""
     if ok:
         say(config.STARTUP_WAKE, "sun raha hai (%s)" % " / ".join(config.WAKE_WORDS))
     else:

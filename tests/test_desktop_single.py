@@ -142,7 +142,7 @@ def test_stale_pid_self_heal():
     # `acquire()` andar se `diagnose()` call karta hai - asli `http_alive`
     # chalega, is liye message ka **shabd nahi**, guarantee hui baat check karo:
     # live process lock pakde hai to "stale" **kabhi** nahi bola jaata. (Pehle
-    # yahan "CHAL raha hai" check tha, jo sirf tab pass hota jab Sunday ka asli
+    # yahan "CHAL raha hai" check tha, jo sirf tab pass hota jab app ka asli
     # server 8000 par chala ho - yani test **environment** par depend karta tha,
     # jabki is file ka apna vaada hai "koi asli process ya socket nahi".)
     other = Single(lock)

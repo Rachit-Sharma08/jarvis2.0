@@ -15,11 +15,11 @@ NAMES = {"sunday": "Sunday", "prabh": "Prabh"}
 
 
 def detect_mode(text: str, current_mode: str) -> tuple:
-    """Message 'Sunday...' ya 'Prabh...' se shuru ho to mode badal do.
+    """Message 'Jarvis...' ya 'Prabh...' se shuru ho to mode badal do.
 
     `config.SUNDAY_ONLY` on hai to PRABH ka switch **band** hai — koi bhi
     message se prabh mode nahi jayega. Prabh ka code yahan maujood hai,
-    hataya nahi gaya; sirf ek flag se band hai (Phase 5, sirf Sunday).
+    hataya nahi gaya; sirf ek flag se band hai (Phase 5, sirf ek mode).
 
     Returns (mode, message_without_prefix).
     """
@@ -39,14 +39,26 @@ def detect_mode(text: str, current_mode: str) -> tuple:
 
 
 def persona_for(mode: str) -> str:
-    path = config.PERSONAS_DIR / f"{mode}.txt"
+    """Mode ka persona file. Naam `config.PERSONA_FILES` se aata hai — mode id
+    `"sunday"` hai par file `jarvis.txt` (Step 1: naam badla, id nahi)."""
+    name = config.PERSONA_FILES.get(mode, "%s.txt" % mode)
+    path = config.PERSONAS_DIR / name
     return path.read_text(encoding="utf-8")
 
 
 def display_name(mode: str) -> str:
-    return NAMES.get(mode, NAMES[config.DEFAULT_MODE])
+    """Jo **user ko dikhta** hai.
+
+    Default mode (id `"sunday"`) ka dikhne wala naam app ka naam hai —
+    `config.ASSISTANT_NAME` = "Jarvis". Is liye jawab ke upar "SUNDAY" nahi,
+    "JARVIS" aata hai, jabki andar ka id wahi rehta hai. Baaki mode (prabh)
+    apna naam rakhta hai — wo dormant hai.
+    """
+    if mode == config.DEFAULT_MODE:
+        return config.ASSISTANT_NAME
+    return NAMES.get(mode, config.ASSISTANT_NAME)
 
 
 def label(mode: str) -> str:
-    """Jawab ke upar dikhne wala label: SUNDAY ya PRABH."""
+    """Jawab ke upar dikhne wala label: JARVIS ya PRABH."""
     return display_name(mode).upper()

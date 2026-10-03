@@ -55,17 +55,31 @@ async def security_headers(request: Request, call_next):
     return response
 
 
+def fill_html(html: str) -> str:
+    """`index.html` ke placeholders bhar do — token, tools, naam.
+
+    Ye **pure function** hai is liye test `GET /` chala ke ( asli server, port,
+    Edge) verify karne ki zaroorat nahi padti. Route sirf isko call karta hai —
+    yahin se naam aata hai, is liye UI me "Jarvis" hard-code nahi hai.
+    """
+    html = html.replace(security.TOKEN_PLACEHOLDER, security.token())
+    html = html.replace("__PRABH_TOOLS_ON__", "1" if keeper.tools_on() else "0")
+    # Naam config se (config_name.ASSISTANT_NAME / DISPLAY_NAME). UI, tray aur
+    # shortcut — sab ek hi jagah se badalte hain.
+    html = html.replace("__PRABH_ASSISTANT_NAME__", escape(config.ASSISTANT_NAME))
+    html = html.replace("__PRABH_DISPLAY_NAME__", escape(config.DISPLAY_NAME))
+    # Startup warning plain text hai — ise HTML me escape karke hi daalte hain.
+    return html.replace("__PRABH_BRAIN_WARN__", escape(checkup.banner()))
+
+
 @app.get("/")
 async def index(request: Request):
     denied = security.verify_host(request.headers.get("host", ""))
     if denied:
         raise HTTPException(*denied)
 
-    html = (config.UI_DIR / "index.html").read_text(encoding="utf-8")
-    html = html.replace(security.TOKEN_PLACEHOLDER, security.token())
-    html = html.replace("__PRABH_TOOLS_ON__", "1" if keeper.tools_on() else "0")
-    # Startup warning plain text hai — ise HTML me escape karke hi daalte hain.
-    return HTMLResponse(html.replace("__PRABH_BRAIN_WARN__", escape(checkup.banner())))
+    return HTMLResponse(fill_html(
+        (config.UI_DIR / "index.html").read_text(encoding="utf-8")))
 
 
 @app.post("/chat")

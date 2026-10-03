@@ -33,7 +33,7 @@ def test_worker_loop():
         # (TypeError jaakar trigger chup ho jaata). Yeh closure `heard` par hai,
         # is liye andar hi rakha hai (module level par `heard` dikhta hi nahi).
         heard.append(phrase)
-    listener = FakeListener(["kuch aur", "hey sunday whatsapp kholo"])
+    listener = FakeListener(["kuch aur", "hey jarvis whatsapp kholo"])
     session_mod.detect.build = lambda: listener
     session_mod.audio_mod.MicSource = lambda: mic
     try:
@@ -45,12 +45,12 @@ def test_worker_loop():
             mic.feed(loud())
         mic.feed(quiet())
         wait(lambda: "heard" in states)
-        check("wake trigger hua", heard, ["hey sunday"])
+        check("wake trigger hua", heard, ["hey jarvis"])
         check("state heard aaya", "heard" in states, True)
         check("ek hi trigger", worker.wakes(), 1)
 
         worker.set_paused(True)
-        listener.queue.append("hey sunday")
+        listener.queue.append("hey jarvis")
         for _ in range(3):
             mic.feed(loud())
         mic.feed(quiet())
@@ -59,7 +59,7 @@ def test_worker_loop():
 
         worker.set_paused(False)
         wait(lambda: False, seconds=config.WAKE_COOLDOWN_SECONDS + 0.2)
-        listener.queue.append("hello sunday")
+        listener.queue.append("hello jarvis")
         for _ in range(3):
             mic.feed(loud())
         mic.feed(quiet())
@@ -81,7 +81,7 @@ def test_crash_safe():
     print("WORKER CALLBACK CRASH")
     saved = (session_mod.detect.build, session_mod.audio_mod.MicSource)
     mic = FakeMic()
-    session_mod.detect.build = lambda: FakeListener(["hey sunday"])
+    session_mod.detect.build = lambda: FakeListener(["hey jarvis"])
     session_mod.audio_mod.MicSource = lambda: mic
     try:
         worker.stop()

@@ -1,4 +1,4 @@
-# CLAUDE.md — Sunday (Prabh) ka handoff
+# CLAUDE.md — Jarvis (Prabh) ka handoff
 
 Ye file **sirf direction** deti hai — haalaat, chalti cheezein, pakkaurey aur roadmap.
 Detail ke liye: `AGENTS.md` (poore niyam) · `CHANGELOG.md` (kaam ka record) ·
@@ -11,18 +11,18 @@ Detail ke liye: `AGENTS.md` (poore niyam) · `CHANGELOG.md` (kaam ka record) ·
 ## 1. Ye project kya hai
 
 `D:\prabh` me ek **local personal app** hai — sirf usi PC par (`127.0.0.1`), web app
-nahi. Naam **Sunday** (pehle "Prabh" tha, wo mode ab band hai). Ek brain hai
-(sirf **free** providers), awaaz hai, aur 10 PC tools hain jinse Sunday computer par
+nahi. Naam **Jarvis** (pehle "Prabh" tha, wo mode ab band hai). Ek brain hai
+(sirf **free** providers), awaaz hai, aur 10 PC tools hain jinse Jarvis computer par
 kaam kar sakta hai.
 
 ## 2. Ab ka haal (3 Oct 2026)
 
-- Git **clean**, commit `3c6f151` (GitHub par push ho chuka hai).
-- **36 test suite green** (`SUITE GREEN`). Sab standalone, koi real API call nahi.
+- Git **clean**, commit `07161c0` (GitHub par push ho chuka hai).
+- **40 test suite green** (`SUITE GREEN`). Sab standalone, koi real API call nahi.
 - App chalta hai: `GET http://127.0.0.1:8000/` = 200, tray + HUD live.
-- Phase 5 **Step 1 (Vosk wake word) poora**, aur **Step 2 ke do hisse**: 2a command
-  capture + WAV, 2b speaker (`desktop/playback.py`). Aage **Step 2c** — command ka
-  text lena → brain → jawab ki awaaz.
+- Phase 5 **Step 1 (Vosk wake word)**, **Step 2a** (command capture + WAV),
+  **Step 2b** (speaker `desktop/playback.py`) aur **Step 2c** (poora command:
+  STT + brain + jawab ki awaaz) — teeno 3 Oct tak complete.
 - Sab production file **200 line se chhoti ya barabar** (`test_desktop.py` ka hygiene
   check ye khud har file par lagata hai, test file me bhi).
 
@@ -31,7 +31,7 @@ kaam kar sakta hai.
 | Kya | Kaise |
 |---|---|
 | App chalao | `start_prabh.bat` par double-click (supervisor crash par dobara chalata hai) |
-| HUD kholo | tray menu · Desktop ka `Sunday HUD.lnk` · **Ctrl+Alt+S** |
+| HUD kholo | tray menu · Desktop ka `Jarvis HUD.lnk` · **Ctrl+Alt+S** |
 | Browser me | `http://127.0.0.1:8000` |
 | Band karo | tray me **Quit** (window band karna app nahi rokta) |
 
@@ -52,17 +52,17 @@ if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
 - Exit code **0** hi asli pass hai. `print("FAIL: koi nahi")` matlab **sab pass**.
-- 3–5 min leti hai (36 suite) — `Start-Job` + result file wala tarika `TESTS.md` me
+- 3–5 min leti hai (40 suite) — `Start-Job` + result file wala tarika `TESTS.md` me
   hai. Har naye shell me `Start-Job` mar jaata hai, is liye **detached** process chalao
   (`Start-Process powershell -File <script> -WindowStyle Hidden`).
 
-## 5. Sunday ABHI ye kar sakta hai
+## 5. Jarvis ABHI ye kar sakta hai
 
 **Baat-cheet**
 - Text: HUD ya browser me likho → brain sochta hai → jawab.
 - Awaaz (browser): mic dabao → bolo → wahi brain → **female awaaz** me jawab
   (TTS chain: ElevenLabs → Cartesia (abhi skip) → Edge Swara).
-- Awaaz (Python, Step 1-2): mic hamesha sunta hai, **"Sunday"** bolte hi HUD khulta hai
+- Awaaz (Python, Step 1-2): mic hamesha sunta hai, **"Jarvis"** bolte hi HUD khulta hai
   (100% offline Vosk). TTS ki awaaz `desktop/playback.py` se bajti hai — app ke
   bina bhi: `python -m desktop.playback --say "Ji, boliye"`.
 
@@ -91,11 +91,11 @@ me provider ki list badlo, engine me kabhi hard-code mat likho.
 
 **Tray**: status line · Mic Mute · Open HUD · TOOLS · Restart · Quit
 
-## 6. Sunday ABHI ye NAHI kar sakta (galat mat samjho)
+## 6. Jarvis ABHI ye NAHI kar sakta (galat mat samjho)
 
-- ❌ **Wake ke baad command ka jawab nahi aata** — mic se command uthana (`Step 2a`)
-  aur awaaz bajana (`Step 2b`) dono ban chuke hain, par dono ko jodne wala glue
-  (`wake/command.py`, **Step 2c**) nahi bana. Abhi "Sunday" bolte hi sirf HUD khulta hai.
+- ✅ **Wake ke baad poora command** — `Step 2c` (3 Oct) poora hai: "Jarvis" →
+  "Ji, boliye" → mic se command → Groq STT → brain → HUD par jawab + awaaz.
+  (2 Oct ki ye line ab purani hai.)
 - ❌ **Awaaz se tool nahi chalta** — tool sirf chat se. Aur ALLOW hamesha screen par
   button se hoga, awaaz se kabhi nahi.
 - ❌ **Auto-start nahi** — Windows login par khud nahi chalta (Step 3 me aayega).
@@ -135,7 +135,7 @@ Poora niyam → **`AGENTS.md`** (section 3.1–3.4, 8, 8.1, 8.2).
 
 | Step | Kya | Halaat |
 |---|---|---|
-| **1** | Vosk wake word — mic hamesha sunta hai, "Sunday" par HUD | **ho gaya** (2 Oct) |
+| **1** | Vosk wake word — mic hamesha sunta hai, "Jarvis" par HUD | **ho gaya** (2 Oct) |
 | **2a** | Command capture + WAV (`wake/utterance.py`, `wake/wav.py`) | **ho gaya** (3 Oct) |
 | **2b** | Speaker — TTS bytes bajana (`desktop/playback.py`) | **ho gaya** (3 Oct) |
 | **2c** | Glue: "Ji, boliye" → mic drain + warm-up → capture → Groq STT → `ENGINE` → HUD events → awaaz me jawab | **agla kaam** |
@@ -152,8 +152,8 @@ join sirf 3 s hai, par command + TTS 8 s+ lag sakte hain.
 1. **Awaaz ka asli test** (sirf ek baar, app band karke):
    `.\.venv\Scripts\python.exe -m desktop.playback --say "Ji, boliye"` — awaaz aayi?
 2. **Ctrl+Alt+S dabao** → HUD khulna chahiye. Nahi khule to Desktop ka
-   `Sunday HUD.lnk` try karo (tray ki list me app ka naam **nahi** dikhta).
-3. **Taskbar ke `^`** par click → Sunday icon → right-click → **"Always show icons"**
+   `Jarvis HUD.lnk` try karo (tray ki list me app ka naam **nahi** dikhta).
+3. **Taskbar ke `^`** par click → Jarvis icon → right-click → **"Always show icons"**
    ( warna icon overflow me chhupa rehta hai).
 4. **Purana Chrome tab `localhost:8000` band karo** → warna log token-reject se bharta hai.
 5. **GitHub PAT revoke** — jo token push ke liye diya gaya tha, wo abhi chat me hai.
@@ -174,7 +174,7 @@ desktop/           launcher, app, tray, state, hud_window, hotkey, open_hud,
 wake/              worker (module-level ek hi worker) + session, audio, model,
                    detect, phrase (Step 1) + utterance, wav (Step 2a)
 ui/                index.html + hud_*.js + hud_*.css
-tests/             36 suite + poolhelp.py / desktophelp.py / wakehelp.py / hud_*.py
+tests/             40 suite + poolhelp.py / desktophelp.py / wakehelp.py / hud_*.py
 ```
 
 ## 11. Privacy warning

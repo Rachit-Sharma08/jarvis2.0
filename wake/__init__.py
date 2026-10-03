@@ -1,8 +1,8 @@
-"""Wake word — offline sunna ("hello sunday") + wake ke baad ka command.
+"""Wake word — offline sunna ("hello jarvis") + wake ke baad ka command.
 
 **Step 1 poora:** `config_wake.py` ke constants + is package ke `model`,
 `audio`, `detect`, `phrase`, `session`, `worker`. Sirf **sunta** hai: mic khula
-rehta hai, Vosk text laata hai, "sunday" milte hi `on_wake(phrase)`.
+rehta hai, Vosk text laata hai, wake shabd milte hi `on_wake(phrase)`.
 
 **Step 2 shuru ho chuka hai:** `utterance` (wake ke baad command uthata hai)
 aur `wav` (Groq ke liye WAV). Awaaz ka raasta `desktop/playback.py` me hai —

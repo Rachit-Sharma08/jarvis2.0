@@ -59,8 +59,9 @@ def test_mode_aliases():
         check("flag off par bina naam wahi", modes.detect_mode("kya haal", "prabh")[0], "prabh")
     finally:
         config.SUNDAY_ONLY = True
-    check("aadha naam nahi maana", modes.detect_mode("sundaya kya", "sunday")[0], "sunday")
-    check("6 naam config me", len(config.mode_aliases()), 6)
+    check("aadha naam nahi maana", modes.detect_mode("jarvisly kya", "sunday")[0], "sunday")
+    # Step 1: "Jarvis" + uska Devanagari spelling default mode ke alias hain.
+    check("naam config me", len(config.mode_aliases()), 8)
 
 
 def test_transcribing_status():

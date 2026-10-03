@@ -47,7 +47,7 @@ def test_brain_fail_speaks_short_not_reasons():
         events.message("assistant",
                        "Abhi koi brain jawab nahi de paya. Ye reasons mila:\n"
                        "- groq-120b: 429 busy\n- gemini: timeout\n- nvidia: 402 credits",
-                       "SUNDAY"),
+                       "JARVIS"),
         events.status("idle"),
     ]
     got, said, hub, _engine = talk(out=out)
@@ -64,7 +64,7 @@ def test_brain_crash_also_short():
     # `core/engine.py` ka crash raasta bhi brain_name = "none" deta hai.
     out = [
         events.log("jawab none se aya", data={"brain": "none"}),
-        events.message("assistant", "Kuch gadbad ho gayi. Dobara try karo.", "SUNDAY"),
+        events.message("assistant", "Kuch gadbad ho gayi. Dobara try karo.", "JARVIS"),
         events.status("idle"),
     ]
     _got, said, _hub, _engine = talk(out=out)

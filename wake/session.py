@@ -145,7 +145,7 @@ class Session:
                 # Mic aur stop event yahin se jaate hain — command ko inke
                 # alawa koi raasta nahi chahiye. `on_wake` **synchronous** hai
                 # (is wake thread par), is liye command poora chal jaane tak
-                # sunna ruka rehta hai aur dobara "sunday" trigger nahi hoga.
+                # sunna ruka rehta hai aur dobara wake trigger nahi hoga.
                 self._on_wake(heard, self._mic, self._stop)
             except Exception as exc:
                 log.error("on_wake crash: %s: %s", type(exc).__name__, exc)

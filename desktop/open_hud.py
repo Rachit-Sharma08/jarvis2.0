@@ -27,9 +27,9 @@ EXIT_NO_BROWSER = 1
 EXIT_SERVER_DOWN = 2
 
 DOWN_MESSAGE = (
-    "Sunday abhi chal nahi raha.\n\n"
+    "%s abhi chal nahi raha.\n\n"
     "Pehle D:\\prabh\\start_prabh.bat chalao (wahi rakha hai), phir ye "
-    "shortcut dobara dabao."
+    "shortcut dobara dabao." % config.ASSISTANT_NAME
 )
 NO_BROWSER_MESSAGE = (
     "HUD kholne ke liye Edge ya Chrome nahi mila.\n\n"

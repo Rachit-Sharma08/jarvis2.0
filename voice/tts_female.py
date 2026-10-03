@@ -16,7 +16,7 @@ log = get_logger("voice_female")
 # Dono verified female voice ids. Groq/voice ke liye: ElevenLabs ki voice
 # library me "female" filter laga kar confirm kiye gaye the.
 ELEVENLABS_FEMALE = {
-    "JBFqnCBsd6RMkjVDRZzb",   # Sunday
+    "JBFqnCBsd6RMkjVDRZzb",   # Jarvis
     "XrExE9yKIg1WjnnlVkGX",   # Prabh
 }
 

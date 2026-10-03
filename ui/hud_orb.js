@@ -58,7 +58,13 @@
   }
 
   function setMode(mode) {
-    modeEl.textContent = String(mode || "sunday").toUpperCase();
+  // Server `label()` ka naam bhejta hai ("JARVIS"). Agar kabhi sirf mode id
+  // ("sunday") mile to usse bhi upar jor do - user ko purana naam dikhna
+  // nahi chahiye. Naam `meta[name="prabh-name"]` se aata hai (config-driven).
+  const fallback = ((document.querySelector('meta[name="prabh-name"]') || {}).content
+    || "Jarvis").toUpperCase();
+  const raw = String(mode || "").toLowerCase();
+  modeEl.textContent = (raw === "sunday" ? fallback : (mode || fallback)).toUpperCase();
   }
 
   // ---- amber progress arc ----

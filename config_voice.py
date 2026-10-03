@@ -18,7 +18,9 @@ RECORD_MAX_SECONDS = 30
 # bhejta hai, server 600ms se kam par TTS/STT dono rok deta hai.
 STT_MIN_DURATION_MS = 600
 
-# Dono mode ki awaaz female. Prabh pehle bhi female tha, ab Sunday bhi.
+# Dono mode ki awaaz female. Prabh pehle bhi female tha, ab default mode bhi.
+# Key `sunday` wo mode **id** hai (Step 1 me naam badla, id nahi) — `.env` me
+# bhi `ELEVENLABS_VOICE_SUNDAY` wahi naam rehta hai.
 EDGE_VOICES = {"sunday": "hi-IN-SwaraNeural", "prabh": "hi-IN-SwaraNeural"}
 ELEVENLABS_MODEL = "eleven_multilingual_v2"
 CARTESIA_MODEL = "sonic-2"

@@ -14,9 +14,9 @@ Char zaroori baatein:
    recording, memory me bante hi, Groq ke STT par network par jaati hai —
    **disk par kabhi save nahi hoti**, koi file likhi jaati hi nahi.
 2. Ye `wake/session.py` ke `_fire()` se **wake thread par, synchronous** chalta
-   hai. Is liye poore flow me sunna ruka rehta hai aur "Sunday" dobara trigger
+   hai. Is liye poore flow me sunna ruka rehta hai aur "Jarvis" dobara trigger
    nahi hota. TTS ke waqt mic `worker.hold_for_command()` se band rehta hai —
-   warna Sunday apni hi awaaz sun kar phir uth jaata.
+   warna apni hi awaaz sun kar phir uth jaata.
 3. **Gatekeeper bilkul waisa hi hai.** Is file me approve/deny ka koi raasta
    nahi — tool sirf `ENGINE.handle()` ke andar chalta hai. ALLOW hamesha screen
    ke button se hota hai, awaaz se kabhi nahi. ASK card aaye to sirf HUD khol
@@ -186,7 +186,7 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None) -> str
         return "asked" if asked else "ok"
     finally:
         # TTS ka shor queue me pada hai — phenk do, warna `Session._loop` use
-        # `sunday` samajh kar dobara trigger kar dega.
+        # wake shabd samajh kar dobara trigger kar dega.
         listen.drain(mic, stop)
         if held:
             wake_worker.release_from_command()

@@ -6,6 +6,7 @@ Bade hisse alag file me hain (ek file, ek kaam):
   - config_hud.py    → HUD ka rang, weather, stats interval, quick buttons
   - config_desktop.py → desktop shell: HUD window, tray, supervisor, autostart
   - config_wake.py   → wake word, VAD, command window, WhatsApp call ke constants
+  - config_name.py   → assistant ka naam + usko bulane ke shabd (Step 1: Jarvis)
 Yahan woh sab re-export hote hain, isliye `config.GROQ_API_KEY` aur
 `config.TTS_CHAIN` dono pehle jaise hi kaam karte hain.
 
@@ -71,14 +72,16 @@ from config_wake import (  # noqa: E402
     WAKE_ENABLED, WAKE_GRAMMAR, WAKE_MODEL_DIR, WAKE_WORDS, WHATSAPP_WEB, describe,
     model_missing, model_path, wake_available,
 )
+from config_name import (  # noqa: E402
+    ASSISTANT_NAME, DISPLAY_NAME, LEGACY_WAKE_PHRASES, WAKE_PHRASES,
+    legacy_enabled, wake_grammar, wake_words,
+)
 
-DEFAULT_MODE = "sunday"
+DEFAULT_MODE = "sunday"   # Andar ka id — dikhne wala naam `ASSISTANT_NAME` hai
 
-# Phase 5: sirf Sunday. PRABH mode ka code **hataya nahi gaya** — bas band
-# kar diya gaya hai. Band karna ek flag se hai taaki baad me wapas on kar
-# sakein bina kuch badle. `core/modes.py` yahi flag dekhta hai: "Prabh..." bol
-# par bhi mode sunday hi rahega, aur wo text ek normal message ki tarah brain
-# ko jayegi.
+# Phase 5: sirf ek hi mode (Sunday-only flag). PRABH mode ka code **hataya nahi
+# gaya** — bas band kar diya gaya hai, taaki baad me bina kuch badle wapas on
+# kar sakein. `core/modes.py` yahi flag dekhta hai.
 SUNDAY_ONLY = os.getenv("PRABH_SUNDAY_ONLY", "1") == "1"
 
 # Ye app sirf is PC par chalti hai. 0.0.0.0 kabhi allowed nahi.
@@ -90,87 +93,29 @@ SERVER_ORIGIN = f"http://{SERVER_HOST}:{SERVER_PORT}"
 LOCAL_NAMES = ("localhost", "127.0.0.1")
 TOKEN_BYTES = 32
 
+# Mode switch ke shabd. "Jarvis" bhi `sunday` mode ka alias hai (andar ka id
+# wahi rehta hai) — is liye "Jarvis, kya haal hai" se sirf naam prefix hatta
+# hai, mode badalta nahi.
 MODE_ALIASES = {
-    "sunday": ("Sunday", "संडे"),
+    "sunday": ("Sunday", "Jarvis", "जार्विस", "संडे"),
     "prabh": ("Prabh", "Prabhu", "प्रभ", "प्रभु"),
 }
 
+# Mode id → persona file. File ka naam alag hai (Step 1: `jarvis.txt`), mode id
+# wahi `sunday` — ye mapping hi dono ko baand rakhti hai.
+PERSONA_FILES = {"sunday": "jarvis.txt", "prabh": "prabh.txt"}
+
 # ---- Phase 3: PC ke tools + gatekeeper ----
 
-SAFE, ASK, BLOCKED = "SAFE", "ASK", "BLOCKED"
-
-HOME = Path(os.path.expanduser("~"))
-WORKSPACE = Path(os.getenv("PRABH_WORKSPACE", r"D:\prabh_workspace"))
-READ_FOLDERS = (HOME / "Desktop", HOME / "Downloads", HOME / "Documents", WORKSPACE)
-
-# Har tool ka base risk. Gatekeeper args dekh ke ise aage badha sakta hai.
-TOOL_BASE_RISK = {
-    "get_time_date": SAFE,
-    "system_info": SAFE,
-    "list_dir": SAFE,
-    "read_file": SAFE,
-    "write_file": ASK,
-    "run_command": ASK,
-    "open_app": SAFE,
-    "open_website": SAFE,
-    "close_app": ASK,
-    "delete_to_trash": ASK,
-}
-
-# open_app sirf inhi me SAFE hai. Baaki sab poochhega.
-ALLOWED_APPS = {
-    "notepad": "notepad.exe",
-    "calculator": "calc.exe",
-    "calc": "calc.exe",
-    "explorer": "explorer.exe",
-    "file explorer": "explorer.exe",
-    "paint": "mspaint.exe",
-    "chrome": "chrome.exe",
-    "edge": "msedge.exe",
-    "vscode": "code",
-    "vs code": "code",
-    "wordpad": "write.exe",
-}
-
-# Yahan user aur patterns add kar sakta hai. Code me hard-coded nahi.
-EXTRA_BLOCKED_PATTERNS = (
-    "vssadmin delete shadows",
-    "bcdedit /set",
-    "cipher /w",
-    "wmic shadowcopy delete",
+from config_tools import (  # noqa: E402
+    ALLOWED_APPS, ASK, BLOCKED, BLOCKED_ROOTS, COMMAND_TIMEOUT_SECONDS,
+    EXTRA_BLOCKED_PATTERNS, HOME, PROTECTED_FOLDER_NAMES, READ_FILE_MAX_BYTES,
+    READ_FOLDERS, SAFE, SECRET_FILE_NAMES, TOOL_ARG_LIMIT, TOOL_BASE_RISK,
+    TOOL_CONFIRM_TIMEOUT, TOOL_MAX_CALLS_PER_MINUTE, TOOL_MAX_STEPS,
+    TOOL_OUTPUT_LIMIT, TOOLS_ENABLED_DEFAULT, WORKSPACE,
 )
 
-
-def _blocked_roots() -> tuple:
-    """Jahan delete/badlav kabhi nahi hoga."""
-    roots = []
-    for name in ("SystemRoot", "ProgramFiles", "ProgramFiles(x86)", "ProgramW6432"):
-        value = os.environ.get(name, "")
-        if value:
-            roots.append(Path(value))
-    roots += [Path(p) for p in (r"C:\Windows", r"C:\Program Files", r"C:\Program Files (x86)",
-                                r"C:\$Recycle.Bin", r"C:\Recovery", r"C:\System Volume Information")]
-    return tuple(dict.fromkeys(roots))
-
-
-BLOCKED_ROOTS = _blocked_roots()
-# Naam se bhi pakadna hai (D: drive par bhi), raw aur resolved dono me.
-PROTECTED_FOLDER_NAMES = (
-    "windows", "system32", "syswow64", "winsxs", "program files",
-    "program files (x86)", "programdata", "recovery", "boot", "driver",
-    "$recycle.bin", "system volume information",
-)
-SECRET_FILE_NAMES = (".env", ".env.local", "credentials", "secrets.json", "id_rsa", "id_ed25519")
-
-# Kill switch. Default OFF — user UI ka toggle daba kar ON kare.
-TOOLS_ENABLED_DEFAULT = os.getenv("PRABH_TOOLS_ON", "0") == "1"
-TOOL_MAX_STEPS = 5
-TOOL_MAX_CALLS_PER_MINUTE = 20
-TOOL_CONFIRM_TIMEOUT = 60
-TOOL_OUTPUT_LIMIT = 2000
-TOOL_ARG_LIMIT = 2000
-COMMAND_TIMEOUT_SECONDS = 30
-READ_FILE_MAX_BYTES = 20 * 1024
+# Gatekeeper har tool ka likhna yahan — LOG_DIR config.py ka apna hai.
 ACTION_LOG = LOG_DIR / "actions.log"
 CSP = (
     "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; "

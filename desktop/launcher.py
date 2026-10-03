@@ -138,8 +138,8 @@ def supervise(max_restarts: int = None, window: int = None) -> int:
             log.info("tray ne restart kaha — turant dobara")
             continue
         if action == GIVE_UP:
-            _console("Sunday BAND: %d crash %d second me. Aage chhod diya."
-                     % (len(crashes), span))
+            _console("%s BAND: %d crash %d second me. Aage chhod diya."
+                     % (config.ASSISTANT_NAME, len(crashes), span))
             _console("Crash ki wajah (logs\\desktop.out): %s" % (_log_tail() or "khaali"))
             _console("Detail: logs\\prabh.log")
             return code or 1

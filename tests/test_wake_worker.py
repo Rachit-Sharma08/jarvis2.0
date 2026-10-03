@@ -26,7 +26,7 @@ def test_worker_wiring():
     check("state shuru me off", wake_worker.state(), "off")
     for name in ("start", "stop", "state", "listening", "set_paused", "wakes"):
         check(f"worker.{name} hai", callable(getattr(wake_worker, name, None)), True)
-    check("wake shabd config me", config.WAKE_WORDS, ("sunday",))
+    check("wake shabd config me", config.WAKE_WORDS, ("jarvis",))
 
     saved = (session_mod.detect.build, session_mod.audio_mod.MicSource)
     mic = FakeMic()

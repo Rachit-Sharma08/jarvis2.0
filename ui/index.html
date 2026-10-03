@@ -5,7 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="prabh-token" content="__PRABH_TOKEN__" />
 <meta name="prabh-tools" content="__PRABH_TOOLS_ON__" />
-<title>Prabh HUD</title>
+<!-- Naam config se aata hai (config_name.py). JS bhi yahin se padhta hai, is
+     liye "Jarvis" app.js / hud_*.js me dobara likha nahi gaya. -->
+<meta name="prabh-name" content="__PRABH_ASSISTANT_NAME__" />
+<meta name="prabh-display" content="__PRABH_DISPLAY_NAME__" />
+<title>__PRABH_ASSISTANT_NAME__ HUD</title>
 <link rel="stylesheet" href="/ui/fonts.css" />
 <link rel="stylesheet" href="/ui/hud_base.css" />
 <link rel="stylesheet" href="/ui/hud_panel.css" />
@@ -22,7 +26,7 @@
   <!-- ============ TOP BAR ============ -->
   <header class="topbar">
     <div class="tb-left">
-      <h1 class="brand" id="brand">S.U.N.D.A.Y</h1>
+      <h1 class="brand" id="brand">__PRABH_DISPLAY_NAME__</h1>
       <span class="pill st-idle" id="status">● IDLE</span>
     </div>
     <div class="tb-mid" aria-hidden="true"><div class="ruler" id="ruler"></div></div>
@@ -70,7 +74,7 @@
   <!-- ============ CENTER ============ -->
   <section class="col-center">
     <div class="orbwrap" id="orbwrap">
-      <svg class="orb" viewBox="0 0 320 320" role="img" aria-label="Prabh orb">
+      <svg class="orb" viewBox="0 0 320 320" role="img" aria-label="Jarvis orb">
         <defs>
           <!-- core circle ka asli radial gradient. SVG me CSS radial-gradient
                nahi chalta, isliye yahan define karna padta hai. -->
@@ -89,7 +93,7 @@
         <circle class="core" id="ringCore" cx="160" cy="160" r="58" />
       </svg>
       <div class="orbtext">
-        <p class="orbmode" id="orbMode">SUNDAY</p>
+        <p class="orbmode" id="orbMode">__PRABH_DISPLAY_NAME__</p>
         <p class="orbstate" id="orbState">READY</p>
       </div>
     </div>

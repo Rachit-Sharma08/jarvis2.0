@@ -1,4 +1,4 @@
-# PC Tools (Sunday aur Prabh dono ke liye)
+# PC Tools (Jarvis aur Prabh dono ke liye)
 
 Prabh PC ka koi kaam kar sakta hai — file banana, folder dekhna, app kholna, command
 chalana. Har kaam ke pehle **gatekeeper** faisla karta hai. Koi bhi tool bina faisle ke
@@ -27,7 +27,7 @@ gaya hai.
 - **60 second me jawab na diya to apne aap DENY** ho jaata hai. Kuch bhi chalta nahi.
 - Card ek hi waqt me rehta hai. Doosra card tab tak nahi banta.
 - Allow **sirf UI button** se hota hai. Chat ya awaaz me "haan bol de" se kuch nahi hota.
-- Sunday aur Prabh dono ka faisla **bilkul same** hota hai — farak sirf andaaz ka hai.
+- Jarvis aur Prabh dono ka faisla **bilkul same** hota hai — farak sirf andaaz ka hai.
 
 ## Allowed jagahen
 

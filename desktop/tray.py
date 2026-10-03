@@ -92,8 +92,11 @@ class Tray:
         with self._lock:
             if self._icon is not None:
                 return True
+            # pystray ka teesra argument tooltip hai — wo user ko dikhta hai,
+            # isliye naam `config.TRAY_TITLE` se aata hai (Step 1: Jarvis).
             self._icon = pystray.Icon(
-                config.TRAY_NAME, trayicon.image(self.state.mic()), "Sunday", self.build()
+                config.TRAY_NAME, trayicon.image(self.state.mic()),
+                config.tray_title(self.state.mic()), self.build(),
             )
         try:
             self._icon.run_detached(setup=self._on_setup)

@@ -1,12 +1,12 @@
 """Wake ke baad ka command: mic se utha lo, VAD se sahi waqt par band karo.
 
-Step 1 worker sirf "Sunday" sunta tha. Step 2 ka pehla hissa yahi hai — wake
+Step 1 worker sirf wake shabd ("Jarvis") sunta tha. Step 2 ka pehla hissa yahi hai — wake
 ke baad thodi der aur suno aur jo user bola wahi raw PCM de do (STT usi ko
 Groq par bhejega).
 
 Teen window `config_wake.py` se aati hain:
 
-- **Pre-roll** — mic chunk queue me pehle se maujood hota hai. "Sunday, WhatsApp
+- **Pre-roll** — mic chunk queue me pehle se maujood hota hai. "Jarvis, WhatsApp
   kholo" ek saath bola ho to "WhatsApp" bhi pakadna chahiye, is liye shuru hone
   se thoda pehle ka buffer bhi jodte hain.
 - **End silence** — user chup ho gaya to command khatam. Har 30 ms me silence ka
