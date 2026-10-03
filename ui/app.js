@@ -88,7 +88,11 @@ function handleEvent(ev) {
     addMessage(ev.role, ev.text, ev.label);
     if (ev.role === "assistant") {
       orb.setLine(ev.text);
-      voice.speak(ev.text, currentMode);
+      // `via: "voice"` = jawab wake se aaya hai. Awaaz already Python ke
+      // speaker se boli gayi (desktop/playback.py), is liye browser TTS yahin
+      // SKIP. Likh kar bheja hua message par ye nahi lagta -> wo waise hi
+      // bolega, jaise pehle.
+      if (ev.via !== "voice") voice.speak(ev.text, currentMode);
     }
   } else if (ev.type === "confirm" || ev.type === "activity") {
     tools.handle(ev);

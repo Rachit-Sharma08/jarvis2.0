@@ -119,12 +119,25 @@ cd D:\prabh
 .\.venv\Scripts\python.exe -m desktop.shortcut install   # ya: remove / status
 ```
 
-Sunke chalana **ab kaam karta hai** — app shuru hote hi mic khul kar "sunday"
-sunta hai. "Sunday, WhatsApp kholo" bolte hi HUD khul jaata hai. Details
-`VOICE.md` me; band karna ho to `.env` me `PRABH_WAKE=0`.
+Sunke chalana **ab poora kaam karta hai** — app shuru hote hi mic khul kar
+"sunday" sunta hai. "Sunday" bolte hi HUD khulta hai, Sunday **"Ji, boliye"**
+bolta hai, aap apni baat bolo, aur jawab **awaaz me** aa jaata hai.
 
-> Abhi sirf **trigger** hota hai (HUD khulna). Command sunna, "Ji, boliye"
-> bolna aur phir brain se baat — wo Step 2 me aayega.
+```
+Sunday  ->  "Ji, boliye"  ->  aapki baat (2 s chup par band, 30 s max)
+        ->  brain  ->  HUD par jawab + awaaz
+```
+
+- ❌ Suna nahi → "Main theek se sun nahi paya, dobara boliye."
+- ❓ Tool chahiye → HUD par confirm card + "Screen par confirm kijiye." —
+  **allow hamesha screen ke button se, awaaz se nahi.**
+- 🔇 Tray ka **MUTE** ya PC lock → command bilkul nahi chalta.
+
+Details `VOICE.md` me. Band karna ho to `.env` me `PRABH_WAKE=0`, ya `.env` me
+`PRABH_CMD_SILENCE=2.0` se chup-hone ka wait badal sakte ho.
+
+> Awaaz se **sirf baat** hoti hai — koi tool, koi file delete, koi setting badal
+> nahi. Ye `TOOLS.md` me hai.
 
 Band karne ke liye tray me **Quit**. Sirf window band karne se app nahi rukta.
 

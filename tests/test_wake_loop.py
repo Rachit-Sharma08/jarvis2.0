@@ -26,12 +26,19 @@ def test_worker_loop():
     print("WORKER LOOP (fake mic + fake listener)")
     saved = (session_mod.detect.build, session_mod.audio_mod.MicSource)
     mic, heard, states = FakeMic(), [], []
+
+    def trigger(phrase, mic=None, stop=None):
+        # Naya `on_wake` teen args leta hai: phrase + mic + stop event.
+        # `heard.append` ek-arg wala hai — Step 2c ke baad seedha nahi chalta
+        # (TypeError jaakar trigger chup ho jaata). Yeh closure `heard` par hai,
+        # is liye andar hi rakha hai (module level par `heard` dikhta hi nahi).
+        heard.append(phrase)
     listener = FakeListener(["kuch aur", "hey sunday whatsapp kholo"])
     session_mod.detect.build = lambda: listener
     session_mod.audio_mod.MicSource = lambda: mic
     try:
         worker.stop()
-        check("start True", worker.start(on_wake=heard.append, on_state=states.append), True)
+        check("start True", worker.start(on_wake=trigger, on_state=states.append), True)
         check("state listening", worker.state(), "listening")
         check("listening() bhi", worker.listening(), True)
         for _ in range(4):

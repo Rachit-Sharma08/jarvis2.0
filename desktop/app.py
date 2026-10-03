@@ -177,8 +177,8 @@ class SundayApp:
     def _on_tools_change(self, on: bool) -> None:
         callbacks.on_tools_change(on, self)
 
-    def _on_wake(self, phrase: str) -> None:
-        callbacks.on_wake(phrase, self)
+    def _on_wake(self, phrase: str, mic=None, stop=None) -> None:
+        callbacks.on_wake(phrase, mic, stop, self)
 
     def _on_hotkey(self) -> None:
         callbacks.on_hotkey(self)

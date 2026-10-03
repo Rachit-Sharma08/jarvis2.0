@@ -6,6 +6,135 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Phase 5 Step 2c (3 Oct 2026) - wake ke baad poora command
+
+Step 2a ne command **kaat** li, 2b ne awaaz **baja** di. Ab dono jury/judge se
+jud gaye: "Sunday" ke baad Sunday sunta hai, aapki baat sunta hai, brain se
+jawab paata hai, HUD par dikhata hai aur **awaaz se** bolta hai.
+
+### Naye file
+
+- **`wake/listen.py`** (mic wala hissa, policy nahi) - `stop()`/`reset()` ke saath
+  module-level `_STOP`, aur chaar kaam: `drain()` (purana queue phenko),
+  `warmup()` (mic khulne ka wait), `capture()` (chunks), `to_text()` (WAV bana kar
+  Groq STT). **Chaaron par stop event** — app band ho raha ho to turant laut jaate
+  hain, TTS aaj bhi bajti hai ye check `worker.stop()` par pakda gaya.
+- **`wake/command.py`** (flow) - `allowed()` guard → `speak("Ji, boliye")` →
+  drain + warm-up → capture → STT → brain → awaaz. Brain ke liye **shared
+  `server.state.ENGINE`** (naya Engine nahi), har event par `via="voice"`.
+
+### Flow ka faisla
+
+- **`Session._fire()` ab `on_wake(phrase, mic, stop)` deta hai**, teeno, aur
+  **synchronously** wake thread par. Isi wajah se teen kaam ek saath mile:
+  1. mic/stop-event ka **sirf wahi raasta** bana (kahin aur se `MicSource` ya
+     `Session` private access nahi).
+  2. Command poore chal jaane tak wake **rukega** — nahi to Sunday ki apni awaaz
+     par dobara trigger hota.
+  3. `worker.stop()` ka join 3 s hai, par capture+TTS 8 s+ lag sakta hai — is liye
+     mic ke chaaron kaam aur `speak()` dono `stop` event maangte hain.
+- **Pause ke do alag kaam:** `set_paused()` = tray ka MUTE (user ka faisla),
+  `hold_for_command()` = command ka temporary hold. Beech me MUTE aa gaya to
+  `_HELD` clear ho jaata hai — **MUTE haar nahi maarta**. Naya public
+  `worker.paused()`/`Session.paused()` (test + UI dono ke liye).
+- **Bole hue to aawaaz dobara trigger na ho:** `run()` ke `finally` me pehle mic
+  queue `drain()`, **tabhi** hold chhoda. Ulta karne par `Session._loop` TTS ko
+  `sunday` samajh kar phir uth jaata.
+- **`via="voice"`** - wake se aaye **har** engine event par. `ui/app.js` is par
+  browser TTS skip karta hai ( warna do awaaz), par **type** kiye message ka
+  raasta badalta nahi - waise hi bolte hain.
+
+### Naye config
+
+`COMMAND_END_SILENCE_SECONDS = 2.0` (`.env` se `PRABH_CMD_SILENCE` se badal sakta
+hai), `COMMAND_MAX_SECONDS = 30` (Step 2a ka 8 s bahut chhota tha), aur teen bolne
+wali line: `NOT_UNDERSTOOD` (suna hi nahi), `BRAIN_FAILED` (brain/net fail),
+`CONFIRM_VOICE` (card par "confirm kijiye").
+
+### Safety
+
+- **Awaaz se ALLOW kabhi nahi.** Mute ya PC lock par command **bilkul nahi**
+  chalta - na record, na awaaz, na brain (`desktop/callbacks.py` ka `allowed()`
+  callback; `wake/` ko `desktop/` ka import nahi karna pada).
+- ASK par sirf HUD card khulta hai aur "confirm kijiye" bolta hai. Faisla sirf
+  screen ke button se - `wake/command.py` me `keeper.approve/deny/wait` ka koi
+  bhi raasta nahi, sirf `gatekeeper.audit.mask()` (text ke masking ke liye).
+- **Recording kabhi disk par nahi** - memory byte buffer, seedha Groq STT. Wake
+  word detection poora offline (Vosk).
+
+### Stage time
+
+`core/timing.py` ke `Stopwatch` se ek line: `ack / warmup / capture / stt /
+brain / speak`. `tts` aur `play` ka apna time `voice/tts.py` aur
+`desktop/playback.py` alag log karte hain - `playback.say()` ek hi raasta hai,
+is liye usko do hisson me nahi toda.
+
+### Test
+
+- **Teen naye suite, pura fake** (`tests/wakecmdhelp.py` ke fakes):
+  - `test_wake_command.py` (139) - poora flow: ack -> capture -> STT -> brain -> awaaz,
+    mute/lock par kuch nahi, not-heard / no-text, `via="voice"`, stage timing, `ui/app.js`.
+  - `test_wake_brain.py` (140) - brain tak ka raasta: brain ne kuch nahi diya, saare
+    provider fail, brain crash, ASK card par awaaz se allow nahi, confirm line ki
+    **ordering**.
+  - `test_wake_listen.py` (85) - `listen.py` ke chaar kaam + pause: drain/warmup, stop,
+    hold-then-release, MUTE absorb.
+  Koi **asli** API, mic ya speaker nahi. **36 → 39 suite green.** Teenon file
+  200-line niyam me hain (fakes `wakecmdhelp.py` me jaake dono bhi).
+- **Paanch asli galti test ne hi pakdi:**
+  1. Source-scan docstring ke text se **false positive** de raha tha (file me
+     likha tha "approve yahan nahi hai"). Ab **AST** se check — sirf asli
+     `from gatekeeper... import ...` lines gin-te hain, docstring nahi.
+  2. `FakeMic` ki queue sirf **400** chunk rakh sakti hai, is liye 30 s wala
+     "max par kaatna" test preload nahi ho sakta tha (`queue.Full`). Ab
+     `COMMAND_MAX_SECONDS=1.5` karke wahi niyam test hota hai.
+  3. Test me worker **shuru** nahi tha, is liye `state()` "off" tha - do check
+     chup-chaap False hue. Ab pause ka faisla naye `paused()` se hota hai.
+  4. **ASK par "confirm kijiye" 60 second BAAD boli jaati thi.** `run()` us line ko
+     `ask_brain()` ke **return ke baad** bolta tha, par engine confirm event ke baad
+     `keeper.wait()` par **ruk jaata hai** - to user ko card dikhta hi tha, awaaz 60 s
+     baad aati. Ab `ask_brain()` generator ko aage badhane se **pehle** bolta hai, aur
+     ek test jaanbujh kar block hone wala generator banakar **ordering prove** karta hai.
+  5. **Brain fail par awaaz saare provider ke technical reasons padh leti thi** -
+     `pool.ask()` "Abhi koi brain jawab nahi de paya. Ye reasons mila: - groq 429 -
+     gemini timeout ..." bhejta hai. Ab engine log event me `data.brain` bhejta hai;
+     `ask_brain()` usse `config.BRAIN_FAILED` bolta hai. **HUD par reasons waise hi
+     dikhte hain** (wo theek hai), sirf awaaz chhoti line hai.
+- `test_wake_utterance.py` ke window ab asli (end-silence 2.0 s = 67 chunk,
+  max 30 s), purane 0.9 s/8 s wale numbers hataye.
+
+### Do aur galti poori suite se nikal kar
+
+Poori 39-file suite pehli baar chalao to **do** suite fail hue — dono Step 2c se
+bhaari nahi, dono **purane** test the:
+
+1. **`test_wake_loop.py` — trigger chup-chaap gaya.** Step 2c ne `on_wake` ka
+   signature badla: ab `on_wake(phrase, mic, stop)` teen args leta hai. Test ka
+   fake callback `heard.append` (ek arg) tha → `TypeError` → `Session._fire()`
+   ke `except Exception` ne pakad liya → **koi crash log nahi, koi trigger nahi**.
+   Test pass hota tha jab tak `wakes() == 1` hi dekhta; `heard` khaali reh gaya.
+   Doosri galti: pehla fix **module level** helper banaya tha jo local `heard`
+   ko dekh nahi sakta tha (`NameError`, isi `except` me gaya) — yahi trap
+   `AGENTS.md` me pehle bhi likha hai, phir bhi ho gaya. Ab closure `test_worker_loop()`
+   ke **andar** hai.
+2. **`test_desktop_single.py` — test ko bahar ki duniya par depend.** `acquire()`
+   andar se `diagnose()` call karta hai, jo **asli** HTTP se 8000 par poochta hai.
+   Test "CHAL raha hai" shabd maangta tha, jo tabhi aata hai jab Sunday ka server
+   sach me chala ho. Matlab suite **environment** par depend karti thi — app band
+   ho to fail, app chalu ho to pass. Ab sirf wo check hai jo **guarantee** hai
+   (live process lock pakde hai to "stale" kabhi nahi bola jaata + apna PID
+   bataya) — is file ke docstring ke vaade ka khilaf bhi nahi. Wording wahi
+   fake-probe test (`test_diagnose_message`) me pehle se cover hai.
+- `tests/test_desktop.py` ki 200-line list me `wake/listen.py` bhi gaya.
+
+### Naye pakkaurey (AGENTS.md)
+
+Section **3.5** (voice privacy) aur **3.6** (Step 2c ke 7 niyam): mic ka ek
+raasta, pause ka do matlab, `via="voice"`, awaaz se ALLOW nahi, stage time ka
+ek line, MUTE/lock par kuch nahi.
+
+---
+
 ## Phase 5 Step 2 (3 Oct 2026) - wake ke baad ka command + speaker
 
 Step 1 sirf **sunta** tha. Ab mic se command uthane ka raasta bana, aur TTS ki

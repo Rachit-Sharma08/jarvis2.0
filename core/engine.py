@@ -115,7 +115,7 @@ class Engine:
             if kind == "none":
                 self.history.append({"role": "assistant", "content": answer})
                 self._trim()
-                yield events.log(f"jawab {brain_name} se aaya")
+                yield events.log(f"jawab {brain_name} se aya", data={"brain": brain_name})
                 yield events.message("assistant", answer, modes.label(self.mode))
                 yield events.status("speaking")
                 yield events.status("idle")

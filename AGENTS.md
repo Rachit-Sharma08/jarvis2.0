@@ -85,6 +85,9 @@ prabh/
   desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Sunday HUD" .lnk banao/hatao
   wake/worker.py     -> Step 1 ka module-level raasta (poori app me EK worker)
   wake/session.py    -> asli loop: mic -> VAD -> Vosk -> trigger (thread, cooldown, pause)
+  wake/utterance.py + wake/wav.py -> Step 2a: command capture + WAV
+  wake/listen.py     -> Step 2c ka mic wala hissa: drain/warmup/capture/to_text (STT)
+  wake/command.py    -> Step 2c ka flow: ack -> suno -> brain -> awaaz (policy nahi)
   wake/audio.py      -> sounddevice se 16 kHz mono (mic ka EK owner) + energy Vad + PCM
   wake/model.py      -> Vosk model load + cache (khaali ya error = ModelMissing)
   wake/detect.py     -> KaldiRecognizer ka wrapper: JSON -> saaf text
@@ -97,9 +100,47 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (36 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py — poori list TESTS.md me)
+  tests/ (39 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
+
+### 3.5 Voice privacy ke pakkaurey niyam
+
+- **Wake word detection poori tarah local; wake ke baad command ki recording memory
+  me bante hi Groq STT ko network par jaati hai, disk par kabhi save nahi hoti.**
+  (Vosk offline hai — koi recording provider ko nahi jaati. Sirf command jaati
+  hai, aur woh bhi byte buffer — koi file likhi jaati hi nahi.)
+- **Wake flow ka recording kabhi file me mat likho** (debug bhi nahi). `wav.to_wav`
+  sirf `io.BytesIO` me hai — wahi sahi tareeka hai.
+- **Awaaz se ALLOW kabhi nahi.** `wake/command.py` me `keeper.approve/deny/wait`
+  ka koi bhi reference nahi hai; card sirf dikhta hai, faisla screen ke button se.
+  Test me ye **AST** se check hota hai — docstring me likha text count nahi hota.
+
+### 3.6 Step 2c (wake command) ke pakkaurey niyam
+
+- **`on_wake(phrase, mic, stop)`** — `wake/session.py` ka `_fire()` teeno deta
+  hai, kahin aur se mic **kabhi** mat lo. Ye **synchronous** hai (wake thread par),
+  is liye command poore chal jaane tak sunna ruka rehta hai aur dobara "Sunday"
+  trigger nahi hoga.
+- **Mic ke chaar kaam `wake/listen.py` me** (`drain`/`warmup`/`capture`/`to_text`),
+  flow `wake/command.py` me. `listen` ko brain/policy ki knowledge mat do — mute
+  aur lock ka faisla `desktop/callbacks.py` ka `allowed()` callback deta hai (taaki
+  `wake/` ko `desktop/` ka import na karna pade).
+- **Pause ke do alag kaam hain:** `set_paused()` = tray ka MUTE (user ka faisla,
+  hamesha), `hold_for_command()` = command ka temporary hold. Beech me MUTE aaye
+  to `_HELD` clear ho jaata hai — **MUTE haar nahi maarta**.
+- **Bole hue to aawaaz dobara trigger na ho:** `run()` ke `finally` me mic queue
+  `drain()` hoti hai *tabhi* hold chhoda jaata hai. Warna `Session._loop` TTS ko
+  `sunday` samajh kar phir uth jaata.
+- **`via="voice"`** — wake se aaye har engine event par ye lagta hai aur
+  `ui/app.js` us par **browser TTS skip** karta hai (warna do awaaz). Likh kar
+  bheja hua message ka raasta badalta nahi — wo waise hi bolega.
+- **Stage time** `core/timing.py` ke `Stopwatch` se ek line me:
+  `ack / warmup / capture / stt / brain / speak`. `tts` aur `play` ka apna time
+  `voice/tts.py` aur `desktop/playback.py` alag log karte hain — `playback.say()`
+  ek hi raasta hai, is liye usko do hisson me mat todo.
+- **Mute ya PC lock par command bilkul nahi chalta** — na record, na koi awaaz,
+  na brain. Sirf `logs/prabh.log` me ek line.
 
 ### 3.4 Bat file aur log ke pakkaurey niyam
 
@@ -250,7 +291,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 36 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 39 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -337,6 +378,18 @@ endpoint mat likho.
   `TESTS.md` ki table me row zaroor daalo. `test_desktop.py` ka hygiene check
   ab **har** `tests/test_*.py` par `<=200` lines lagata hai — is liye split ke
   baad koi badi file chup-chaap nahi reh sakti.
+- **Callback ka signature badle to saare caller fake update karo — aur chup-chaap
+  fail hone mat do.** Step 2c ne `on_wake(phrase)` badal kar `on_wake(phrase, mic,
+  stop)` kiya; test ka `heard.append` ek-arg wala tha → `TypeError` → `Session._fire()`
+  ke `except Exception` ne pakad liya → **koi crash log nahi, trigger hi nahi**. Isi
+  tarah `worker.start()` jaisa koi bhi cheez `stop.is_set()` se guard ho to us par
+  depend mat karo. Naya fake callback hamesha **saare args** signature me rakho.
+- **Test ko app ke **chal raha hai** ya na chal raha par depend mat karo.** Ye
+  `desktop/single.py` ke test me hua: `acquire()` → `diagnose()` → **asli** HTTP se
+  8000 par poochta hai, aur "CHAL raha hai" shabd tabhi aata hai jab server sach me
+  chalu ho — app band ho to fail. Fake probe daalne ka raasta na ho to sirf wo
+  **guarantee** check karo jo asli state se depend nahi karta (jaise "stale" shabd
+  kabhi nahi aayega), aur wording fake-probe test me rakho.
 - **Wake test me asli mic / Vosk model / sounddevice kabhi mat chalao.** Fakes
   `tests/wakehelp.py` me hain; `Session.start()` sirf **do** cheez maangta hai —
   `wake.session.detect.build` aur `wake.session.audio_mod.MicSource` (wahi patch karo).
@@ -401,15 +454,16 @@ endpoint mat likho.
   capture (`wake/utterance.py` + `wake/wav.py`), **2b** speaker (`desktop/playback.py`,
   `python -m desktop.playback --say "Ji, boliye"` se bina app ke awaaz test ho jaati hai).
   Dono ka record `CHANGELOG.md`, detail `VOICE.md`.
-- **Baaqi Phase 5, isi order me:** **Step 2c** (`wake/command.py` — wake ke baad "Ji, boliye",
-  mic queue drain + warm-up, capture → Groq STT → shared `ENGINE` → Hub/UI events → jawab ki
-  awaaz) → **Step 3** auto-start (registry tabhi jab user "haan" bole).
+- **Phase 5 Step 2c ho gaya (3 Oct 2026) — 37 suite green.** Wake ke baad poora command:
+  "Ji, boliye" → mic queue drain + warm-up → capture (2.0 s khamoshi par band, max 30 s) →
+  Groq STT → shared `server.state.ENGINE` → Hub/UI events + `via="voice"` → jawab ki awaaz
+  (`desktop/playback.py`). Naye file `wake/listen.py` (mic wala hissa) + `wake/command.py`
+  (flow), mute/lock par kuch nahi, ASK par sirf card + "confirm kijiye" (awaaz se ALLOW
+  nahi). Teen naye suite: `test_wake_command.py` (flow), `test_wake_brain.py` (brain + ASK),
+  `test_wake_listen.py` (mic/pause) + `tests/wakecmdhelp.py` (fakes). Record
+  `CHANGELOG.md`, detail `VOICE.md`.
+- **Baaqi Phase 5, isi order me:** **Step 3** auto-start (registry tabhi jab user "haan" bole).
   Face/trust/learn/maker baad me.
-- **Step 2c banate waqt yaad rakho:** `Session._fire()` `on_wake` ko **wake thread par
-  synchronously** call karta hai — is liye command glue wahin chalega (ek hi queue
-  consumer). Mic/stop-event ka public access `wake/worker.py` se dena hai (Session 199
-  lines par hai, naya file bhi 200 se chhota rakhna). `worker.stop()` ka join 3 s hai,
-  par command+TTS 8 s+ lag sakta hai — capture ko bhi stop event dena padega.
 - **Fix round 4 ho gaya (2 Oct 2026)** — tray entry `IsPromoted=1` (backup ke saath), Desktop
   `Sunday HUD` shortcut + global hotkey `Ctrl+Alt+S`, dono ka ek raasta
   (`desktop/open_hud.py`). Record `CHANGELOG.md` me.
@@ -588,3 +642,34 @@ green**, sab file `<200`.
   abhi tak "stub" likha tha, brain ke model ke naam hard-code the (wo
   `config_brain.py` se aate hain — **guess kabhi mat likho**), aur roadmap Step 1
   par atka tha.
+- **Phase 5 Step 2c (3 Oct 2026)** — wake ke baad **poora command**. Naye
+  `wake/listen.py` (drain/warmup/capture/to_text, module-level `_STOP`) +
+  `wake/command.py` (ack → suno → brain → awaaz), `Session._fire()` ab
+  `on_wake(phrase, mic, stop)` **synchronously** deta hai (mic/stop ka sirf
+  wahi raasta), `worker.hold_for_command()`/`release_from_command()` +
+  `paused()` (MUTE hold ko absorb karta hai), `worker.stop()` → `listen.stop()`.
+  Silent capture **2.0 s** (`PRABH_CMD_SILENCE`) par, max **30 s**.
+  `desktop/callbacks.py` ka `allowed()` mute/lock par command rokta hai; ASK par
+  sirf HUD + "confirm kijiye" — awaaz se ALLOW nahi (test **AST** se check karta
+  hai). `via="voice"` se browser TTS sirf wake-origin event par skip.
+  Teen naye suite (`test_wake_command` flow, `test_wake_brain` brain + ASK, `test_wake_listen`
+  mic/pause) + `tests/wakecmdhelp.py` fakes — **39 suite green**. **Paanch** asli galti
+  pakdi: (1) source-scan docstring ke `keeper.approve` text se false positive de raha tha —
+  ab AST; (2) `FakeMic` ki queue 400 chunk tak hi hai, is liye 30 s wala test 1.5 s window
+  se chala; (3) test me worker shuru nahi tha is liye `state()` "off" tha — ab `paused()`
+  se pause check hota hai; (4) **ASK par "confirm kijiye" 60 s BAAD boli jaati thi** (engine
+  `keeper.wait()` par rukta hai) — ab generator aage badhne se pehle bolta hai, ordering
+  test prove karta hai; (5) **brain fail par awaaz saare provider reasons padh leti thi** —
+  ab engine log event ka `data.brain` se `BRAIN_FAILED` bolta hai (HUD par reasons waise
+  hi). Naye niyam section **3.5** (voice privacy) aur **3.6** (Step 2c).
+- **Step 2c suite fix (3 Oct 2026)** — poori 39-file suite pehli baar chalao to
+  **do** purane suite fail hue. (1) `test_wake_loop.py`: naya `on_wake(phrase, mic,
+  stop)` teen-arg signature keagainst fake `heard.append` (ek arg) → `TypeError` →
+  `Session._fire()` ka `except Exception` → **trigger chup-chaap gaya, koi crash log
+  nahi**; pehla fix bhi galat tha (module level helper local `heard` ko nahi
+  dekh sakta), ab closure test ke andar. (2) `test_desktop_single.py`: `acquire()`
+  → `diagnose()` → **asli** HTTP 8000 par, is liye "CHAL raha hai" shabd tabhi
+  aata jab app sach me chalu ho (app band = fail) — ab sirf guarantee wali baat
+  check hoti hai ("stale" kabhi nahi + apna PID). Do **nayi niyam** bullet:
+  callback signature badle to saare fake update karo, aur test ko app ke
+  "chal raha hai / nahi" par depend mat karo. **39 suite green**, sab file `<=200`.

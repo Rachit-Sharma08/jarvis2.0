@@ -58,9 +58,11 @@ VAD_HANGOVER_BLOCKS = 30     # ~0.9 s — VAD ke dauraan awaaz mat kaato
 WAKE_COOLDOWN_SECONDS = 1.5
 
 # ---- command window ----
-COMMAND_MAX_SECONDS = 8      # wake ke baad itni der suno
+# Owner ne 2.0 s rakhi hai (3.0 nahi) — `.env` se badla ja sakta hai. Beech ka
+# number: jaldi na kato (sochne me waqt lagta hai), par aadat banegi nahi.
+COMMAND_MAX_SECONDS = 30           # wake ke baad itni der suno (safety limit)
 COMMAND_MIN_SECONDS = 0.6    # itni ASLI awaaz chahiye, khamoshi ginti nahi
-COMMAND_END_SILENCE_SECONDS = 0.9   # user chup ho gaya -> command khatam
+COMMAND_END_SILENCE_SECONDS = float(os.getenv("PRABH_CMD_SILENCE", "2.0"))
 COMMAND_HANGOVER_SECONDS = 0.4     # beech ka chhota ruk na kaato (wake se chhota)
 COMMAND_PRE_ROLL_SECONDS = 0.4     # "Sunday" ke aakhri shabd bhi pakad lo
 COMMAND_WAIT_SECONDS = 5.0         # pehla shabd aaya hi nahi -> "sun nahi aaya"
@@ -71,8 +73,17 @@ COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-t
 PLAYBACK_MUTE_MIC = True
 
 # ---- wake ke jawab ----
+# Ye chaaron line sirf `wake/command.py` bolti hai. UI me text nahi — awaaz.
 ACK_ON_WAKE = "Ji, boliye."
 NOT_HEARD = "Kuch sun nahi aaya. Dobara boliye."
+# Awaaz saaf nahi aayi: kuch bola hi nahi, bahut chhota bola, ya STT guard ne
+# ("Thank you." jaisa) reject kar diya. TEENO ka jawab ek hi line.
+NOT_UNDERSTOOD = "Samajh nahi aaya, dobara boliye."
+# Brain ya net fail. Chhota rakha hai — asli wajah log me hai.
+BRAIN_FAILED = "Abhi jawab nahi mil pa raha."
+# ASK wala tool: card screen par aayega. **Awaaz se Allow kabhi nahi** — sirf
+# screen ka button. Ye line sirf itni batati hai ki screen dekh lo.
+CONFIRM_VOICE = "Screen par confirm kijiye."
 STOP_WORD = ("ruk jao", "band karo", "shukriya", "thanks", "stop")
 
 # ---- WhatsApp call (Step 2, Option A) ----

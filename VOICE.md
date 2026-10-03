@@ -140,26 +140,56 @@ Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
 | Band karo | `.env` me `PRABH_WAKE=0` — phir startup me `wake: PRABH_WAKE=0 se band hai` dikhega |
 | Startup line | `wake: sun raha hai (sunday)` — ya mic band/model missing ho to wajah |
 
-### Command sunna (Step 2) — pehla hissa
+### Command sunna + bolna (Step 2c) — poora
 
-Wake ke baad mic se command uthane ka kaam shuru ho chuka hai:
+Ab wake ke baad **poora command** chalta hai. "Sunday" bolo, Sunday "Ji, boliye"
+bolega, aap apni baat bolo, aur jawab **awaaz me** aayega:
 
 | Kya | Kahan |
 |---|---|
 | Command capture (pre-roll, VAD, max/min/wait) | `wake/utterance.py` |
 | PCM -> WAV (Groq ko bhejne ke liye) | `wake/wav.py` |
 | Speaker — TTS bytes bajana | `desktop/playback.py` |
+| Mic wale chaar kaam (drain/warmup/capture/STT) | `wake/listen.py` |
+| Poora flow (ack -> suno -> brain -> awaaz) | `wake/command.py` |
 
-Abhi **brain tak pohanch nahi raha** (wo agla hissa hai). Jo ban chuka hai usse
-app ke bina test kar sakte ho:
+#### Window (`.env` se badal sakte ho)
 
-```powershell
-cd D:\prabh
-# 1. Kaunse speaker hain
-.\.venv\Scripts\python.exe -m desktop.playback --list
-# 2. Asli awaaz (ek baar "Ji, boliye" bolega)
-.\.venv\Scripts\python.exe -m desktop.playback --say "Ji, boliye"
-```
+| Kya | Default | `.env` |
+|---|---|---|
+| Chup ho jaane par band | **2.0 s** | `PRABH_CMD_SILENCE` |
+| Sabse lamba command | **30 s** | (constant) |
+| Turn ka max step | 5 | (constant) |
+
+2.0 s is liye ki aap sochne ke liye pause kar sako — 0.9 s me beech me ruk jaata tha.
+
+#### Kya hota hai, ek line me
+
+`"Ji, boliye"` → mic ka purana queue phenka + mic garam kiya → aapki baat record
+(2.0 s chup par band, 30 s par force) → Groq STT → brain → HUD par jawab + **awaaz**.
+
+- ❌ **Suna hi nahi** → "Main theek se sun nahi paya, dobara boliye."
+- ❌ **Brain/net fail** → sirf "Abhi jawab nahi mil pa raha." (provider ke
+  technical reasons **awaaz par nahi** padhe — wo sirf HUD par dikhte hain)
+- ❓ **Tool chahiye (ASK card)** → HUD par confirm card + "Screen par confirm
+  kijiye." — **awaaz se allow kabhi nahi hota**, button se hi hoga. Ye line
+  card ke aate hi boli jaati hai, 60 s baad nahi.
+- 🔇 **Mute ya PC lock** → command bilkul nahi chalta (na record, na awaaz, na brain).
+
+#### Do awaaz kyun nahi bajti
+
+Wake se aaye har brain event par `via="voice"` lagta hai; `ui/app.js` us par
+browser ka TTS **skip** karta hai. Awaaz sirf `desktop/playback.py` se balti hai.
+Jo message tum **type** karte ho usme `via` nahi hota — wo waise hi browser se
+bolte hain.
+
+#### Recording ke pakkaurey
+
+- Command ka audio **kabhi disk par save nahi hota** — memory me byte buffer,
+  seedha Groq STT ko. Wake word (Vosk) poora **offline** hai, koi recording
+  provider ko nahi jaati.
+- Mic band karte waqt jo chunk queue bacha hota hai use pehle phenka jaata hai
+  (`listen.drain()`) — warna Sunday apni hi awaaz sun kar dobara trigger hota.
 
 ### Speaker ke do pakkaurey (Step 2)
 
@@ -176,12 +206,26 @@ aati hai (AGENTS.md ka "TTS provider ka ek hi raasta") aur `say()` sirf use
 bajata hai. `.env` me `PRABH_SPEAKER=<device name>` se speaker badal sakte ho,
 `PRABH_SPEAKER_RATE` se rate (default 32 kHz mono).
 
-### Abhi kya **nahi** hota (Step 2 ka baaki hissa)
+### Abhi kya **nahi** hota
 
-- ❌ Wake ke baad **command sunna** — capture to tayyar hai, par use karne wala
-  glue (`wake/command.py`) abhi nahi bana
-- ❌ Command ka **brain tak jaana** aur jawab ki awaaz
-- ❌ Sunke **tool chalana** — ALLOW hamesha screen par button se hi hoga, awaaz se nahi
+- ✅ Command sunna, brain tak jaana, jawab ki awaaz — **Step 2c poora**
+- ❌ **Tool sunke chalana** — card aata hai, par ALLOW hamesha screen par button
+  se hi hoga, awaaz se nahi (AGENTS.md section 3.5)
+- ❌ **Model kahan hai** ka section — samne wala paragraph dekho
+
+### Awaaz app ke bina test karo
+
+```powershell
+cd D:\prabh
+# 1. Kaunse speaker hain
+.\.venv\Scripts\python.exe -m desktop.playback --list
+# 2. Asli awaaz (ek baar "Ji, boliye" bolega)
+.\.venv\Scripts\python.exe -m desktop.playback --say "Ji, boliye"
+```
+
+Poora voice flow (mic + STT + brain + awaaz) test karne ke liye app chala kar
+"Sunday" bolo — `logs/prabh.log` me har stage ka time (`ack / warmup / capture /
+stt / brain / speak`) ek line me dikhta hai.
 
 ### Model kahan hai / kya hua to
 
@@ -198,10 +242,12 @@ cd D:\prabh; .\.venv\Scripts\python.exe -c "import config; print(config.describe
 
 ### Test me kya hota hai
 
-`tests/test_wake.py` (constants, VAD, phrase, model error) aur
-`tests/test_wake_loop.py` (poora loop) — dono **asli mic aur Vosk model
-kabhi nahi** chalate, fakes se. Isi liye test laptop ki battery/CPU par asar nahi
-dale aur flaky nahi hote.
+`tests/test_wake.py` (constants, VAD, phrase, model error),
+`tests/test_wake_loop.py` (poora loop), aur Step 2c ke teen suite —
+`test_wake_command.py` (poora flow), `test_wake_brain.py` (brain + ASK) aur
+`test_wake_listen.py` (mic + pause). Sab **asli mic, Vosk model aur speaker kabhi
+nahi** chalate, fakes `tests/wakecmdhelp.py` se aate hain. Isi liye test laptop
+ki battery/CPU par asar nahi dale aur flaky nahi hote.
 
 ## Limit
 

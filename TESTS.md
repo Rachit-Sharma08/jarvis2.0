@@ -1,4 +1,4 @@
-# Tests (36 suites)
+# Tests (39 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 36 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 39 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -78,7 +78,10 @@ Ek-ek karke:
 | `test_wake.py` | Wake constants, PCM/RMS + energy VAD (pure), Vosk JSON par `detect`, "sunday" pakadna, model ke **error** raaste |
 | `test_wake_loop.py` | Worker ka poora loop **fake mic + fake listener** se: trigger, `heard` state, cooldown, mute-pause, crash-safe callbacks |
 | `test_wake_worker.py` | Worker ka **wiring** (`wake_worker.start/stop/…`) — `Session` ke sirf do cheez fake, asli mic/model kabhi nahi |
-| `test_wake_utterance.py` | Wake ke baad ka command: pre-roll, VAD se band karna, min/max/wait/stop, **mic mar jaye to turant lautna**, `wav.py` ka sahi WAV |
+| `test_wake_utterance.py` | Wake ke baad ka command: pre-roll, VAD se band karna (end-silence 2.0s), `COMMAND_MAX_SECONDS` par kaatna, min/wait/stop, **mic mar jaye to turant lautna**, `wav.py` ka sahi WAV |
+| `test_wake_command.py` | **Step 2c ka flow** — fake mic + fake STT + fake playback: ack -> capture -> stt -> shared ENGINE -> awaaz; mute/lock par kuch nahi; not-heard / no-text; `via="voice"`; har stage ka time; `ui/app.js` guard |
+| `test_wake_brain.py` | Wake se **brain** tak: brain ne kuch nahi diya / saare provider fail (awaaz par reasons **na** padhe, `BRAIN_FAILED` bole) / brain crash; **ASK card par awaaz se allow nahi** (AST se gatekeeper import check); "confirm kijiye" generator rukne se **pehle** boli jaaye |
+| `test_wake_listen.py` | `listen.py` ke chaar kaam + pause: drain/warmup; **stop par to_text aur speak dono ruke**; command me hold aur baad me chhod; **MUTE hold absorb kare** (MUTE haar nahi maarta) |
 | `test_bat.py` | `start_prabh.bat`: CRLF + ASCII + raw-bracket rule, aur asli `cmd` par launch line sach me chalti hai ya nahi |
 
 ### `test_desktop*.py` ke helpers
@@ -118,6 +121,15 @@ hain (`load()` chala kar 1 second + RAM lagana test ka kaam nahi).
 
 Dhyan do: `worker.wakes()` **poore app ka count** hai (reset nahi hota). Do test
 me aage-pahe compare kar rahe ho to pehle `before = worker.wakes()` pakad lo.
+
+**Step 2c ke fakes `tests/wakecmdhelp.py` me hain** — teenon Step 2c suite
+(`test_wake_command` / `test_wake_brain` / `test_wake_listen`) wahan se import
+karte hain: `patch()`, `Spy`, `FakeEngine` (`server.state.ENGINE` ki jagah),
+`hub_spy()`, `engine_say()`, aur poora `command.run` chalane wala `talk()`.
+`gatekeeper_uses()` bhi wahin hai — `wake/command.py` me gatekeeper ka kya import
+hua, **AST** se (docstring me likhe text se dhoka nahi chalta). `COMMAND_WARMUP_SECONDS
+= 0` kiya jaata hai warna har test 1 second extra lega. Asli API, mic ya speaker
+**kabhi nahi**.
 
 ### `test_hud.py` ke helpers
 Runner sirf hai; saare checks char helper me hain (har file `<200` lines):

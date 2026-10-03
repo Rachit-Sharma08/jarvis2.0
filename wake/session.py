@@ -2,15 +2,12 @@
 
 `wake/worker.py` sirf module-level raasta deta hai (poori app me ek hi worker).
 Is file me us ek worker ka **session** hai: mic, listener, callbacks aur state.
-
-Class is liye ki (a) global variable me kuch chhupa nahi hai, (b) test me
-session ko dekh sakte hain. Test asli mic/model kabhi nahi chalate —
-`detect.build` aur `audio_mod.MicSource` hi patch karte hain.
+Test asli mic/model kabhi nahi chalate — `detect.build` aur `audio_mod.MicSource`
+hi patch karte hain.
 
 Loop: chunk uthakar VAD se dekho bol rahe ho ya nahi -> text nikaalo ->
-`phrase.hit()` -> `on_wake`. Lambi khamoshi par recognizer reset (pichhla bhool
-jao), aur wake hit ke baad `WAKE_COOLDOWN_SECONDS` tak chunk phenk-te rehne
-wale (dobaara trigger na ho).
+`phrase.hit()` -> `on_wake`. `on_wake` **synchronous** hai (is thread par), to
+command poora chal jaane tak sunna ruka rehta hai.
 """
 
 import queue
@@ -67,6 +64,10 @@ class Session:
         else:
             self._paused.clear()
             log.info("wake chalu (unmute)")
+
+    def paused(self) -> bool:
+        """Abhi sunna band hai? (tray ka MUTE ya command ka hold — dono)"""
+        return self._paused.is_set()
 
     # ---- chalao / band ----
     def start(self, on_wake=None, on_state=None) -> bool:
@@ -141,19 +142,19 @@ class Session:
         self._say(self._on_state, "heard")
         if self._on_wake is not None:
             try:
-                self._on_wake(heard)
+                # Mic aur stop event yahin se jaate hain — command ko inke
+                # alawa koi raasta nahi chahiye. `on_wake` **synchronous** hai
+                # (is wake thread par), is liye command poora chal jaane tak
+                # sunna ruka rehta hai aur dobara "sunday" trigger nahi hoga.
+                self._on_wake(heard, self._mic, self._stop)
             except Exception as exc:
                 log.error("on_wake crash: %s: %s", type(exc).__name__, exc)
         self._listener.reset()
         vad.reset()
 
     def _end(self) -> None:
-        """Loop khatam (band ya mic mara) — haal ke hisaab se `off` ya `error`.
-
-        Sirf `mic.error` dekhna kaafi nahi: device unplug ho to error khaali
-        hota hai aur app chup-chaap `off` ho jaata tha. Is liye faisla `_stop`
-        se hota hai — loop khud khatam hua matlab `error`.
-        """
+        """Loop khatam — `off` ya `error`. Sirf `mic.error` kaafi nahi (unplug par
+        wo khaali hota hai), is liye faisla `_stop` se."""
         mic = self._mic
         reason = mic.error if mic is not None else ""
         dead = mic is not None and not mic.alive

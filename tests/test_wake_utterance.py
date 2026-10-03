@@ -1,7 +1,7 @@
 """`wake/utterance.py` + `wake/wav.py` ka test — pura fake, koi mic nahi.
 
 Script: 30 ms ka ek chunk = `wakehelp.loud(1)` (awaaz) ya `quiet(1)` (khamoshi).
-Config ke asli window (pre-roll 0.4s, end-silence 1.1s, max 8s, min 0.6s) use
+Config ke asli window (pre-roll 0.4s, end-silence 2.0s, max 30s, min 0.6s) use
 hate hain. Sirf `COMMAND_WAIT_SECONDS` chhota karke test tez rakha gaya hai —
 warna "kuch nahi bola" wala case 5 second leta. Patch `config` par hota hai
 (`import config` se constant ki copy padhi jati hai, is liye `config_wake`
@@ -59,19 +59,20 @@ def test_capture_silence_only():
 
 
 def test_capture_speech():
-    show("capture: awaaz + khamoshi -> chunk list")
+    show("capture: awaaz + khamoshi -> chunk list (end-silence 2.0s)")
     from tests.wakehelp import FakeMic
 
     speech = [loud(1) for _ in range(25)]
-    mic = FakeMic([quiet(1) for _ in range(10)] + speech + [quiet(1) for _ in range(60)])
+    mic = FakeMic([quiet(1) for _ in range(10)] + speech + [quiet(1) for _ in range(100)])
     got = utterance.capture(mic)
     truthy("kuch mila", got)
     if got:
-        # 25 loud + 10 pre-roll (0.4s = 13 chunk max, par deque me se jo bache)
-        truthy("sab se kam 25 chunk", len(got) >= 25)
-        truthy("khamoshi ke baad band hua", len(got) < 90)
+        # 10 pre-roll + 25 awaaz + 13 hangover + 67 end-silence = 115. Queue me
+        # 135 chunk the, is liye 115 par rukna ka matlab **khamoshi par band**.
+        truthy("sab se kam 35 chunk", len(got) >= 35)
+        check("khamoshi par band hua (queue khaali nahi hui)", len(got) <= 116, True)
         ms = utterance.duration_ms(got)
-        truthy("duration 700-3000ms", 700 <= ms <= 3000)
+        truthy("duration 700-3500ms", 700 <= ms <= 3500)
 
 
 def test_capture_too_short():
@@ -83,14 +84,18 @@ def test_capture_too_short():
 
 
 def test_capture_max_seconds():
-    show("capture: 8s se zyada sunta nahi")
+    show("capture: COMMAND_MAX_SECONDS par hi kaat-ta hai (safety limit)")
     from tests.wakehelp import FakeMic
 
+    # FakeMic ki queue sirf 400 chunk rakh sakti hai, is liye asli 30s (1000
+    # chunk) preload nahi ho sakta. Window chhota karke wahi niyam test karte
+    # hain: 1.5 s = 50 chunk, aur mic poori der bolta rahe.
     mic = FakeMic([loud(1) for _ in range(400)])
-    got = utterance.capture(mic)
+    with window(COMMAND_MAX_SECONDS=1.5):
+        got = utterance.capture(mic)
     truthy("mila", got)
     if got:
-        check("max 8s = 268 chunk se kam", len(got) <= 268, True)
+        check("1.5s = 50 chunk par hi ruka", len(got), 50)
 
 
 def test_capture_stop_event():

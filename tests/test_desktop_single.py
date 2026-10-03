@@ -138,7 +138,13 @@ def test_stale_pid_self_heal():
     check("lock mili", s.owner_pid(), os.getpid())
     check("purana PID hat gaya", str(dead_pid) in s.pid_path.read_text("utf-8"), False)
 
-    # ab jab lock HELD hai, doosra instance ko saaf message milna chahiye
+    # ab jab lock HELD hai, doosra instance ko saaf message milna chahiye.
+    # `acquire()` andar se `diagnose()` call karta hai - asli `http_alive`
+    # chalega, is liye message ka **shabd nahi**, guarantee hui baat check karo:
+    # live process lock pakde hai to "stale" **kabhi** nahi bola jaata. (Pehle
+    # yahan "CHAL raha hai" check tha, jo sirf tab pass hota jab Sunday ka asli
+    # server 8000 par chala ho - yani test **environment** par depend karta tha,
+    # jabki is file ka apna vaada hai "koi asli process ya socket nahi".)
     other = Single(lock)
     try:
         other.acquire()
@@ -146,7 +152,6 @@ def test_stale_pid_self_heal():
     except Exception as exc:
         msg = str(exc)
         check("doosre ko 'stale' nahi bola", "stale" in msg, False)
-        check("doosre ko 'CHAL raha hai' bola", "CHAL raha hai" in msg, True)
         check("  apna PID bataya", "pid=%d" % os.getpid() in msg, True)
     finally:
         s.release()
