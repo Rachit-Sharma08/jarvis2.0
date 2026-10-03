@@ -22,7 +22,7 @@ from tests.desktophelp import (  # noqa: E402
 )
 
 import config  # noqa: E402
-from desktop import playback  # noqa: E402
+from desktop import playback, playback_cli  # noqa: E402
 from voice import tts  # noqa: E402
 
 
@@ -43,13 +43,22 @@ class fake_speak:
 
 
 def swap(fake):
-    """`tts.speak` badlo, call karo, wapas. -> (ms, fake)"""
+    """`tts.speak` badlo, call karo, wapas. -> (ms, fake)
+
+    **`tts.cache_clear()` zaroori hai.** `playback.say` ab `tts.speak_cached()`
+    call karta hai (Step 2 speed fix: "Ji, boliye" ka audio cache hota hai). Bina
+    cache clear kiye pehle wale fake ka audio wapas mil jaata hai — naya fake
+    **chup-chaap** call hi nahi hota, `fake.calls` khali reh jaata hai. Ye wahi
+    galti hai jo callback signature badalne par hui thi, bas cache ki wajah se.
+    """
     saved = tts.speak
     tts.speak = fake
+    tts.cache_clear()
     try:
         return playback.say("Ji, boliye.", "sunday"), fake
     finally:
         tts.speak = saved
+        tts.cache_clear()
 
 
 def test_say():
@@ -72,11 +81,13 @@ def test_default_mode():
     fake = fake_speak()
     saved_speak = tts.speak
     tts.speak = fake
+    tts.cache_clear()
     try:
         playback.say("Ji, boliye.")
         check("mode khaali to default", fake.calls[0][1], config.DEFAULT_MODE)
     finally:
         tts.speak = saved_speak
+        tts.cache_clear()
         remove_audio(saved)
 
 
@@ -112,6 +123,7 @@ def test_timeout():
 
     saved_speak = tts.speak
     tts.speak = slow
+    tts.cache_clear()
     try:
         ms = playback.say("Ji, boliye.")
         check("timeout par 0", ms, 0)
@@ -128,18 +140,22 @@ def test_main_say():
     # "nahi baja" samajh jaayega.
     _mini, _sd, saved = install_audio(mini=FakeMini(samples=[1000] * 3200))
     tts.speak = fake
+    tts.cache_clear()
     try:
-        check("--say se baja", playback.main(["--say", "Ji,", "boliye."]), 0)
+        check("--say se baja", playback_cli.main(["--say", "Ji,", "boliye."]), 0)
         check("saare shabd jode", fake.calls[0][0], "Ji, boliye.")
     finally:
         tts.speak = saved_speak
+        tts.cache_clear()
         remove_audio(saved)
 
     tts.speak = fake_speak(boom=tts.TtsError("fail"))
+    tts.cache_clear()
     try:
-        check("--say par tts fail", playback.main(["--say", "test"]), 1)
+        check("--say par tts fail", playback_cli.main(["--say", "test"]), 1)
     finally:
         tts.speak = saved_speak
+        tts.cache_clear()
         remove_audio(saved)
 
 

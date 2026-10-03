@@ -6,6 +6,53 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Step 2 speed fix (3 Oct 2026) - wake 18.5 s se tez
+
+Owner ne bola "bhot slow hai, placeholder bhi aa raha". Do alag baatein thin:
+
+**1. Placeholder ka asli kaaran — stale process.** `GET /` raw
+`__PRABH_ASSISTANT_NAME__` de raha tha. Code sahi tha; woh **purana** chal raha
+process tha jisne `fill_html()` nahi jaana tha (Step 1 ke baad restart hi nahi
+hua tha). Teeno PIDs band karke `start_prabh.bat` chala diya. Ab `GET /` =
+`Jarvis HUD` + `J.A.R.V.I.S`, koi placeholder nahi. Ye wahi bug family hai jo
+Phase 4 me bhi aayi thi (`localhost` vs `127.0.0.1`, three `Engine()`).
+
+**2. Der kahan thi.** Brain tez tha (Groq 1.1-1.7 s). Log me der wake path me
+thi:
+
+```
+TIME wake_command: TOTAL 18450ms | ack=3520ms warmup=1036ms capture=8088ms
+```
+
+Teen fix:
+
+| Kya | Pehle | Ab |
+|---|---|---|
+| "Ji, boliye" ka TTS | har wake par ~1.4-1.8 s | `voice/tts.py` me cache - dusri baar **0 ms** |
+| Warm-up | har baar 1 s dead wait | ack chalti hai, usi me mic settle (`deadline`) |
+| Chuppi | 2.0 s | **1.2 s** (`PRABH_CMD_SILENCE`) |
+
+- `voice/tts.py`: `speak_cached()` + `cache_clear()`, `_CACHE` (max 8, FIFO),
+  `speak()` sirf `_speak_uncached()` ka wrapper. Hit par log: `tts cache hit`.
+  Provider fail hone par **cache me kuch nahi** jata (warna app hamesha
+  "nahi bola" repeat karegi).
+- `wake/listen.py`: `warmup(mic, stop, deadline=None)` — deadline diya to jitna
+  poora hua utna hi wait, warna poora `COMMAND_WARMUP_SECONDS`.
+- `wake/command.py`: `settled_by = stage() + WARMUP` **ack se pehle** banta hai,
+  is liye ack ki 2 s me warm-up poora ho jata hai aur wo 1 s har baar bachta hai.
+- `desktop/playback.py` 205 lines ho gaya -> **split**: naya
+  `desktop/playback_cli.py` (`--list`/`--say` + `devices()`). Asli decode/play/
+  `say()` wahi rahe. CLI ab `-m desktop.playback_cli` se (teeno test + doc update).
+- Naye suite: `tests/test_tts_cache.py` (cache hit/miss/bounded/fail-not-cached),
+  `tests/test_speed_fix.py` (warm-up deadline ka sach + 1.2 s + env override).
+  **42 suite green**, sab file `<=200`.
+- Ek asli galti: nayi `speak()` me `return _speak_uncached(...)` likh diya tha
+  bina `await` ke — `test_voice_tts.py` ne `cannot unpack non-iterable coroutine
+  object` pakda. Split karte waqt bhi do test fudge hue the (import stub +
+  `devices()` ab `playback_cli` me hai, dono test me badle gaye).
+
+---
+
 ## Step 1 (3 Oct 2026) - naam "Sunday" -> "Jarvis"
 
 Sirf **naam** badla, **id nahi**. `config.SUNDAY_ONLY`, `PRABH_SUNDAY_ONLY`,
@@ -202,7 +249,7 @@ awaaz bajane ka bhi. Brain tak pohanchna agli sub-step hai (`wake/command.py`).
      bina argument + `max_output_channels > 0` filter.
 - **Test me asli speaker kabhi nahi bajti:** `miniaudio` + `sounddevice` ke fake
   `tests/desktophelp.py` me `install_audio()` se `sys.modules` me. Asli check:
-  `python -m desktop.playback --list` aur `--say "Ji, boliye"`.
+  `python -m desktop.playback_cli --list` aur `--say "Ji, boliye"`.
 - **Test:** 30 -> **32 suite green**. Naye suite `test_desktop_playback.py`
   (decode + play + device list) aur `test_desktop_play_say.py` (TTS + har error
   par `0`, crash nahi). Test me `int16` buffer `bytes()` se nahi, `np.asarray`
@@ -356,13 +403,13 @@ Code ka poora record upar hai. Ye sirf **project ke bahar** wale kaam hain â€
   **Koi badlav nahi kiya** â€” user ke "haan" ka wait. Reversible plan bhi likha hai.
 - **Tray icon na dikhne ki asli wajah** â€” pystray nahi, Windows overflow. `NotifyIconSettings`
   me 22 icon me se sirf 1 `IsPromoted=1`; baaki 21 `^` chevron me. Icon register hua tha, bas
-  dikha nahi. User ko `^` â†’ right-click â†’ "Always show icons" batana hai.
+  dikha nahi. User ko `^` → right-click → "Always show icons" batana hai.
 - **`localhost` vs `127.0.0.1`** â€” HUD hamesha `http://127.0.0.1:8000`, `localhost` se token reject.
 - **Fix round 3 live verify** â€” naya code **asli** stale PID file saaf ki:
   `15:41:21 | WARNING | single | stale pid file hata di: D:\prabh\data\prabh.pid (pid=19584)`.
   `start_prabh.bat` dobara chalane par naya saaf message + exit 3.
 - **Jahan chhoda** â€” app band, port khaali, pid file saaf, lock free, git clean. Agla step
-  user ka: double-click â†’ `^` me icon â†’ "Always show icons". Iske baad Phase 5 Step 1 (Vosk).
+  user ka: double-click → `^` me icon → "Always show icons". Iske baad Phase 5 Step 1 (Vosk).
 
 ---
 
@@ -378,10 +425,10 @@ tha ki app shuru hi nahi hua.
   `PROCESS_QUERY_LIMITED_INFORMATION`, doosre platform par `os.kill`) aur
   `http_alive(origin, opener=None)` (`GET /` ka status 200?) â€” dono probe injectable hain.
 - `Single.diagnose(pid_probe=None, http_check=None)` 4 haal alag-alag bolta hai:
-  - PID zinda + `GET /` 200 â†’ "pehle se CHAL raha hai (pid=...)"
-  - PID zinda par 200 nahi â†’ "app atki hai, Task Manager se band karo"
-  - PID murda par 200 â†’ "port 8000 kisi aur ka hai, ye lock stale nahi"
-  - dono murda â†’ "lock stale hai, ye instance apne aap lock pakad lega"
+  - PID zinda + `GET /` 200 → "pehle se CHAL raha hai (pid=...)"
+  - PID zinda par 200 nahi → "app atki hai, Task Manager se band karo"
+  - PID murda par 200 → "port 8000 kisi aur ka hai, ye lock stale nahi"
+  - dono murda → "lock stale hai, ye instance apne aap lock pakad lega"
 - `os.kill(pid, 0)` jaan-boojh kar **nahi** likha â€” CPython isay `TerminateProcess` bana
   sakta hai. Ye baat `AGENTS.md` me pakkaari gayi hai.
 - `_clean_stale_pid()` â€” lock milne ke baad mar ke bache `.pid` file apne aap hat jaati hai.
@@ -390,7 +437,7 @@ tha ki app shuru hi nahi hua.
 - `desktop/app.py` ab ye message **console par bhi** bolta hai (`print(..., flush=True)`),
   kyunki double-click karne wala user log nahi padhta.
 
-Live verify (asli app ke against): `owner_pid = 19584` â†’
+Live verify (asli app ke against): `owner_pid = 19584` →
 *"Sunday pehle se CHAL raha hai (pid=19584). Usi tray icon se Open HUD karo, ya Quit dabao."*
 aur `start_prabh.bat` dobara chalane par wahi message + exit 3.
 
@@ -423,7 +470,7 @@ Wake/face/trust/learn/maker ka poora plan `PLAN.md` + `PLAN-TRUST.md` me hai
 
 **Naye package** (`.venv` me, D: drive ke cache/temp se):
 `vosk 0.3.45` Â· `sounddevice 0.5.6` Â· `numpy 2.5.3` Â· `miniaudio 1.71` Â·
-`pystray 0.19.5`. Aage ka chhota plan: `wake word` â†’ `mic` â†’ `chime` â†’
+`pystray 0.19.5`. Aage ka chhota plan: `wake word` → `mic` → `chime` →
 `baat sunai de` (sirf Step 1-3; face se pehle).
 
 **Vosk model** (Step 1 ke liye pehle se download): `models/vosk-model-small-en-us-0.15`
@@ -551,7 +598,7 @@ wake: stub: Step 1 me aayega - mic nahi khula
 Tray icon window mila (`Sunday...SystemTrayIcon`, pid 13668), `GET /` = 200.
 
 **Purana JARVIS auto-start (sirf bataya, chhua nahi):**
-`HKCU\...\Run` me `electron.app.Electron` â†’
+`HKCU\...\Run` me `electron.app.Electron` →
 `D:\jarvis\desktop\node_modules\electron\dist\electron.exe D:\jarvis\desktop --hidden`.
 `D:\jarvis` abhi bhi maujood hai. Startup folder me Jarvis nahi â€” sirf
 `start_local_hidden.vbs` (VoiceMemories AI ka `node local_host.js`) aur
@@ -602,8 +649,8 @@ mila, wo sirf listening-state ke liye rakha gaya.
 5. **SYSTEM pill** â€” startup par `active_tier: null` se OFFLINE dikhta tha. Ab ready
    provider (key + cooldown nahi) hone par ONLINE.
 6. **STOP button** â€” sirf awaaz rokta tha, pending tool card nahi. Ab dono.
-7. `/hud/quick` ka `QuickIn` extra fields ignore kar raha tha â†’ ab `extra="forbid"`.
-8. Network `MB` â†’ `MB/s`, activity tag `DENY` â†’ `DENIED`.
+7. `/hud/quick` ka `QuickIn` extra fields ignore kar raha tha → ab `extra="forbid"`.
+8. Network `MB` → `MB/s`, activity tag `DENY` → `DENIED`.
 
 **Verify**
 - 23/23 suite green, sab file `<200` lines.
@@ -633,9 +680,9 @@ mila, wo sirf listening-state ke liye rakha gaya.
 
 **Live probe (Sept-Oct 2026):**
 
-- NVIDIA `nemotron-3-super-120b-a12b` â€” strict JSON **pass**, ~1.0s â†’ winner.
-- NVIDIA `nemotron-3.5-lightning-30b-a3b` â€” 60s+ timeout â†’ fail.
-- NVIDIA `nemotron-nano-3-30b-a3b` â€” **404** â†’ pool se bahar.
+- NVIDIA `nemotron-3-super-120b-a12b` â€” strict JSON **pass**, ~1.0s → winner.
+- NVIDIA `nemotron-3.5-lightning-30b-a3b` â€” 60s+ timeout → fail.
+- NVIDIA `nemotron-nano-3-30b-a3b` â€” **404** → pool se bahar.
 - OpenRouter `nemotron-3-super-120b-a12b:free` â€” strict JSON **pass**, ~1.2s.
 - OpenRouter `qwen3.8-27b:free` â€” **429**.
 - NVIDIA free trial = 1000 credits; credits khatam par HTTP **402**.
@@ -647,7 +694,7 @@ mila, wo sirf listening-state ke liye rakha gaya.
 ## Fix round 1
 
 - Models fix + fallback (Groq 10s / Gemini 15s, 503 par 1 retry).
-- `brain/health.py` â€” 404 â†’ model GONE, 402/429/503/timeout â†’ 10 min rest.
+- `brain/health.py` â€” 404 → model GONE, 402/429/503/timeout → 10 min rest.
 - Startup `/models` check + warning banner.
 - `core/timing.py` â€” stage + total timing.
 - Dono brain provider fail ho to **ek hi** message.
@@ -675,7 +722,7 @@ aur khaali/length/ghalat JSON = failure count.
 
 ## Phase 1-2 (skeleton)
 
-- Skeleton, brain (Groq â†’ Gemini), personas, mode switch.
+- Skeleton, brain (Groq → Gemini), personas, mode switch.
 - Engine + events, FastAPI (`/chat`, `/ws`), HUD UI.
 - Suraksha: 127.0.0.1 only, Origin + Host check, per-start token, CORS band.
 - Voice: `stt.py`, TTS chain, `/stt` + `/tts`, mic UI, 500 char limit.

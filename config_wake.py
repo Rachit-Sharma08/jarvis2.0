@@ -60,11 +60,14 @@ VAD_HANGOVER_BLOCKS = 30     # ~0.9 s — VAD ke dauraan awaaz mat kaato
 WAKE_COOLDOWN_SECONDS = 1.5
 
 # ---- command window ----
-# Owner ne 2.0 s rakhi hai (3.0 nahi) — `.env` se badla ja sakta hai. Beech ka
-# number: jaldi na kato (sochne me waqt lagta hai), par aadat banegi nahi.
+# Chuppi 2.0 s thi -> **1.2 s**. Wake ka total 18.5 s tha, jisme se 2.0 s sirf
+# is ek intezaar me jaata tha (brain to 1.1 s me jawab de raha tha). 1.2 s abhi
+# bhi ek natural sentence-gap se lamba hai, is liye beech ka vaakya kat-ta nahi.
+# `.env` ke `PRABH_CMD_SILENCE` se badal sakte ho - Step 2 (STT) isi ko tune
+# karega, kyunki zyada chuppi = zyada pakka text par thoda sa slow.
 COMMAND_MAX_SECONDS = 30           # wake ke baad itni der suno (safety limit)
 COMMAND_MIN_SECONDS = 0.6    # itni ASLI awaaz chahiye, khamoshi ginti nahi
-COMMAND_END_SILENCE_SECONDS = float(os.getenv("PRABH_CMD_SILENCE", "2.0"))
+COMMAND_END_SILENCE_SECONDS = float(os.getenv("PRABH_CMD_SILENCE", "1.2"))
 COMMAND_HANGOVER_SECONDS = 0.4     # beech ka chhota ruk na kaato (wake se chhota)
 COMMAND_PRE_ROLL_SECONDS = 0.4     # "Jarvis" ke aakhri shabd bhi pakad lo
 COMMAND_WAIT_SECONDS = 5.0         # pehla shabd aaya hi nahi -> "sun nahi aaya"

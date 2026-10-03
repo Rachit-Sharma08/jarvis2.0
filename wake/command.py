@@ -140,19 +140,23 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None) -> str
 
     watch = Stopwatch("wake_command")
     stage = time.perf_counter
+    settled_by = stage() + float(config.COMMAND_WARMUP_SECONDS)
     held = wake_worker.hold_for_command()
     _safe(on_busy, True)
     HUB.publish({"type": "status", "value": "listening"})
     try:
         # 1. "Ji, boliye" — mic hold ho chuka hai, to apni awaaz capture nahi hogi.
+        #    Mic band nahi hota (duty cycle), is liye ye bolte waqt bhi settle
+        #    hota hai — `settled_by` usi ko count karta hai (niche dekho).
         at = stage()
         speak(config.ACK_ON_WAKE, stop)
         watch.stage("ack", at)
 
-        # 2. Purana audio phenko + mic baithne do, phir suno.
+        # 2. Purana audio phenko + mic baithne do, phir suno. Jitna warm-up pehle
+        #    poora ho chuka hai utna hi wait — pehle har baar 1 s ka dead time tha.
         at = stage()
         listen.drain(mic, stop)
-        listen.warmup(mic, stop)
+        listen.warmup(mic, stop, deadline=settled_by)
         watch.stage("warmup", at)
 
         # 3. VAD se command uthao. Kuch suna hi nahi -> dobara boliye.

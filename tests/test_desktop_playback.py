@@ -19,7 +19,7 @@ from tests.desktophelp import (  # noqa: E402
 )
 
 import config  # noqa: E402
-from desktop import playback  # noqa: E402
+from desktop import playback, playback_cli  # noqa: E402
 
 PCM = (1000, 2000, -3000, 4000)
 
@@ -143,7 +143,7 @@ def test_play():
 def test_devices():
     _mini, _sd, saved = install_audio()
     try:
-        rows = playback.devices()
+        rows = playback_cli.devices()
         check("ek device", len(rows), 1)
         check("naam", rows[0][1], "Fake Speakers")
     finally:
@@ -151,7 +151,7 @@ def test_devices():
 
     _mini, _sd, saved = install_audio(sd=FakeSd(devices_boom=True))
     try:
-        check("crash par khaali list", playback.devices(), [])
+        check("crash par khaali list", playback_cli.devices(), [])
     finally:
         remove_audio(saved)
 
@@ -159,16 +159,16 @@ def test_devices():
 def test_main():
     _mini, _sd, saved = install_audio()
     try:
-        check("--list par device", playback.main(["--list"]), 0)
-        check("kuch argument nahi", playback.main([]), 2)
-        check("--say bina shabd", playback.main(["--say"]), 2)
+        check("--list par device", playback_cli.main(["--list"]), 0)
+        check("kuch argument nahi", playback_cli.main([]), 2)
+        check("--say bina shabd", playback_cli.main(["--say"]), 2)
     finally:
         remove_audio(saved)
 
     _mini, _sd, saved = install_audio(sd=FakeSd(devices_boom=True))
     try:
-        check("speaker na ho to --list", playback.main(["--list"]), 1)
-        check("speaker na ho to --say", playback.main(["--say", "test"]), 1)
+        check("speaker na ho to --list", playback_cli.main(["--list"]), 1)
+        check("speaker na ho to --say", playback_cli.main(["--say", "test"]), 1)
     finally:
         remove_audio(saved)
 

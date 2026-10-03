@@ -125,6 +125,11 @@ def say(text: str, mode: str = None, rate: int = None) -> int:
 
     Thread se call karo (wake worker / tray). Koi bhi galti upar nahi aati —
     sirf log, warna wake thread toot jayega.
+
+    **Cache:** `tts.speak_cached()` wala raasta — constant text ("Ji, boliye",
+    "confirm kijiye") pehli baar ban-ta hai, phir memory se (har baar ~1.5 s
+    bachta hai). Chat ka jawab bhi yahin se jaata hai, par wo unique hai is liye
+    cache khud hit nahi hota. Yahan naya provider chain **kabhi** mat likho.
     """
     from voice import tts
 
@@ -132,7 +137,7 @@ def say(text: str, mode: str = None, rate: int = None) -> int:
     limit = float(config.PLAYBACK_TIMEOUT_SECONDS)
     try:
         audio, provider = asyncio.run(
-            asyncio.wait_for(tts.speak(text, mode), limit)
+            asyncio.wait_for(tts.speak_cached(text, mode), limit)
         )
     except asyncio.TimeoutError:
         log.error("tts timeout (%ds)", int(limit))
@@ -149,52 +154,3 @@ def say(text: str, mode: str = None, rate: int = None) -> int:
     except PlaybackError as exc:
         log.error("playback nahi hua: %s", exc)
         return 0
-
-
-def devices() -> list:
-    """Saare output device -> [(index, name), ...]. Log aur `--list` ke liye.
-
-    Dhyan do: `sounddevice.query_devices(kind="output")` **list nahi** deta, us
-    default output device ka **ek dict** deta hai. List ke liye sab devices
-    chahiye, phir `max_output_channels` se filter karo — is liye yahan
-    `query_devices()` bina argument ke.
-    """
-    try:
-        _mini, sd = _modules()
-        found = sd.query_devices()
-    except Exception as exc:
-        log.error("device list nahi mili: %s: %s", type(exc).__name__, exc)
-        return []
-    return _output_rows(found)
-
-
-def main(argv: list) -> int:
-    """`python -m desktop.playback` — asli speaker ka test (app ke bina)."""
-    if "--list" in argv:
-        rows = devices()
-        if not rows:
-            print("koi output device nahi mila")
-            return 1
-        for index, name in rows:
-            print("%d  %s" % (index, name))
-        return 0
-
-    words = ""
-    if "--say" in argv:
-        at = argv.index("--say")
-        words = " ".join(argv[at + 1:]).strip()
-    if not words:
-        print("usage: python -m desktop.playback --list | --say \"Ji, boliye\"")
-        return 2
-
-    ok, reason = available()
-    if not ok:
-        print(reason)
-        return 1
-    ms = say(words, config.DEFAULT_MODE)
-    print("baja: %d ms" % ms if ms else "nahi baja")
-    return 0 if ms else 1
-
-
-if __name__ == "__main__":
-    sys.exit(main(sys.argv[1:]))

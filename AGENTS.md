@@ -350,6 +350,31 @@ endpoint mat likho.
 - **Stale PID file lock milne par apne aap hatni chahiye** (`_clean_stale_pid()`). Windows par
   `msvcrt` lock marne par khud release ho jaata hai — asli stale **lock** rare hai, stale
   `.pid` file common hai.
+- **Cache sirf `speak_cached()` me, `speak()` me bilkul nahi.** `voice/tts.py` ka
+  `speak()` sirf `_speak_uncached()` ka `return await` wrapper hai. `await` bhool
+  gaye to caller ko nested coroutine milta hai aur test me
+  `cannot unpack non-iterable coroutine object` aata hai — asli me TTS chup ho
+  jaata hai. Cache **fail par store na kare** (warna app hamesha "nahi bola"
+  repeat karegi, recovery nahi hogi) aur **bounded** rahe (`CACHE_MAX`).
+- **"Time lag raha hai" par pehle log padho, brain ko mat shak karo.** Wake path
+  ka ek line pura hisaab deta hai: `TIME wake_command: TOTAL ... | ack=... warmup=...
+  capture=... stt=... brain=...`. Brain alag `TIME tts`/`brain` me hai. 3-Oct ko
+  brain 1.1 s tha aur der wake path me thi — `settled_by` (ack se pehle) + cache +
+  `COMMAND_END_SILENCE` se fix hui.
+- **Deadline pattern: jo kaam peeche chal raha hai, uska time pehle se `settled_by`
+  bana do.** `wake/command.py` me ack `speak()` ke **pehle** `settled_by =
+  stage() + COMMAND_WARMUP_SECONDS` banta hai, phir `listen.warmup(...,
+  deadline=settled_by)`. Is liye 2 s ki ack ke dauraan 1 s ka warm-up apne aap poora
+  ho jata hai. Deadline nahi de rahe to `warmup` poora wait karega (test raasta).
+- **Purana process chal raha ho to code badalne ka koi matlab nahi.** 3-Oct ko
+  `GET /` raw `__PRABH_ASSISTANT_NAME__` de raha tha jabki `fill_html()` code me
+  theek tha — sirf woh **purana launcher/app** chal raha tha. Code badalne ke baad
+  app **restart** karna ya rehne dena, dono me se ek jaan-boojh kar chuno.
+- **200 lines cross karte hi split karo, aur test ke fake bhi usi raaste pe
+  shift karo.** `desktop/playback.py` 205 hua to `desktop/playback_cli.py`
+  (`--list`/`--say` + `devices()`) bana. Sirf file nahi — do test me bhi
+  `playback.main(...)` aur `playback.devices()` references badalne pade. Naya
+  module bana kar sirf production file copy karna **chup-chaap fail** kar deta hai.
 - **Wake worker ka ek hi raasta** `wake/worker.py`. Kahin bhi `wake.session.Session()`
   mat banao — poori app me **ek** worker. `desktop/app.py` sirf `start/stop/state`,
   tray ka MUTE sirf `worker.set_paused()`.
@@ -373,7 +398,7 @@ endpoint mat likho.
 - **Playback test me asli speaker kabhi na baja.** `miniaudio` + `sounddevice` ke
   fake `tests/desktophelp.py` me `install_audio()` se `sys.modules` me daalo
   (playback late import karta hai, is liye bas yahi kaafi hai) aur `voice/tts.speak`
-  ko badal do. Asli check `python -m desktop.playback --say "..."` se.
+  ko badal do. Asli check `python -m desktop.playback_cli --say "..."` se.
 - **Test file 200+ ho to theme ke hisaab se todo**, aur **helper class/function ko
   module level par rakh** — use hone wali function me chhod diya to doosri me
   `NameError` se **silent fail** ho jaata hai (aisa hi hua: `Ok`/`boom` split ke
@@ -479,7 +504,7 @@ endpoint mat likho.
   record `CHANGELOG.md`.
 - **Phase 5 Step 2 ke do hisse ho gaye (3 Oct 2026) — 32 suite green.** **2a** command
   capture (`wake/utterance.py` + `wake/wav.py`), **2b** speaker (`desktop/playback.py`,
-  `python -m desktop.playback --say "Ji, boliye"` se bina app ke awaaz test ho jaati hai).
+  `python -m desktop.playback_cli --say "Ji, boliye"` se bina app ke awaaz test ho jaati hai).
   Dono ka record `CHANGELOG.md`, detail `VOICE.md`.
 - **Phase 5 Step 2c ho gaya (3 Oct 2026) — 37 suite green.** Wake ke baad poora command:
   "Ji, boliye" → mic queue drain + warm-up → capture (2.0 s khamoshi par band, max 30 s) →
@@ -634,6 +659,16 @@ green**, sab file `<200`.
   `desktop/shortcut.py` + `hud_shortcut.ps1`, `.env` se badalne wala `PRABH_HUD_HOTKEY`,
   `tests/test_desktop_hotkey.py` + `tests/test_desktop_shortcut.py` (test file
   200+ lines thi to split ki) — **28 suite green**.
+- **Step 2 speed fix (3 Oct 2026)** — wake 18.5 s tha, brain sirf 1.1 s tha
+  (log: `TIME wake_command: TOTAL 18450ms | ack=3520ms warmup=1036ms capture=8088ms`).
+  Teen fix: (1) `voice/tts.py` me `speak_cached()` + `_CACHE` (max 8) — ack ki
+  "Ji, boliye" ka TTS ab dusri baar 0 ms; (2) `listen.warmup(deadline=)` +
+  `command.py` me ack se **pehle** `settled_by` — 1 s ka dead wait gaya;
+  (3) `COMMAND_END_SILENCE` 2.0 → 1.2 s. `desktop/playback.py` 205 → split
+  (`desktop/playback_cli.py`, CLI ab `-m desktop.playback_cli`). Naye suite
+  `test_tts_cache.py` + `test_speed_fix.py` — **42 suite green**, sab file `<=200`.
+  Do asli galti: `speak()` me `return await` bhool gaye (nested coroutine), aur
+  split karte waqt do test ke references update nahi hue.
 - **Phase 5 Step 1 (2 Oct 2026)** — Vosk wake word **asli**: `config_wake.py` (constants) +
   `wake/` ka 6 file (`audio` = mic ka ek owner + VAD, `model`, `detect`, `phrase`,
   `session` = loop, `worker` = module-level ek hi worker), grammar me sirf 5 shabd,

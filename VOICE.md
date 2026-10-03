@@ -157,16 +157,17 @@ bolega, aap apni baat bolo, aur jawab **awaaz me** aayega:
 
 | Kya | Default | `.env` |
 |---|---|---|
-| Chup ho jaane par band | **2.0 s** | `PRABH_CMD_SILENCE` |
+| Chup ho jaane par band | **1.2 s** | `PRABH_CMD_SILENCE` |
 | Sabse lamba command | **30 s** | (constant) |
 | Turn ka max step | 5 | (constant) |
 
-2.0 s is liye ki aap sochne ke liye pause kar sako — 0.9 s me beech me ruk jaata tha.
+1.2 s: 2.0 s sirf intezaar me tha, 0.9 s se beech ka vaakya kat jaata tha. Beech ka 0.4 s
+`HANGOVER` alag hai aur waise hi hai.
 
 #### Kya hota hai, ek line me
 
 `"Ji, boliye"` → mic ka purana queue phenka + mic garam kiya → aapki baat record
-(2.0 s chup par band, 30 s par force) → Groq STT → brain → HUD par jawab + **awaaz**.
+(1.2 s chup par band, 30 s par force) → Groq STT → brain → HUD par jawab + **awaaz**.
 
 - ❌ **Suna hi nahi** → "Main theek se sun nahi paya, dobara boliye."
 - ❌ **Brain/net fail** → sirf "Abhi jawab nahi mil pa raha." (provider ke
@@ -190,6 +191,25 @@ bolte hain.
   provider ko nahi jaati.
 - Mic band karte waqt jo chunk queue bacha hota hai use pehle phenka jaata hai
   (`listen.drain()`) — warna Jarvis apni hi awaaz sun kar dobara trigger hota.
+
+### Tez kyun hai (Step 2 speed fix, 3 Oct)
+
+Pehle log me ye dikhta tha:
+`TIME wake_command: TOTAL 18450ms | ack=3520ms warmup=1036ms capture=8088ms`.
+Brain to tez tha (~1.1–1.7 s), der **wake path** me thi. Teen fix:
+
+| Kya | Pehle | Ab |
+|---|---|---|
+| "Ji, boliye" ki awaaz | har baar banti thi (~1.5 s) | `voice/tts.py` me cache — dusri baar **0 ms** |
+| Warm-up | har baar 1 s dead wait | ack chalti hai, usi me mic settle (deadline) |
+| Chuppi | 2.0 s | **1.2 s** |
+
+- Cache **bounded** hai (`CACHE_MAX = 8`, purani entry nikal jaati hai) aur
+  provider fail hone par **kuch store nahi** hota — warna app hamesha "nahi bola"
+  repeat karegi aur recovery kabhi na ho.
+- Brain ka naya jawab bhi `speak_cached()` se hi jaata hai (awaaz ka ek hi raasta
+  hai) — par unique hai to hit nahi hoga. Memory par koi asar nahi (`~50 KB` × 8).
+- Test: `tests/test_tts_cache.py`, `tests/test_speed_fix.py`.
 
 ### Speaker ke do pakkaurey (Step 2)
 
@@ -218,9 +238,9 @@ bajata hai. `.env` me `PRABH_SPEAKER=<device name>` se speaker badal sakte ho,
 ```powershell
 cd D:\prabh
 # 1. Kaunse speaker hain
-.\.venv\Scripts\python.exe -m desktop.playback --list
+.\.venv\Scripts\python.exe -m desktop.playback_cli --list
 # 2. Asli awaaz (ek baar "Ji, boliye" bolega)
-.\.venv\Scripts\python.exe -m desktop.playback --say "Ji, boliye"
+.\.venv\Scripts\python.exe -m desktop.playback_cli --say "Ji, boliye"
 ```
 
 Poora voice flow (mic + STT + brain + awaaz) test karne ke liye app chala kar

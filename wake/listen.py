@@ -69,17 +69,25 @@ def drain(mic, stop=None) -> int:
     return dropped
 
 
-def warmup(mic, stop=None) -> int:
+def warmup(mic, stop=None, deadline=None) -> int:
     """Mic settle hone do, phir queue khaali karo. -> kitne chunk phenke.
 
     Ye command se pehle hota hai — warna `warmup` ke pehle ka buffer capture ke
-    shuru me chala jaata aur pehla shabd kat-ta hai."""
+    shuru me chala jaata aur pehla shabd kat-ta hai.
+
+    `deadline` = absolute `time.monotonic()`. Mic **hamesha** chalta hai, is liye
+    "Ji, boliye" bolte waqt bhi settle ho raha hota hai — `wake/command.py` ack
+    shuru karne ka time yahan deta hai, aur jitna poora ho chuka hai utna hi
+    wait hota hai. Pehle hamesha `COMMAND_WARMUP_SECONDS` (1 s) ka **dead time**
+    tha, jabki ack ki awaaz already 2 s chal chuki hoti thi. Ab wo 1 s har baar
+    bach jaata hai. Deadline na mile to poora warmup (test ka raasta)."""
     stop = stop or _STOP
-    end = time.monotonic() + float(config.COMMAND_WARMUP_SECONDS)
-    while time.monotonic() < end:
+    if deadline is None:
+        deadline = time.monotonic() + float(config.COMMAND_WARMUP_SECONDS)
+    while time.monotonic() < deadline:
         if stop.is_set():
             return 0
-        time.sleep(0.05)
+        time.sleep(0.02)
     return drain(mic, stop)
 
 

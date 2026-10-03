@@ -1,4 +1,4 @@
-# Tests (40 suites)
+# Tests (42 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 40 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 42 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -60,6 +60,8 @@ Ek-ek karke:
 | `test_brain_status.py` | `/brain/status` route, Host/Origin/token, key masking, `.env` ignored |
 | `test_voice.py` | Voice chain, limit, mode naam, `/stt` `/tts` |
 | `test_voice_tts.py` | TTS chain order, clean(), teeno fail par saaf error |
+| `test_tts_cache.py` | **Ack audio cache** — `speak_cached()` dobaara call na kare (fake provider, koi asli TTS nahi), hit asli tez ho, mode/text alag key, `cache_clear()`, bounded, **fail cache na ho**, plain `speak()` cache na kare |
+| `test_speed_fix.py` | **Warm-up deadline + chuppi** — `listen.warmup(deadline=...)` ka sach: pura wait / bilkul free / sirf bacha hua; `COMMAND_END_SILENCE_SECONDS == 1.2`; hangover aur max/min seconds waise hi; `.env` override; `command.py` ke chhah stage naam + `deadline=settled_by` |
 | `test_voices_female.py` | Female allowlist, male id skip, Edge Swara fallback |
 | `test_stt_guard.py` | Duration <600ms, silence/khaali, non-Hindi/English script reject |
 | `test_fixes_r1.py` | Round-1 fixes (modes, events, engine) |
@@ -73,7 +75,7 @@ Ek-ek karke:
 | `test_desktop_tray.py` | Tray icon ke 5 rang, menu ke 5 button, shared state, mic permission key, lock heuristic |
 | `test_desktop_shortcut.py` | HUD ka backup raasta: `open_hud.plan()`, `shortcut.command()` list, Desktop path padhna, app/tray wiring — `.lnk` **kabhi banata nahi** |
 | `test_desktop_hotkey.py` | `hotkey.parse/describe` (pure) + `Hotkey` stub flow + **thread-ownership pakkaura** (`RegisterHotKey` aur pump ek hi thread) + hotkey file ka hygiene |
-| `test_desktop_playback.py` | Speaker: TTS bytes -> 16-bit PCM (`miniaudio.decode`, memory buffer), PCM -> `sounddevice.play`, output device list + filter, `--list`/`--say` |
+| `test_desktop_playback.py` | Speaker: TTS bytes -> 16-bit PCM (`miniaudio.decode`, memory buffer), PCM -> `sounddevice.play`, output device list + filter, `--list`/`--say` (`desktop/playback_cli.py`) |
 | `test_desktop_play_say.py` | `playback.say()` — text se TTS, **har galti par `0` aur crash nahi** (TtsError / crash / khaali audio / timeout), `--say` ka raasta |
 | `test_wake.py` | Wake constants, PCM/RMS + energy VAD (pure), Vosk JSON par `detect`, "jarvis" pakadna, model ke **error** raaste |
 | `test_name_jarvis.py` | **Step 1 naam**: wake phrase variants + near-miss, grammar me `[unk]`, legacy "sunday" list (default band, `PRABH_WAKE_LEGACY=1` par chalu), persona `jarvis.txt`, tray/shortcut, `fill_html()` placeholder replace, aur UI grep (teen exception chhodkar har "Sunday" pakadta hai) |
