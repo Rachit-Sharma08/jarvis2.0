@@ -1,4 +1,4 @@
-# Tests (44 suites)
+# Tests (45 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 44 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 45 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -78,6 +78,7 @@ Ek-ek karke:
 | `test_desktop_playback.py` | Speaker: TTS bytes -> 16-bit PCM (`miniaudio.decode`, memory buffer), PCM -> `sounddevice.play`, output device list + filter, `--list`/`--say` (`desktop/playback_cli.py`) |
 | `test_desktop_play_say.py` | `playback.say()` — text se TTS, **har galti par `0` aur crash nahi** (TtsError / crash / khaali audio / timeout), `--say` ka raasta |
 | `test_desktop_autostart.py` | **Step 3 auto-start** — `FakeReg` (dict-based nakli `winreg`): naam `Jarvis`, command `pythonw desktop\launcher.py`, space wale path me quote, install/remove/status cycle, error + "pehle se nahi tha", CLI dispatch (registry ke baghair), module-level koi registry call nahi |
+| `test_wake_gate.py` | **Battery ka pakkaura** — `wake/gate.py` pure hai: khamoshi me 40 chunk me Vosk tak 0 (battery), awaaz + hangover par feed, `VAD_SILENCE_BLOCKS` par ek `listener.reset()`, `gate_on=False` par sab chunk (purana behaviour), wake ke baad reset, `config.describe()` me `gate=on` |
 | `test_desktop_login.py` | **Login ka asli pakkaura** — Run key ka cwd `C:\Windows\System32` hota hai aur wahan se `-m module` mar jaata hai: value me `-m` nahi, launcher ko **asli** cwd par load karke `BASE` prove, `sys.path.insert` ka order `import config` se pehle, `os.chdir` + `creationflags` (app start/mic/tray kabhi nahi) |
 | `test_wake.py` | Wake constants, PCM/RMS + energy VAD (pure), Vosk JSON par `detect`, "jarvis" pakadna, model ke **error** raaste |
 | `test_name_jarvis.py` | **Step 1 naam**: wake phrase variants + near-miss, grammar me `[unk]`, legacy "sunday" list (default band, `PRABH_WAKE_LEGACY=1` par chalu), persona `jarvis.txt`, tray/shortcut, `fill_html()` placeholder replace, aur UI grep (teen exception chhodkar har "Sunday" pakadta hai) |

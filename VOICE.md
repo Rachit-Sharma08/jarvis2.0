@@ -135,6 +135,8 @@ Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
 | Model | `models/vosk-model-small-en-us-0.15` — **Vosk**, 100% offline, awaaz bahar nahi jaati |
 | Grammar | Sirf 3 shabd sunta hai (`hello jarvis`, `hey jarvis`, `jarvis`, `[unk]`) — is liye galat trigger kam aur CPU halka |
 | Audio | 16 kHz mono, 30 ms chunk, energy VAD (threshold `.env` se `PRABH_VAD`) |
+| Battery | Vosk **sirf awaaz par** chalta hai (`wake/gate.py`) — khamoshi me chunk recognizer tak jaata hi nahi. Napi napa 4.8% → 0.9% core. Mic ka stream phir bhi khula rehta hai, is liye "Jarvis" har waqt sun sakta hai |
+| Gate band | `.env` me `PRABH_VOSK_GATE=0` — purana behaviour (har chunk Vosk ko), debug ke liye |
 | Cooldown | Ek trigger ke baad **1.5 second** dobara nahi pakadta |
 | Mute | Tray ka **Mic Mute** sunna rok deta hai (mic khula rehta hai, sunta nahi) |
 | Band karo | `.env` me `PRABH_WAKE=0` — phir startup me `wake: PRABH_WAKE=0 se band hai` dikhega |

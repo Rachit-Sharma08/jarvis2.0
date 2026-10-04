@@ -34,7 +34,7 @@ def test_config():
     check("block 30ms", audio.BLOCK_SECONDS, 0.03)
     truthy("cooldown", config.WAKE_COOLDOWN_SECONDS > 0)
     describe = config.describe()
-    check("describe me 4 hisse", len(describe.split()), 4)
+    check("describe me 5 hisse", len(describe.split()), 5)
     show(describe)
     check("worker READY", worker.READY, True)
     check("startup line stub nahi", config.STARTUP_WAKE, "wake")

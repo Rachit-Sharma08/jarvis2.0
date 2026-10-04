@@ -89,7 +89,8 @@ prabh/
                            sirf main() likhta hai, module me koi registry call nahi
   desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Jarvis HUD" .lnk banao/hatao
   wake/worker.py     -> Step 1 ka module-level raasta (poori app me EK worker)
-  wake/session.py    -> asli loop: mic -> VAD -> Vosk -> trigger (thread, cooldown, pause)
+  wake/session.py    -> asli loop: mic -> VAD/gate -> Vosk -> trigger (thread, cooldown, pause)
+  wake/gate.py       -> "Vosk ko ye chunk chahiye?" ka faisla (khamoshi me Vosk nahi = battery)
   wake/utterance.py + wake/wav.py -> Step 2a: command capture + WAV
   wake/listen.py     -> Step 2c ka mic wala hissa: drain/warmup/capture/to_text (STT)
   wake/command.py    -> Step 2c ka flow: ack -> suno -> brain -> awaaz (policy nahi)
@@ -461,6 +462,40 @@ endpoint mat likho.
   karte hain. Purana test chup-chaap fail ho sakta hai kyunki fake listener naye
   shabd par trigger hi nahi karta.
 
+### 8.1.1 BATTERY AUR TIMING KE PAKKAUREY NIYAM (4 Oct 2026)
+
+- **Vosk ko HAR chunk mat do — `wake/gate.py` ka faisla suno.** Purana loop har 30 ms
+  chunk recognizer ko deta tha, is liye khamoshi me bhi **~4.8% core** chalu tha (RAM
+  154 MB). Ab VAD se "bol rahe ho?" puchha jaata hai; `False` par chunk recognizer tak
+  **jaata hi nahi**. Mic ka stream kabhi band nahi hota (duty-cycle niyam mehfooz) — sirf
+  inference rukti hai, is liye "Hlo Jarvis" har waqt chalta hai. `.env` ke
+  `PRABH_VOSK_GATE=0` se purana behaviour wapas (debug). Napi napa: **4.8% → 0.9%**.
+- **`InputStream.read()` blocking hai — uske baad `sd.sleep()` mat lagao.** Purane
+  `_pump` me `read()` + `sd.sleep(30ms)` dono the, is liye chunk asli me **~43 ms** me
+  aata tha. Do nuksan: CPU dobara jaagna, aur `utterance.capture()` chunk **ginti** par
+  chalti hai — to "0.9 s chuppi" asli me 1.4 s thi (jawab late) aur log ka ms jhootha
+  (`82 chunk = 2460ms` jabki asli 3.5 s lage). Ab cadence sach me 30 ms hai.
+- **App ka core (server/tray/psutil) idle me bhi ~1.4% core leta hai** — `psutil`
+  `interval=None` hai (blocking nahi), 3 `time.sleep()` loop hain (`app.py` 0.6 s,
+  `lockwatch` 2 s, `startup` 0.4 s). Wake band karke baseline measure kar sakte ho
+  (`PRABH_WAKE=0` + launch, phir 30 s CPU sample) — **app ko blame karne se pehle
+  number nikaalo**.
+- **Doosra InputStream se mic ki RMS mat naapo — sabse pehla `InputStream` zeros deta
+  hai** (device already app ke paas busy). Asli level ke liye app band karo, phir
+  `sounddevice` se direct probe chalao (probe likhna ho to `%TEMP%\opencode` me,
+  repo me nahi).
+- **200 lines cross karte hi split karo — gate ka seam `wake/gate.py` hai.**
+  `session.py` 200 par tha; VAD + khamoshi ka hisaab + "feed karun?" ka faisla nayi
+  pure file me gaya (mic/thread/Vosk chahiye hi nahi — `tests/test_wake_gate.py` seedha
+  usi par chalta hai). `Session._fire()` ab sirf `text` leta hai (`_fire(text, vad)`
+  nahi) — reset `self._gate.reset()` khud karta hai.
+- **`config.describe()` me naya field = uska test bhi update.** Ab 5 hisse
+  (`... stt=groq-whisper gate=on`); `tests/test_wake.py` me "5 hisse" check hai.
+- **PowerShell me apne hi process ko `Stop-Process` mat karo.** `Get-CimInstance
+  Win32_Process | Where CommandLine -like "*desktop.*"` me **apna powershell bhi**
+  aata hai (uske `-Command` me wahi shabd hota hai) — pura shell mar jaata hai aur
+  aage ka output khatam. Hamesha `$_.Name -like "python*"` se filter karo.
+
 ---
 
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
@@ -540,6 +575,15 @@ endpoint mat likho.
   karta hai (child ko bhi chahiye). Proof: `Start-Process ... -WorkingDirectory
   C:\Windows\System32` se asli launch → `GET /` 200, startup ki 4 line, tray register.
   Test `tests/test_desktop_login.py`. Face/trust/learn/maker baad me.
+- **Battery fix + Step 2-6 ka kaam shuru (4 Oct 2026) — 45 suite green.** User ki 3
+  shikayat: (1) mic hamesha on = battery, (2) tray icon me button nahi + TOOLS default
+  ON chahiye, (3) "sun nahi pa rha", jawab late (11.5 s). **Battery ka asli wajah code
+  mila** — `wake/session.py` Vosk ko har chunk deta tha. Naya `wake/gate.py` (VAD +
+  khamoshi ka hisaab + "feed karun?" ka faisla) + `_pump` se redundant `sd.sleep()`
+  hata (chunk 43 ms → sach me 30 ms, is liye chuppi ki window aur timing dono theek).
+  **Asli probe (app band, `%TEMP%\opencode` me): 4.8% → 0.9% core**; app total
+  3.9% → 2.3% (app core 1.46%, mic+gate 0.9%). Naya suite `test_wake_gate.py`
+  (pure, battery ka fix bina mic ke pakadta hai) + `describe()` ab 5 hisse.
 - **Fix round 4 ho gaya (2 Oct 2026)** — tray entry `IsPromoted=1` (backup ke saath), Desktop
   `Sunday HUD` shortcut + global hotkey `Ctrl+Alt+S`, dono ka ek raasta
   (`desktop/open_hud.py`). Record `CHANGELOG.md` me.

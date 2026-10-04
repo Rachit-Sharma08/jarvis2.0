@@ -2,12 +2,11 @@
 
 `wake/worker.py` sirf module-level raasta deta hai (poori app me ek hi worker).
 Is file me us ek worker ka **session** hai: mic, listener, callbacks aur state.
-Test asli mic/model kabhi nahi chalate — `detect.build` aur `audio_mod.MicSource`
-hi patch karte hain.
+Test me asli mic/model kabhi nahi chalta — `detect.build` aur `audio_mod.MicSource`
+patch hote hain.
 
-Loop: chunk uthakar VAD se dekho bol rahe ho ya nahi -> text nikaalo ->
-`phrase.hit()` -> `on_wake`. `on_wake` **synchronous** hai (is thread par), to
-command poora chal jaane tak sunna ruka rehta hai.
+Loop: chunk uthakar VAD se dekho bol rahe ho ya nahi -> **sirf tab** Vosk ko
+chunk (`WAKE_VOSK_GATE`) -> `phrase.hit()` -> `on_wake`.
 """
 
 import queue
@@ -18,6 +17,7 @@ import config
 from log_setup import get_logger
 from wake import audio as audio_mod
 from wake import detect
+from wake import gate as gate_mod
 from wake import model as model_mod
 from wake import phrase as phrase_mod
 
@@ -34,6 +34,7 @@ class Session:
         self._thread = None
         self._mic = None
         self._listener = None
+        self._gate = None
         self._on_wake = None
         self._on_state = None
         self._state = "off"
@@ -69,7 +70,7 @@ class Session:
         """Abhi sunna band hai? (tray ka MUTE ya command ka hold — dono)"""
         return self._paused.is_set()
 
-    # ---- chalao / band ----
+    # ---- zindagi ----
     def start(self, on_wake=None, on_state=None) -> bool:
         """Model + mic kholo aur sunne wala thread chalao. -> chala ya nahi."""
         with self._lock:
@@ -92,7 +93,8 @@ class Session:
             self._thread = threading.Thread(target=self._loop, name="wake", daemon=True)
             self._thread.start()
         self._say(self._on_state, "listening")
-        log.info("wake ready: %s", config.describe())
+        log.info("wake ready: %s | vosk gate: %s (khamoshi me Vosk nahi)",
+                 config.describe(), "ON" if config.WAKE_VOSK_GATE else "OFF")
         return True
 
     def stop(self) -> None:
@@ -105,8 +107,7 @@ class Session:
 
     # ---- andar (thread) ----
     def _loop(self) -> None:
-        vad = audio_mod.Vad()
-        silent = 0
+        gate = self._gate = gate_mod.Gate()
         cool_until = 0.0
         while not self._stop.is_set():
             try:
@@ -119,11 +120,8 @@ class Session:
                 break
             if self._paused.is_set() or time.monotonic() < cool_until:
                 continue                             # chunk phenko, suno nahi
-            loud = vad.push(audio_mod.chunk_to_rms(raw))
-            silent = 0 if loud else silent + 1
-            if silent >= config.VAD_SILENCE_BLOCKS:
-                silent = 0
-                self._listener.reset()               # khamoshi ka pichhla bhool jao
+            if not gate.push(self._listener, raw):  # khamoshi: Vosk mat chalao
+                continue
             text = self._listener.feed(raw)
             if not text:
                 continue
@@ -131,26 +129,26 @@ class Session:
             if not phrase_mod.hit(text):
                 continue
             cool_until = time.monotonic() + config.WAKE_COOLDOWN_SECONDS
-            self._fire(text, vad)
-            silent = 0
+            self._fire(text)
         self._end()
 
-    def _fire(self, text: str, vad) -> None:
+    def _fire(self, text: str) -> None:
         self._wakes += 1
         heard = phrase_mod.phrase(text)
         log.info("WAKE HIT #%d: %r (poora: %r)", self._wakes, heard, text[:60])
         self._say(self._on_state, "heard")
         if self._on_wake is not None:
             try:
-                # Mic aur stop event yahin se jaate hain — command ko inke
-                # alawa koi raasta nahi chahiye. `on_wake` **synchronous** hai
-                # (is wake thread par), is liye command poora chal jaane tak
-                # sunna ruka rehta hai aur dobara wake trigger nahi hoga.
+                # Mic aur stop event yahin se jaate hain — inke alawa command
+                # ko koi raasta nahi chahiye. `on_wake` **synchronous** hai (is
+                # thread par), to command poora chal jaane tak sunna ruka rehta
+                # hai aur dobara wake trigger nahi hota.
                 self._on_wake(heard, self._mic, self._stop)
             except Exception as exc:
                 log.error("on_wake crash: %s: %s", type(exc).__name__, exc)
         self._listener.reset()
-        vad.reset()
+        if self._gate is not None:
+            self._gate.reset()
 
     def _end(self) -> None:
         """Loop khatam — `off` ya `error`. Sirf `mic.error` kaafi nahi (unplug par
@@ -187,6 +185,7 @@ class Session:
         if mic is not None:
             mic.stop()
         self._listener = None
+        self._gate = None
         model_mod.clear()
 
     def _say(self, callback, value: str) -> None:

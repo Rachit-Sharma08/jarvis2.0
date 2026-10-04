@@ -6,6 +6,53 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Battery fix - 1 (4 Oct 2026) - Vosk khamoshi me nahi, chunk 30 ms sach me
+
+User ki shikayat: "mic har waqt on rehta hai, battery jaldi drain hoti hai". Mic
+hardware on rakhna **zaroori** hai (warna "Hlo Jarvis" sunai hi nahi dega), par
+uske aage ka CPU bekaar chala rahta tha.
+
+**Do asli wajah, dono code me:**
+
+1. `wake/session.py` ka loop **har 30 ms chunk** recognizer ko deta tha, chahe koi
+   na bol. VAD pehle se bol raha tha ya chup — sirf us faisla ki upaj thi hi nahi.
+   Naya `wake/gate.py`: VAD + khamoshi ka hisaab + "Vosk ko ye chunk chahiye?"
+   ka faisla (`listener.reset()` bhi usi jagah, purana behaviour waisa hi).
+   Khamoshi me chunk recognizer tak **jaata hi nahi**. Mic ka stream kabhi band
+   nahi hota — duty-cycle niyam mehfooz, sirf inference rukti hai. `.env` ke
+   `PRABH_VOSK_GATE=0` se purana behaviour wapas (debug).
+2. `wake/audio.py` ke `_pump` me `read()` ke baad **`sd.sleep(30ms)`** tha, jabki
+   `InputStream.read()` blocking hai (pura chunk aane tak ruk jaata hai). Natija:
+   chunk ~43 ms me aata tha. Do nuksan — CPU dobara jaagna, aur
+   `utterance.capture()` chunk **ginti** par chalti hai, to "0.9 s chuppi" asli me
+   1.4 s thi: jawab late, aur log ka ms jhootha (`82 chunk = 2460ms` jabki asli
+   3.5 s lage). `sd.sleep()` hata diya — cadence ab sach me 30 ms.
+
+**Napi napa (asli probe, app band, `%TEMP%\opencode` me — repo me nahi):**
+
+| S | Kya | CPU (ek core par) |
+|---|---|---|
+| A | purana: mic + Vosk har chunk | **4.8%** |
+| B | gate: sirf RMS, Vosk sirf awaaz par | **1.4%** |
+| C | gate + `sd.sleep` hata (naya) | **0.9%** |
+| D | sirf mic, Vosk bilkul nahi | 0.8% |
+
+Chup kamre me 500 chunk me se **1** loud — yani gate 99.8% skip karta hai. App poora
+(launcher + child + HUD + mic) **3.9% → 2.3%**; usme app ka apna core 1.46% hai
+(`PRABH_WAKE=0` karke nikala — server/tray/psutil, `psutil` `interval=None` hai
+is liye blocking nahi).
+
+**Saath me:** `config.describe()` ab 5 hisse (`... stt=groq-whisper gate=on`) +
+startup log par `vosk gate: ON (khamoshi me Vosk nahi)`. Naya suite
+`tests/test_wake_gate.py` (pure — mic/thread/Vosk nahi) battery ka fix khud
+pakadta hai. **45 suite green.** `session.py` 200 lines par tha, is liye gate ka
+seam nayi file me gaya aur `_fire()` ab sirf `text` leta hai.
+
+Baaki do shikayatein (tray icon + TOOLS default, aur "sun nahi pa rha / jawab
+late") agli entries me.
+
+---
+
 ## Phase 5 Step 3 (4 Oct 2026) - Windows login par auto-start
 
 Har login par Jarvis khud chalega - double-click nahi. `HKCU\...\Run` me **ek**

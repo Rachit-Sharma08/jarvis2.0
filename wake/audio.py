@@ -147,7 +147,14 @@ class MicSource:
 
     # ---- andar ----
     def _pump(self) -> None:
-        """Stream se chunk uthakar queue me daalo. Thread marte bhi mic band."""
+        """Stream se chunk uthakar queue me daalo. Thread marte bhi mic band.
+
+        `read()` **blocking** hai — pura chunk aane tak ruk jaata hai. Is liye
+        uske baad koi `sleep()` nahi: pehle yahan `sd.sleep(30ms)` tha, jo
+        chunk ko ~43 ms me la raha tha (30 + 30). Do nuksan — CPU dobara
+        jaagna, aur `utterance.capture()` chunk *ginti* par chalti hai, to
+        chuppi ki "0.9 s" window asli me 1.4 s ho jaati thi (jawab late).
+        """
         while not self._stop.is_set():
             try:
                 data, _overflow = self._stream.read(self.blocksize)
@@ -168,11 +175,3 @@ class MicSource:
                     self.dropped += 1
                 except queue.Empty:
                     pass
-            time_sleep(BLOCK_SECONDS)
-
-
-def time_sleep(seconds: float) -> None:
-    """`sounddevice` ka apna `sleep` — busy-wait se CPU bachata hai."""
-    import sounddevice as sd
-
-    sd.sleep(int(seconds * 1000))

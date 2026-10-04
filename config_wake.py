@@ -54,6 +54,13 @@ VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.012"))
 VAD_SILENCE_BLOCKS = 12      # ~0.36 s khamoshi = VAD ke baad band
 VAD_HANGOVER_BLOCKS = 30     # ~0.9 s — VAD ke dauraan awaaz mat kaato
 
+# ---- battery ka pakkaura ----
+# Vosk ko **har** chunk dena = 3.9% CPU chalu, chahe koi na bol (battery jaati
+# hai). Is liye chunk tabhi dena jab VAD bol raha ho — `wake/session.py` ka gate.
+# Mic ka stream khula rehta hai (band nahi hota, crash ka raasta bhi nahi);
+# sirf sunna band hota hai. `.env` ke `PRABH_VOSK_GATE=0` se gate band.
+WAKE_VOSK_GATE = os.getenv("PRABH_VOSK_GATE", "1").strip() not in ("0", "false", "no")
+
 # Ek hi "jarvis" me do trigger na ho. Wake hit ke baad itni der queue khaali
 # karte hue aawaaz fenk-te hain (recognition nahi) — taaki TTS/bijli ka shor
 # ya apna hi naam dobara na pakde.
@@ -128,12 +135,13 @@ def wake_available() -> bool:
 def describe() -> str:
     """Log + `--wake-info` ke liye ek line."""
     folder = model_path()
-    return "wake=%s word=%s%s model=%s stt=%s" % (
+    return "wake=%s word=%s%s model=%s stt=%s gate=%s" % (
         "ON" if WAKE_ENABLED else "OFF",
         "/".join(WAKE_WORDS),
         "+legacy" if legacy_enabled() else "",
         Path(folder).name if folder else "MISSING",
         config_stt_name(),
+        "on" if WAKE_VOSK_GATE else "off",
     )
 
 
