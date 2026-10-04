@@ -122,6 +122,10 @@ def supervise(max_restarts: int = None, window: int = None) -> int:
             proc = subprocess.Popen(
                 child_command(), shell=False, stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                # Auto-start pythonw se chalta hai (Step 3) — wahan child par
+                # console na khule, warna login ke baad ek black window chhoot
+                # jaata. `stdout` pipe me hai, is liye kuch chhoota nahi.
+                creationflags=_NO_WINDOW,
             )
             log.info("child shuru (pid=%s)", proc.pid)
             threading.Thread(target=_tee, args=(proc.stdout, out),

@@ -1,4 +1,4 @@
-# Tests (42 suites)
+# Tests (43 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 42 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 43 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -77,6 +77,7 @@ Ek-ek karke:
 | `test_desktop_hotkey.py` | `hotkey.parse/describe` (pure) + `Hotkey` stub flow + **thread-ownership pakkaura** (`RegisterHotKey` aur pump ek hi thread) + hotkey file ka hygiene |
 | `test_desktop_playback.py` | Speaker: TTS bytes -> 16-bit PCM (`miniaudio.decode`, memory buffer), PCM -> `sounddevice.play`, output device list + filter, `--list`/`--say` (`desktop/playback_cli.py`) |
 | `test_desktop_play_say.py` | `playback.say()` — text se TTS, **har galti par `0` aur crash nahi** (TtsError / crash / khaali audio / timeout), `--say` ka raasta |
+| `test_desktop_autostart.py` | **Step 3 auto-start** — `FakeReg` (dict-based nakli `winreg`): naam `Jarvis`, command `pythonw -m desktop.launcher`, space wale path me quote, install/remove/status cycle, error + "pehle se nahi tha", CLI dispatch (registry ke baghair), module-level koi registry call nahi, launcher par `creationflags` |
 | `test_wake.py` | Wake constants, PCM/RMS + energy VAD (pure), Vosk JSON par `detect`, "jarvis" pakadna, model ke **error** raaste |
 | `test_name_jarvis.py` | **Step 1 naam**: wake phrase variants + near-miss, grammar me `[unk]`, legacy "sunday" list (default band, `PRABH_WAKE_LEGACY=1` par chalu), persona `jarvis.txt`, tray/shortcut, `fill_html()` placeholder replace, aur UI grep (teen exception chhodkar har "Sunday" pakadta hai) |
 | `test_wake_loop.py` | Worker ka poora loop **fake mic + fake listener** se: trigger, `heard` state, cooldown, mute-pause, crash-safe callbacks |

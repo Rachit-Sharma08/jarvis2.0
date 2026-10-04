@@ -85,6 +85,8 @@ prabh/
   desktop/hotkey.py   -> global hotkey (Ctrl+Alt+S), sirf ctypes + RegisterHotKey
   desktop/playback.py -> Step 2 speaker: TTS bytes -> miniaudio PCM -> sounddevice
   desktop/open_hud.py -> shortcut + hotkey dono ka EK raasta (server zinda -> HUD)
+  desktop/autostart.py -> Windows login par chalu (HKCU Run, pythonw -m desktop.launcher);
+                           sirf main() likhta hai, module me koi registry call nahi
   desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Jarvis HUD" .lnk banao/hatao
   wake/worker.py     -> Step 1 ka module-level raasta (poori app me EK worker)
   wake/session.py    -> asli loop: mic -> VAD -> Vosk -> trigger (thread, cooldown, pause)
@@ -103,7 +105,7 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (39 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
+  tests/ (43 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
 
@@ -294,7 +296,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 39 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 43 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -490,6 +492,12 @@ endpoint mat likho.
   karne ke bajaye message box (pythonw me stdout nahi hota, is liye print kaam nahi karta).
 - **PowerShell quoting JS me mat todo.** `.lnk` banane wala `.ps1` **alag file** rakho aur
   `subprocess` se `shell=False` par chalao.
+- **Auto-start sirf `desktop/autostart.py` likhta hai, aur sirf `main()` se**
+  (`python -m desktop.autostart install`). Module me koi module-level registry call
+  **nahi** — test me har function ka `reg` fake (`FakeReg`) deta hai, asli registry kabhi
+  nahi chhooti. Quote ka kaam `subprocess.list2cmdline` karta hai, haath se `"` mat lagao.
+  Value `pythonw -m desktop.launcher` hai (black console nahi); crash `logs/desktop.out`
+  me bachta hai, is liye "crash chup mat ho" wala niyam bhaala jaata hai.
 
 ---
 
@@ -514,8 +522,11 @@ endpoint mat likho.
   nahi). Teen naye suite: `test_wake_command.py` (flow), `test_wake_brain.py` (brain + ASK),
   `test_wake_listen.py` (mic/pause) + `tests/wakecmdhelp.py` (fakes). Record
   `CHANGELOG.md`, detail `VOICE.md`.
-- **Baaqi Phase 5, isi order me:** **Step 3** auto-start (registry tabhi jab user "haan" bole).
-  Face/trust/learn/maker baad me.
+- **Phase 5 Step 3 ka CODE ho gaya (4 Oct 2026) — 43 suite green.** Naya `desktop/autostart.py`
+  (`python -m desktop.autostart install|remove|status`), value `pythonw -m desktop.launcher`,
+  `AUTOSTART_NAME` ab `ASSISTANT_NAME` se banta hai, launcher ka dead `_NO_WINDOW` flag use
+  me aaya. **Registry me abhi kuch nahi likha** — entry sirf tab bani jab user "haan" bole
+  (`reg export` backup → sirf ek value → entry-count proof). Face/trust/learn/maker baad me.
 - **Fix round 4 ho gaya (2 Oct 2026)** — tray entry `IsPromoted=1` (backup ke saath), Desktop
   `Sunday HUD` shortcut + global hotkey `Ctrl+Alt+S`, dono ka ek raasta
   (`desktop/open_hud.py`). Record `CHANGELOG.md` me.
@@ -735,3 +746,13 @@ green**, sab file `<200`.
   check hoti hai ("stale" kabhi nahi + apna PID). Do **nayi niyam** bullet:
   callback signature badle to saare fake update karo, aur test ko app ke
   "chal raha hai / nahi" par depend mat karo. **39 suite green**, sab file `<=200`.
+- **Phase 5 Step 3 (4 Oct 2026)** — Windows login par auto-start. Naya
+  `desktop/autostart.py` (`install|remove|status`), value
+  `pythonw -m desktop.launcher` (login par koi black console nahi; crash
+  `logs/desktop.out` me bachta hai). **Ek asli bhooli hui baat pakdi:** Step 1 me
+  naam "Prabh" → "Jarvis" karte waqt `config_desktop.AUTOSTART_NAME = "Prabh"`
+  hard-code reh gaya tha — ab `ASSISTANT_NAME` se banta hai. Doosra: launcher ka
+  `_NO_WINDOW` constant **dead** tha (defined, use nahi) — ab `Popen` ke
+  `creationflags` me lag gaya hai, warna pythonw ke baad child par console chhoot
+  jaata. Test me `FakeReg` (dict-based nakli `winreg`) + `main()` ka CLI dispatch
+  patch karke check — **asli registry kabhi nahi chhoti**. **43 suite green**.

@@ -6,6 +6,45 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Phase 5 Step 3 (4 Oct 2026) - Windows login par auto-start
+
+Har login par Jarvis khud chalega - double-click nahi. `HKCU\...\Run` me **ek**
+value, is liye admin/UAC nahi chahiye.
+
+**Value kya hai:** `D:\prabh\.venv\Scripts\pythonw.exe -m desktop.launcher`
+
+Wahi supervisor jo `start_prabh.bat` chalaata hai, bas `pythonw` se - login par
+koi black console nahi aata. Crash phir bhi `logs/desktop.out` me padha jaata
+hai (`launcher` ka `_tee`), matlab "crash chup mat ho" wala niyam bhaala gaya.
+
+**Kaam**
+
+| File | Kya |
+|---|---|
+| `desktop/autostart.py` (naya) | `value_name` / `pythonw` / `command` / `run_value` / `read` / `enabled` / `install` / `remove` / `status` / `main` |
+| `config_desktop.py` | `AUTOSTART_NAME` ab `ASSISTANT_NAME` se banta hai (pehle `"Prabh"` hard-code tha - naam badle to bhool gaye the) + naya `AUTOSTART_TARGET` |
+| `config.py` | `AUTOSTART_TARGET` re-export |
+| `desktop/launcher.py` | `_NO_WINDOW` constant **dead** tha (line 63) - ab `Popen(creationflags=)` me use ho raha hai |
+| `tests/test_desktop_autostart.py` (naya) | `FakeReg` (dict-based nakli `winreg`) - **asli registry kabhi nahi chhooti** |
+
+Ek hi raasta: value wahi supervisor chalaati hai jo haath se. Quote ka kaam
+`subprocess.list2cmdline` karta hai (path me space ho to khud `"` lagata hai) -
+haath se quote karna kisi aur jagah nahi.
+
+**Teeno niyam jo is module me chipke hain**
+
+1. `HKCU` = sirf is user ka.
+2. Module me **koi module-level registry call nahi** - sirf `main()` se
+   (`python -m desktop.autostart install`). Test me har function ka `reg`
+   fake deta hai, is liye suite asli registry chhooti hi nahi.
+3. **Value abhi tak likhi nahi gayi.** Ye sirf tayyar code + test hai; entry
+   tabhi bani jab owner ne "haan" bola (us raaste me pehle `reg export` backup,
+   phir sirf ek value, phir entry-count ka proof).
+
+**43 suite green**, sab file `<=200`.
+
+---
+
 ## Step 2 speed fix (3 Oct 2026) - wake 18.5 s se tez
 
 Owner ne bola "bhot slow hai, placeholder bhi aa raha". Do alag baatein thin:

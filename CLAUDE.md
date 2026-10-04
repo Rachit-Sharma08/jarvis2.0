@@ -18,7 +18,7 @@ kaam kar sakta hai.
 ## 2. Ab ka haal (3 Oct 2026)
 
 - Git **clean**, commit `07161c0` (GitHub par push ho chuka hai).
-- **40 test suite green** (`SUITE GREEN`). Sab standalone, koi real API call nahi.
+- **43 test suite green** (`SUITE GREEN`). Sab standalone, koi real API call nahi.
 - App chalta hai: `GET http://127.0.0.1:8000/` = 200, tray + HUD live.
 - Phase 5 **Step 1 (Vosk wake word)**, **Step 2a** (command capture + WAV),
   **Step 2b** (speaker `desktop/playback.py`) aur **Step 2c** (poora command:
@@ -52,7 +52,7 @@ if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
 - Exit code **0** hi asli pass hai. `print("FAIL: koi nahi")` matlab **sab pass**.
-- 3–5 min leti hai (40 suite) — `Start-Job` + result file wala tarika `TESTS.md` me
+- 3–5 min leti hai (43 suite) — `Start-Job` + result file wala tarika `TESTS.md` me
   hai. Har naye shell me `Start-Job` mar jaata hai, is liye **detached** process chalao
   (`Start-Process powershell -File <script> -WindowStyle Hidden`).
 
@@ -98,7 +98,8 @@ me provider ki list badlo, engine me kabhi hard-code mat likho.
   (2 Oct ki ye line ab purani hai.)
 - ❌ **Awaaz se tool nahi chalta** — tool sirf chat se. Aur ALLOW hamesha screen par
   button se hoga, awaaz se kabhi nahi.
-- ❌ **Auto-start nahi** — Windows login par khud nahi chalta (Step 3 me aayega).
+- ❌ **Auto-start ki registry value abhi likhi nahi gayi** — code taiyar hai
+  (`python -m desktop.autostart install`), entry tab bani jab owner ne "haan" bola.
 - ❌ **Prabh mode band** — code maujood hai, `PRABH_SUNDAY_ONLY=1` se off.
 - ❌ Cartesia ki female voice id nahi mili → wo provider skip ho jaati hai.
 - ❌ **Cartesia voice id** (`CARTESIA_VOICE_*`) abhi khaali hai.
@@ -128,6 +129,9 @@ me provider ki list badlo, engine me kabhi hard-code mat likho.
     `sd.query_devices(kind="output")` list nahi deta.
 16. **Test file 200+ ho to split karo**, aur helper **module level** par rakh —
     warna doosre function me `NameError` se chup-chaap fail ho jaata hai.
+17. **Auto-start sirf `desktop/autostart.py`** likhta hai, aur sirf `main()` se
+    (`python -m desktop.autostart install`). Registry value tabhi bane jab owner
+    ne "haan" bola — pehle `reg export` backup, phir sirf ek value.
 
 Poora niyam → **`AGENTS.md`** (section 3.1–3.4, 8, 8.1, 8.2).
 
@@ -138,8 +142,9 @@ Poora niyam → **`AGENTS.md`** (section 3.1–3.4, 8, 8.1, 8.2).
 | **1** | Vosk wake word — mic hamesha sunta hai, "Jarvis" par HUD | **ho gaya** (2 Oct) |
 | **2a** | Command capture + WAV (`wake/utterance.py`, `wake/wav.py`) | **ho gaya** (3 Oct) |
 | **2b** | Speaker — TTS bytes bajana (`desktop/playback.py`) | **ho gaya** (3 Oct) |
-| **2c** | Glue: "Ji, boliye" → mic drain + warm-up → capture → Groq STT → `ENGINE` → HUD events → awaaz me jawab | **agla kaam** |
-| 3 | Auto-start (HKCU Run) | **sirf jab owner "haan" bole** |
+| **2c** | Glue: "Ji, boliye" → mic drain + warm-up → capture → Groq STT → `ENGINE` → HUD events → awaaz me jawab | **ho gaya** (3 Oct) |
+| **2** | Der wala fix: TTS cache + warm-up deadline + 1.2 s chuppi | **ho gaya** (3 Oct) |
+| 3 | Auto-start (HKCU Run) — `desktop/autostart.py` taiyar | **sirf jab owner "haan" bole** (value abhi nahi likhi) |
 | — | Face / trust / learn / maker | aage, decided nahi |
 
 **Step 2c me dhyan rakhne ki baat:** `Session._fire()` `on_wake` ko wake thread par
@@ -150,7 +155,7 @@ join sirf 3 s hai, par command + TTS 8 s+ lag sakte hain.
 ## 9. Owner ke haath me abhi ye kaam
 
 1. **Awaaz ka asli test** (sirf ek baar, app band karke):
-   `.\.venv\Scripts\python.exe -m desktop.playback --say "Ji, boliye"` — awaaz aayi?
+   `.\.venv\Scripts\python.exe -m desktop.playback_cli --say "Ji, boliye"` — awaaz aayi?
 2. **Ctrl+Alt+S dabao** → HUD khulna chahiye. Nahi khule to Desktop ka
    `Jarvis HUD.lnk` try karo (tray ki list me app ka naam **nahi** dikhta).
 3. **Taskbar ke `^`** par click → Jarvis icon → right-click → **"Always show icons"**
@@ -170,11 +175,11 @@ tools/             command, files, apps, system
 server/            app + security + state (ek shared Engine) + *_routes
 voice/             stt, tts (+ chain)
 desktop/           launcher, app, tray, state, hud_window, hotkey, open_hud,
-                   shortcut, playback (Step 2 ka speaker)
+                   shortcut, playback (Step 2 ka speaker), autostart (Step 3)
 wake/              worker (module-level ek hi worker) + session, audio, model,
                    detect, phrase (Step 1) + utterance, wav (Step 2a)
 ui/                index.html + hud_*.js + hud_*.css
-tests/             40 suite + poolhelp.py / desktophelp.py / wakehelp.py / hud_*.py
+tests/             43 suite + poolhelp.py / desktophelp.py / wakehelp.py / hud_*.py
 ```
 
 ## 11. Privacy warning

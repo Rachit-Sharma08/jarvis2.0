@@ -151,7 +151,14 @@ LOCK_POLL_SECONDS = 2.0
 # HKCU = sirf is user ka, admin ya UAC nahi chahiye. Value tabhi likhi jaati
 # hai jab user "haan" bole (desktop/autostart.py).
 AUTOSTART_RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
-AUTOSTART_NAME = "Prabh"
+# Registry value ka naam bhi naam se banta hai (Step 1 ka niyam) - "Prabh" ya
+# "Sunday" dobara mat likho.
+AUTOSTART_NAME = ASSISTANT_NAME
+# Login par kya chalta hai: **supervisor** (wo child `desktop.app` khud
+# banata hai). `pythonw` se chalta hai, is liye koi black console nahi aata;
+# crash `logs/desktop.out` me padha jaata hai. Haath se chalane ka raasta alag
+# hai - `start_prabh.bat` (console khula, crash turant screen par).
+AUTOSTART_TARGET = "desktop.launcher"
 
 # "Let desktop apps access your microphone" ka master switch. Value = Deny
 # hua to sounddevice device khol hi nahi paayega.

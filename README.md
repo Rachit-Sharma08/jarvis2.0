@@ -141,6 +141,34 @@ Details `VOICE.md` me. Band karna ho to `.env` me `PRABH_WAKE=0`, ya `.env` me
 
 Band karne ke liye tray me **Quit**. Sirf window band karne se app nahi rukta.
 
+### Windows login par khud chalu ho (auto-start)
+
+Har login par Jarvis khud chalega — koi double-click nahi. Ye `HKCU` ki ek
+value hai, is liye **admin ya UAC nahi chahiye**.
+
+Pehle check karo (sirf padhta hai, kuch nahi badalta):
+
+```powershell
+cd D:\prabh
+.\.venv\Scripts\python.exe -m desktop.autostart status
+```
+
+On karna ho to (ye **sirf ek value** likhta hai):
+
+```powershell
+.\.venv\Scripts\python.exe -m desktop.autostart install
+.\.venv\Scripts\python.exe -m desktop.autostart remove    # band karna ho
+```
+
+- Value ka naam `Jarvis` hai, aur value khud ye chalati hai:
+  `D:\prabh\.venv\Scripts\pythonw.exe -m desktop.launcher` — wahi supervisor
+  jo `start_prabh.bat` chalaata hai. `pythonw` ki wajah se login par koi
+  black console nahi aata.
+- Crash par kuch dikhta nahi hai, par `logs\desktop.out` me likha hota hai —
+  wahi jagah, jahan pehle bhi tha.
+- Wapas sab theek karna ho to Windows ka apna **Task Manager → Startup** tab
+  me `Jarvis` ko disable kar do.
+
 ### Raasta B — purana tarika (browser me)
 
 ```powershell
@@ -281,6 +309,8 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `desktop/open_hud.py` | Shortcut **aur** hotkey dono ka ek hi raasta: server zinda hai to HUD khulo |
 | `desktop/shortcut.py`, `hud_shortcut.ps1` | Desktop ka "Jarvis HUD" `.lnk` banao / hatao (`WScript.Shell`) |
 | `desktop/single.py` | Ek hi instance (doosra `"already running"` band ho jaata hai) |
+| `desktop/autostart.py` | Login par khud chalna (`HKCU\...\Run`, `pythonw -m desktop.launcher`) |
+| `desktop/launcher.py`, `playback.py`, `playback_cli.py` | Supervisor (crash par restart) + speaker (TTS bytes → sounddevice) |
 | `desktop/state.py`, `micperm.py`, `lockwatch.py` | Ek shared haalat, Windows mic permission check, lock ka pata |
 | `wake/worker.py`, `session.py` | Wake word: module ka ek raasta + uska asli loop (thread, cooldown, mute) |
 | `wake/audio.py`, `detect.py`, `phrase.py`, `model.py` | Mic + energy VAD, Vosk recognizer, "jarvis" pakadna, model load |
