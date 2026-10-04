@@ -78,8 +78,13 @@ PROTECTED_FOLDER_NAMES = (
 )
 SECRET_FILE_NAMES = (".env", ".env.local", "credentials", "secrets.json", "id_rsa", "id_ed25519")
 
-# Kill switch. Default OFF — user UI ka toggle daba kar ON kare.
-TOOLS_ENABLED_DEFAULT = os.getenv("PRABH_TOOLS_ON", "0") == "1"
+# Kill switch. Default **ON** (user ka faisla, 4-Oct) — app start hote hi tools
+# khule. `.env` me `PRABH_TOOLS_ON=0` se wapas default OFF kar sakta hai.
+TOOLS_ENABLED_DEFAULT = os.getenv("PRABH_TOOLS_ON", "1") == "1"
+# Auto-off band (0 = "kabhi apne aap OFF nahi"). User ne 4-Oct ko decide
+# kiya TOOLS hamesha ON rahega jab tak khud OFF na kare — pehle 30 min tha.
+# `.env` me PRABH_TOOLS_AUTOOFF=30 daal kar wapas timer laaya ja sakta hai.
+TOOLS_AUTO_OFF_MINUTES = int(os.getenv("PRABH_TOOLS_AUTOOFF", "0") or 0)
 TOOL_MAX_STEPS = 5
 TOOL_MAX_CALLS_PER_MINUTE = 20
 TOOL_CONFIRM_TIMEOUT = 60

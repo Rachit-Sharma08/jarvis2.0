@@ -39,8 +39,11 @@ class Actions:
 
     def toggle_tools(self) -> None:
         on = keeper.set_tools(not keeper.tools_on())
-        log.info("tray: TOOLS=%s (auto-OFF %d min me)",
-                 on, config.TOOLS_AUTO_OFF_MINUTES)
+        # Auto-off ab band hai (0), is liye 'X min me OFF' jaisa text sirf tab
+        # sahi hoga jab user `.env` me PRABH_TOOLS_AUTOOFF de rakhe ho.
+        log.info("tray: TOOLS=%s%s", on,
+                 "" if not config.TOOLS_AUTO_OFF_MINUTES
+                 else " (auto-OFF %d min me)" % config.TOOLS_AUTO_OFF_MINUTES)
 
     def toggle_sleep(self) -> None:
         """'So jao' palat de. Sirf mic + gate chalta rahega, HUD band. Jaagne ka

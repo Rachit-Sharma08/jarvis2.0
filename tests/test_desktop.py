@@ -41,7 +41,8 @@ def test_config():
     check("backoff pehla", config.backoff_for(1), 2)
     check("backoff aakhir", config.backoff_for(99), 30)
     check("restart limit", config.RESTART_MAX, 5)
-    check("tools auto-off 30 min", config.TOOLS_AUTO_OFF_MINUTES, 30)
+    check("tools auto-off band (0 = hamesha ON)", config.TOOLS_AUTO_OFF_MINUTES, 0)
+    check("tools default ON", config.TOOLS_ENABLED_DEFAULT, True)
     check("exit codes alag", len({config.EXIT_QUIT, config.EXIT_RESTART,
                                   config.EXIT_ALREADY_RUNNING}), 3)
     check("HUD viewport me fit", config.HUD_WIDTH + config.HUD_HEIGHT <= 1366 + 768, True)

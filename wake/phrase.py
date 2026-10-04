@@ -15,7 +15,7 @@ import config
 
 FILLER = ("unk", "uh", "um", "hmm", "mm")
 
-GREETING = ("hello", "hey", "hi", "okay", "ok", "helo", "helo")
+GREETING = ("hello", "hey", "hi", "hlo", "yo", "okay", "ok", "helo")
 
 
 def normalize(text: str) -> str:

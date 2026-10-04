@@ -12,6 +12,11 @@ CARTESIA_API_KEY = os.getenv("CARTESIA_API_KEY", "").strip()
 
 TTS_CHAIN = ("elevenlabs", "cartesia", "edge")
 TTS_MAX_CHARS = 500
+# Brain ka **awaaze wala** jawab isse chhota (4-Oct). HUD par poora text rehta
+# hai — sirf awaaz chhoti. 500 char bolne me ~4.3 s lagta tha (sirf playback),
+# is liye user ko jawab "late" lagta tha; ~220 char ≈ 2 s. Vaakya ke end par
+# kat-ta hai (beech se nahi) — `voice/tts.py` ka `clip_answer()`.
+VOICE_ANSWER_MAX_CHARS = int(os.getenv("PRABH_VOICE_MAX", "220") or 220)
 AUDIO_MAX_BYTES = 10 * 1024 * 1024
 RECORD_MAX_SECONDS = 30
 # Round 2: chhoti recording (dab dab) aur bad script reject. Browser duration

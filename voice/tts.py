@@ -94,6 +94,30 @@ def clip(text: str, limit: int = None) -> str:
     return cut.strip()
 
 
+def clip_answer(text: str, limit: int = None) -> str:
+    """Bade jawab ki **awaaz** chhoti — vaakya ke end par, beech se nahi.
+
+    `clip()` kaat-ta hai, is liye usse sunne me ajeeb lagta hai. Yahan pehle
+    `limit` ke andar ka aakhri **poora vaakya** (`. ` / `? ` / `! ` / `। `)
+    dhoonda jaata hai. Sirf tab jab koi vaakya na mile (bahut lambe ek vaakya)
+    tab `clip()` par hafta — beech se katna behtar hai pura sunne se.
+
+    Sirf **awaaz** ke liye: HUD par brain ka poora jawab rehta hai
+    (`config.VOICE_ANSWER_MAX_CHARS`)."""
+    limit = limit or config.VOICE_ANSWER_MAX_CHARS
+    text = (text or "").strip()
+    if len(text) <= limit:
+        return text
+    head = text[:limit]
+    best = -1
+    for mark in (". ", "? ", "! ", "। "):
+        best = max(best, head.rfind(mark))
+    # Sirf ek teen shabd ka vaakya na rahe - warna jawab ka matlab hi nahi bacha.
+    if best > limit // 3:
+        return head[:best + 1].strip()
+    return clip(text, limit)
+
+
 async def speak(text: str, mode: str) -> tuple:
     """Elevenlabs -> Cartesia -> edge. Teeno fail ho to saaf error.
 

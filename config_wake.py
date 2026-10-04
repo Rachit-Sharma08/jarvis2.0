@@ -50,7 +50,10 @@ INPUT_DEVICE = os.getenv("PRABH_WAKE_MIC", "").strip() or None
 # Energy VAD. Mic ki khamoshi ka level ~0.002-0.01 hota hai, insaan ki awaaz
 # 0.02 se upar. Beech ka number: thodi door se awaaz bhi uth jaaye, par
 # fan/hawa ka shor na pakde.
-VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.012"))
+# 4-Oct: 0.012 -> **0.010**. Door se ya dheere bola "Hlo Jarvis" par trigger
+# nahi ho raha tha (gate VAD par hi tika hai). 0.010 par fan ka shor nahi aata,
+# kyunki wo aam taur par 0.005 se neeche rehta hai.
+VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.010"))
 VAD_SILENCE_BLOCKS = 12      # ~0.36 s khamoshi = VAD ke baad band
 VAD_HANGOVER_BLOCKS = 30     # ~0.9 s — VAD ke dauraan awaaz mat kaato
 
@@ -67,22 +70,31 @@ WAKE_VOSK_GATE = os.getenv("PRABH_VOSK_GATE", "1").strip() not in ("0", "false",
 WAKE_COOLDOWN_SECONDS = 1.5
 
 # ---- command window ----
-# Chuppi 2.0 s thi -> **1.2 s**. Wake ka total 18.5 s tha, jisme se 2.0 s sirf
-# is ek intezaar me jaata tha (brain to 1.1 s me jawab de raha tha). 1.2 s abhi
-# bhi ek natural sentence-gap se lamba hai, is liye beech ka vaakya kat-ta nahi.
-# `.env` ke `PRABH_CMD_SILENCE` se badal sakte ho - Step 2 (STT) isi ko tune
-# karega, kyunki zyada chuppi = zyada pakka text par thoda sa slow.
+# Chuppi pehle 2.0 s -> 1.2 s -> ab **0.9 s** (4-Oct). Wake ka total 18.5 s tha,
+# jisme se 2.0 s sirf is ek intezaar me jaata tha (brain to 1.1 s me jawab de
+# raha tha). 0.9 s abhi bhi ek natural sentence-gap se thoda lamba hai, is liye
+# beech ka vaakya kat-ta nahi. `.env` ke `PRABH_CMD_SILENCE` se badalte ho.
 COMMAND_MAX_SECONDS = 30           # wake ke baad itni der suno (safety limit)
 COMMAND_MIN_SECONDS = 0.6    # itni ASLI awaaz chahiye, khamoshi ginti nahi
-COMMAND_END_SILENCE_SECONDS = float(os.getenv("PRABH_CMD_SILENCE", "1.2"))
+COMMAND_END_SILENCE_SECONDS = float(os.getenv("PRABH_CMD_SILENCE", "0.9"))
 COMMAND_HANGOVER_SECONDS = 0.4     # beech ka chhota ruk na kaato (wake se chhota)
-COMMAND_PRE_ROLL_SECONDS = 0.4     # "Jarvis" ke aakhri shabd bhi pakad lo
+# Pre-roll 0.4 -> **0.6** (4-Oct): "Hlo Jarvis, WhatsApp kholo" me pehle shabd
+# "WhatsApp" ka 'a' kat-ta tha, kyunki wake shabd ke aakhri chunk ke saath hi
+# bolna shuru ho jaata tha. Thoda purana buffer = pehla shabd poora.
+COMMAND_PRE_ROLL_SECONDS = 0.6
 COMMAND_WAIT_SECONDS = 5.0         # pehla shabd aaya hi nahi -> "sun nahi aaya"
 COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-ta hai
 
 # Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye — is liye
 # "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
 PLAYBACK_MUTE_MIC = True
+
+# "Ji, boliye" bolne se **pehle** itni der suno (4-Oct). Agar user is dauraan
+# bol hi raha hai to ack chhod do — warna hamari awaaz uske upar chadh jaati
+# hai, command ka pehla shabd kat-ta hai aur use lagta hai "sun nahi pa raha".
+# Isi 0.18 s ka kaam hai: mic settle + bolne ki pehli awaaz pakadna. Nahi mila
+# to normal raasta (ack + 1 s warm-up). `.env` ke `PRABH_ACK_PEEK` se.
+COMMAND_ACK_PEEK_SECONDS = float(os.getenv("PRABH_ACK_PEEK", "0.18"))
 
 # ---- wake ke jawab ----
 # Ye chaaron line sirf `wake/command.py` bolti hai. UI me text nahi — awaaz.

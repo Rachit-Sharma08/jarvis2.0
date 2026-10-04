@@ -4,9 +4,9 @@ Ye Phase 5 **Step 2c** hai. Step 2a (`wake/utterance.py`) ne mic se audio
 uthaya, Step 2b (`desktop/playback.py`) ne awaaz banayi — is file me dono ko
 ek flow me jod diya gaya hai:
 
-    wake -> "Ji, boliye" -> mic drain + warm-up -> capture (VAD)
-         -> WAV -> Groq STT (guard) -> shared ENGINE -> Hub/UI events
-         -> jawab ki awaaz
+    wake -> mic drain + 0.18 s peek -> ("Ji, boliye" | pehle se bol raha hai)
+         -> warm-up -> capture (VAD) -> WAV -> Groq STT (guard)
+         -> shared ENGINE -> Hub/UI events -> jawab ki chhoti awaaz
 
 Char zaroori baatein:
 
@@ -39,6 +39,7 @@ import config
 from core.timing import Stopwatch
 from log_setup import get_logger
 from server.hub import HUB
+from voice import tts
 from wake import ask
 from wake import listen
 
@@ -98,24 +99,32 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
 
     watch = Stopwatch("wake_command")
     stage = time.perf_counter
-    settled_by = stage() + float(config.COMMAND_WARMUP_SECONDS)
     held = wake_worker.hold_for_command()
     _safe(on_busy, True)
     HUB.publish({"type": "status", "value": "listening"})
     try:
-        # 1. "Ji, boliye" — mic hold ho chuka hai, to apni awaaz capture nahi hogi.
-        #    Mic band nahi hota (duty cycle), is liye ye bolte waqt bhi settle
-        #    hota hai — `settled_by` usi ko count karta hai (niche dekho).
-        at = stage()
-        ask.speak(config.ACK_ON_WAKE, stop)
-        watch.stage("ack", at)
-
-        # 2. Purana audio phenko + mic baithne do, phir suno. Jitna warm-up pehle
-        #    poora ho chuka hai utna hi wait — pehle har baar 1 s ka dead time tha.
+        # 1. Purana audio phenko (wake shabd ki goonj + pichli TTS), phir 0.18 s
+        #    suno — kya user bol hi raha hai? Agar haan to "Ji, boliye" **nahi**
+        #    bolte (pehle hamari awaaz uske upar chadh jaati thi), aur usi chhote
+        #    intezaar ne mic ka kaam bhi kar diya. Nahi to normal raasta: ack +
+        #    1 s warm-up, jiska waqt `settled_by` se overlap hota hai.
         at = stage()
         listen.drain(mic, stop)
-        listen.warmup(mic, stop, deadline=settled_by)
-        watch.stage("warmup", at)
+        talking, peak = listen.peek_speech(mic, stop)
+        if talking:
+            log.info("user pehle se bol raha hai (rms=%.3f) - ack skip", peak)
+            settled_by = stage() + float(config.COMMAND_WARMUP_SECONDS)
+            watch.stage("ack", at)
+            watch.stage("warmup", at)
+        else:
+            ask.speak(config.ACK_ON_WAKE, stop)
+            watch.stage("ack", at)
+            # 2. Mic baithne do, phir queue khaali karo. Jitna warm-up ack me
+            #    poora ho chuka hai utna hi wait — pehle har baar 1 s dead tha.
+            at = stage()
+            settled_by = stage() + float(config.COMMAND_WARMUP_SECONDS)
+            listen.warmup(mic, stop, deadline=settled_by)
+            watch.stage("warmup", at)
 
         # 3. VAD se command uthao. Kuch suna hi nahi -> dobara boliye.
         at = stage()
@@ -149,10 +158,13 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
         watch.stage("brain", at)
 
         # 6. Jawab ki awaaz. (ASK card ki "confirm kijiye" `ask.ask` ne andar
-        #    bol di — yahan sirf brain ka jawab.)
+        #    bol di — yahan sirf brain ka jawab.) Awaaz **chhoti** boli jaati
+        #    hai: HUD par poora jawab dikhta hi hai, par 500 char bolne me 4.3 s
+        #    lagta tha sirf playback me — is liye user ko "late" lagta tha.
         at = stage()
-        ask.speak(config.BRAIN_FAILED if failed else (answer or config.BRAIN_FAILED),
-                  stop)
+        spoken = config.BRAIN_FAILED if failed else (
+            tts.clip_answer(answer) or config.BRAIN_FAILED)
+        ask.speak(spoken, stop)
         watch.stage("speak", at)
         return "asked" if asked else "ok"
     finally:

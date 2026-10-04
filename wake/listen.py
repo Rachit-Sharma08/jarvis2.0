@@ -91,6 +91,44 @@ def warmup(mic, stop=None, deadline=None) -> int:
     return drain(mic, stop)
 
 
+def peek_speech(mic, stop=None, seconds: float = None, threshold: float = None) -> tuple:
+    """`seconds` tak suno — kya user bol **hi** raha hai? -> `(bol raha hai, RMS)`.
+
+    Ye `"Ji, boliye"` se pehle chalta hai (Step 2 ka speed fix). Pehle hamari ack
+    user ki awaaz ke upar bol deti thi, command ka pehla shabd kat-ta tha aur
+    use lagta tha "sun nahi pa raha". Ab agar bol raha hai to ack chhoot jaata
+    hai — aur ye chhota intezaar mic ka kaam bhi kar deta hai (settle + pehli
+    awaaz pakadna), is liye warm-up alag se nahi lagta.
+
+    **Chunk phenke nahi jaate** — jo bhi mila, wahi order me wapas queue me
+    daal diye jaate hain, warna `capture()` ko command chhoot jayegi. Ye
+    recording hi hai: memory me rehti hai, koi file nahi (privacy ka niyam).
+
+    `threshold` = `config.VAD_THRESHOLD` se thoda **neeche** (0.8 hissa): is
+    chhoti window me awaaz poore 30 ms chunk me bhi kamzor ho sakti hai.
+    """
+    stop = stop or _STOP
+    seconds = config.COMMAND_ACK_PEEK_SECONDS if seconds is None else float(seconds)
+    threshold = (config.VAD_THRESHOLD * 0.8 if threshold is None else float(threshold))
+    deadline = time.monotonic() + seconds
+    heard, peak = [], 0.0
+    while time.monotonic() < deadline and not stop.is_set():
+        try:
+            heard.append(mic.chunks.get(timeout=0.02))
+        except (queue.Empty, AttributeError):
+            continue
+        try:
+            peak = max(peak, audio_mod.chunk_to_rms(heard[-1]))
+        except Exception as exc:      # kharab chunk: chup-chaap aage badho
+            log.warning("peek: RMS nahi mila: %s: %s", type(exc).__name__, exc)
+    for chunk in heard:
+        try:
+            mic.chunks.put_nowait(chunk)
+        except (queue.Full, AttributeError):
+            break                       # queue bhar gayi - purana naya rehne do
+    return bool(peak >= threshold and heard), round(peak, 4)
+
+
 def capture(mic, stop=None) -> list:
     """VAD se ek command uthao. -> chunk list ya `None` (kuch suna hi nahi).
 

@@ -142,7 +142,6 @@ PLAYBACK_TIMEOUT_SECONDS = 45.0
 # ---- Suraksha ----
 # TOOLS ON karne ke 30 minute baad apne aap OFF. Wake se bhi gatekeeper
 # bilkul waisa hi hai — awaaz se Allow kabhi nahi hota.
-TOOLS_AUTO_OFF_MINUTES = 30
 # Windows lock (Win+L) ka pata. Tools lock par OFF ho jaate hain — sirf
 # baat-cheet chalti hai. Detect na ho to sirf report hota hai, block nahi.
 LOCK_POLL_SECONDS = 2.0

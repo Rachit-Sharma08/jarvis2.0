@@ -90,7 +90,21 @@ def test_tray_guard():
     check("launcher tray-wajah bhi bolta hai", "EXIT_NO_TRAY" in lsrc, True)
 
 
-for fn in (test_tools_auto_off, test_tray_guard):
+def test_tools_default_on_forever():
+    """User ka faisla (4-Oct): app start hote hi TOOLS ON, aur **kabhi** apne aap
+    OFF na ho. Pehle default OFF + 30 min auto-off tha."""
+    print("TOOLS default ON + auto-off band")
+    check("config default ON", config.TOOLS_ENABLED_DEFAULT, True)
+    check("config auto-off 0", config.TOOLS_AUTO_OFF_MINUTES, 0)
+    real = Limiter()                      # koi argument nahi = asli config
+    check("bina kuch kiye ON", real.enabled, True)
+    time.sleep(0.02)
+    check("timer par OFF nahi", real.enabled, True)
+    check("minutes_left 0 (koi timer nahi)", real.minutes_left(), 0.0)
+    check("check() chalega", real.check(), "")
+
+
+for fn in (test_tools_auto_off, test_tools_default_on_forever, test_tray_guard):
     fn()
 
 finish("Saare desktop guard test pass.")

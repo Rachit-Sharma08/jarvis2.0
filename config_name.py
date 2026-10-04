@@ -27,9 +27,16 @@ ASSISTANT_NAME = os.getenv("PRABH_ASSISTANT_NAME", "Jarvis").strip() or "Jarvis"
 DISPLAY_NAME = os.getenv("PRABH_DISPLAY_NAME", "J.A.R.V.I.S").strip() or "J.A.R.V.I.S"
 
 # ---- wake shabd (Step 1: "Jarvis") ----
-# Grammar me sirf ye teen shabd — isse galat trigger kam aur CPU halka
-# (68 MB model me se sirf 4 shabd).
-WAKE_PHRASES = ("hello jarvis", "hey jarvis", "jarvis")
+# Grammar me sirf ye shabd — isse galat trigger kam aur CPU halka.
+# "Hlo/Helo/Hi/Yo Jarvis" bhi 4-Oct ke baad daale gaye: user "Hlo Jarvis"
+# bolta hai par English model "hello"/"hey" sunta hai, to Vosk har baar sahi
+# shabd chunne me galti karta tha. Hinglish bhi grammar me daal do to Vosk ko
+# sahi option mil jaata hai. Trigger ka faisla phir bhi `WAKE_WORDS` se hota
+# hai — ye sab ka aakhri shabd "jarvis" hai, is liye trigger badalta nahi.
+WAKE_PHRASES = (
+    "hello jarvis", "hey jarvis", "hlo jarvis", "helo jarvis",
+    "hi jarvis", "yo jarvis", "jarvis",
+)
 # Purane "sunday" shabd alag list me, **default band**. Ek din wapas chahiye
 # hon to `.env` me PRABH_WAKE_LEGACY=1 — dono saath chalte hain.
 LEGACY_WAKE_PHRASES = (
