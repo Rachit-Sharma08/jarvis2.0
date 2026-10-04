@@ -51,6 +51,66 @@ def speak(text: str, stop=None) -> int:
     return playback.say(text)
 
 
+PREWARM_TEXTS = ("ACK_ON_WAKE", "CONFIRM_VOICE")
+
+
+def prewarm_async(mode: str = None) -> None:
+    """`prewarm()` ko background thread me chalao - startup **rukna nahi** chahiye.
+
+    Yehi app se call hota hai (`desktop/app.py: _start_wake`). Thread daemon hai,
+    is liye app band karte waqt bhi atka nahi rehta."""
+    import threading
+
+    threading.Thread(target=prewarm, args=(mode,), name="prewarm",
+                     daemon=True).start()
+
+
+def prewarm(mode: str = None) -> int:
+    """Startup par ack/confirm ka audio cache me bhar do - **awaaz nahi** bajti.
+
+    4-Oct ke live log me pehla "Ji, boliye" ElevenLabs me **4239 ms** me bana,
+    is liye pehli wake ka `ack` stage 5680 ms le gaya tha (poora jawab 18 s).
+    Cache app restart par khaali hoti hai, is liye ye startup par — background
+    thread me — bharna padta hai.
+
+    Sirf `tts.speak_cached()` (cache wali), `playback.say()` **nahi** — warna
+    startup par awaaz bajegi. Fail hua to chup-chaap: pehli baar me hi ban
+    jayega, bas slow.
+
+    -> kitne text cache me gaye.
+    """
+    import asyncio
+
+    from voice import tts
+
+    mode = mode or config.DEFAULT_MODE
+    texts = [getattr(config, name, "") for name in PREWARM_TEXTS]
+    texts = [text for text in texts if text]
+    if not texts:
+        return 0
+
+    async def run() -> int:
+        done = 0
+        for text in texts:
+            try:
+                await asyncio.wait_for(
+                    tts.speak_cached(text, mode),
+                    float(config.PLAYBACK_TIMEOUT_SECONDS),
+                )
+                done += 1
+            except Exception as exc:
+                log.info("prewarm skip: %s: %s", type(exc).__name__, exc)
+        return done
+
+    try:
+        done = asyncio.run(run())
+    except Exception as exc:
+        log.info("prewarm nahi hua: %s: %s", type(exc).__name__, exc)
+        return 0
+    log.info("voice cache taiyar: %d/%d", done, len(texts))
+    return done
+
+
 def ask(text: str, rid: str, on_confirm=None, stop=None) -> tuple:
     """Shared ENGINE se jawab. -> `(answer, card_aaya, brain_fail)`.
 

@@ -28,7 +28,7 @@ from desktop.tray import Tray
 from gatekeeper import keeper
 from log_setup import get_logger
 from server.hub import HUB
-from wake import worker as wake_worker
+from wake import ask as wake_ask, worker as wake_worker
 
 log = get_logger("app")
 
@@ -152,6 +152,7 @@ class SundayApp:   # naam Step 1 me user-facing hua, class id wahi rakha
         started = wake_worker.start(on_wake=self._on_wake, on_state=STATE.set_wake)
         _, reason = config.wake_available()
         startup.say_wake(started, "" if started else micperm.explain(reason))
+        wake_ask.prewarm_async()
         return started
 
     def _wait(self) -> None:
