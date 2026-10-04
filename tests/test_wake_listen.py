@@ -24,7 +24,7 @@ from tests.wakecmdhelp import Spy, patch  # noqa: E402
 import config  # noqa: E402
 from desktop import playback  # noqa: E402
 from tests.wakehelp import FakeMic  # noqa: E402
-from wake import command, listen  # noqa: E402
+from wake import ask, listen  # noqa: E402
 from wake import worker as wake_worker  # noqa: E402
 
 CHUNKS = [quiet(1) for _ in range(25)]
@@ -49,7 +49,7 @@ def test_stop_event_stops_everything():
     listen.reset()
     listen.stop()
     check("to_text ruk gaya", listen.to_text(CHUNKS), "")
-    check("speak nahi bola", command.speak("kuch bhi"), 0)
+    check("speak nahi bola", ask.speak("kuch bhi"), 0)
     with patch(playback, "say", said):
         check("worker.stop() par bhi kuch nahi bola", wake_worker.stop(), None)
     check("kuch nahi bola", said.calls, [])

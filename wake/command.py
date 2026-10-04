@@ -29,16 +29,17 @@ Har stage ka time `core/timing.py` ke `Stopwatch` se ek line me log hota hai:
 `TIME wake_command: TOTAL | ack=.. warmup=.. capture=.. stt=.. brain=.. speak=..`
 
 Mic ke chaar kaam (`drain`/`warmup`/`capture`/`to_text`) `wake/listen.py` me
-hain — yahan sirf flow aur brain/speaker ka faisla hai.
+aur brain/speaker ka kaam `wake/ask.py` me hai — yahan sirf **flow** hai, is liye
+do files me se kabhi brain ka raasta dobara mat likhna.
 """
 
 import time
 
 import config
 from core.timing import Stopwatch
-from gatekeeper.audit import mask
 from log_setup import get_logger
 from server.hub import HUB
+from wake import ask
 from wake import listen
 
 log = get_logger("wake_command")
@@ -66,67 +67,24 @@ def _allowed(allowed) -> tuple:
     return bool(ok), str(reason or "")
 
 
-def ask_brain(text: str, rid: str, on_confirm=None, stop=None) -> tuple:
-    """Shared ENGINE se jawab. -> `(answer, card_aaya, brain_fail)`.
-
-    Engine ke event seedhe `HUB` par jaate hain (browser wahi HUD hai). Har event
-    me `via="voice"` lagta hai: `ui/app.js` us par browser TTS nahi chalata,
-    warna jawab do baar bolta. Typed message ka raasta badalta nahi.
-
-    `keeper.approve()` yahan nahi hai - card sirf dikhta hai, ALLOW ka button
-    screen par hai aur `engine` us par wait karta hai.
-
-    `brain_fail` = engine ka log event jis me `data.brain == "none"` (saare provider
-    fail, ya brain crash). Us message me **saare technical reasons** hote hain -
-    HUD par theek hai, par awaaz me padhne layak nahi; is liye caller
-    `config.BRAIN_FAILED` bolta hai."""
-    from server.state import engine as shared_engine
-
-    stop = stop or listen._STOP
-    answer, asked, failed = "", False, False
-    for event in shared_engine().handle(text, rid):
-        event["via"] = "voice"
-        HUB.publish(event)
-        kind = event.get("type")
-        if kind == "message" and event.get("role") == "assistant":
-            answer = mask(event.get("text", ""))
-        elif kind == "confirm":
-            asked = True
-            log.info("ASK card aaya: %s (awaaz se allow nahi hoga)", event.get("tool"))
-            _safe(on_confirm)
-            # Yahi bolna zaroori hai: agli iteration par engine `keeper.wait()`
-            # par **ruk jaata hai** (60 s). Bolna yahan chhod diya to user ko
-            # card dikhega par awaaze se koi raasta nahi bataya jayega.
-            speak(config.CONFIRM_VOICE, stop)
-        elif kind == "log" and (event.get("data") or {}).get("brain") == "none":
-            failed = True
-        if stop.is_set():
-            log.info("brain beech me ruka (app band ho raha hai)")
-            break
-    return answer, asked, failed
+def _is_sleep(text: str) -> bool:
+    """'So jao' hai kya? Yahi guard `desktop/sleep.py` me hai — `wake/` ko
+    `desktop/` ka import nahi karwana (`tests/test_desktop_sleep.py` dono check
+    karta hai, taaki dono alag na ho jaayein)."""
+    low = (text or "").strip().lower()
+    if not low or len(low.split()) > 4:
+        return False
+    return any(word in low for word in config.SLEEP_WORDS)
 
 
-def speak(text: str, stop=None) -> int:
-    """Text bol kar suno. -> kitni der lagi (ms); `0` matlab nahi bola.
-
-    Speaker ka ek hi raasta `desktop/playback.py` — yahan koi naya `sd.play`
-    nahi, koi TTS provider chuna nahi jaata. Time alag se: `voice/tts.py` apna
-    `TIME tts: ... Nms` aur `playback` apna `speaker: Nms` log me likhta hai."""
-    from desktop import playback
-
-    stop = stop or listen._STOP
-    if stop.is_set():
-        return 0
-    return playback.say(text)
-
-
-def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None) -> str:
+def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
+        on_sleep=None) -> str:
     """Wake ke baad ka poora command. -> kya hua (log + test ke liye).
 
     `mic` aur `stop` `wake/session.py` ke `_fire()` se aate hain — kahin aur se
-    mic nahi milta (mic ka ek hi owner `wake/audio.py` hai). Baaki teen callback
+    mic nahi milta (mic ka ek hi owner `wake/audio.py` hai). Baaki chaar callback
     `desktop/callbacks.py` deta hai: `allowed` (mute/lock), `on_confirm` (HUD
-    kholo) aur `on_busy` (HUD ka WAKE pill)."""
+    kholo), `on_busy` (HUD ka WAKE pill) aur `on_sleep` ("so jao" — battery)."""
     from wake import worker as wake_worker
 
     stop = stop or listen._STOP
@@ -149,7 +107,7 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None) -> str
         #    Mic band nahi hota (duty cycle), is liye ye bolte waqt bhi settle
         #    hota hai — `settled_by` usi ko count karta hai (niche dekho).
         at = stage()
-        speak(config.ACK_ON_WAKE, stop)
+        ask.speak(config.ACK_ON_WAKE, stop)
         watch.stage("ack", at)
 
         # 2. Purana audio phenko + mic baithne do, phir suno. Jitna warm-up pehle
@@ -163,7 +121,7 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None) -> str
         at = stage()
         chunks = listen.capture(mic, stop)
         if not chunks:
-            speak(config.NOT_UNDERSTOOD, stop)
+            ask.speak(config.NOT_UNDERSTOOD, stop)
             return "not-heard"
         watch.stage("capture", at)
 
@@ -171,21 +129,30 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None) -> str
         at = stage()
         text = listen.to_text(chunks, stop)
         if not text:
-            speak(config.NOT_UNDERSTOOD, stop)
+            ask.speak(config.NOT_UNDERSTOOD, stop)
             return "no-text"
         watch.stage("stt", at)
 
+        # 4b. "So jao" — battery. Brain nahi, tool nahi: sirf haalat badal do.
+        # Text chhota hona zaroori hai (`desktop/sleep.py` ka guard), warna
+        # "band ho jao kya matlab hai" jaisa vaakya galti se so jaa dega.
+        if config.SLEEP_WORDS and _is_sleep(text):
+            ask.speak(config.SLEEP_ACK, stop)
+            _safe(on_sleep)
+            watch.stage("speak", at)
+            return "sleep"
+
         # 5. Shared ENGINE — wahi object jo /chat aur /hud/quick use karte hain.
         at = stage()
-        answer, asked, failed = ask_brain(
+        answer, asked, failed = ask.ask(
             text, "voice%d" % int(time.time() * 1000), on_confirm, stop)
         watch.stage("brain", at)
 
-        # 6. Jawab ki awaaz. (ASK card ki "confirm kijiye" `ask_brain` ne andar
+        # 6. Jawab ki awaaz. (ASK card ki "confirm kijiye" `ask.ask` ne andar
         #    bol di — yahan sirf brain ka jawab.)
         at = stage()
-        speak(config.BRAIN_FAILED if failed else (answer or config.BRAIN_FAILED),
-              stop)
+        ask.speak(config.BRAIN_FAILED if failed else (answer or config.BRAIN_FAILED),
+                  stop)
         watch.stage("speak", at)
         return "asked" if asked else "ok"
     finally:

@@ -33,7 +33,7 @@ def _mic():
 import config  # noqa: E402
 from core import events  # noqa: E402
 from desktop import playback  # noqa: E402
-from wake import command, listen  # noqa: E402
+from wake import ask, command, listen  # noqa: E402
 
 
 def _mic():
@@ -90,7 +90,8 @@ def test_not_heard():
     said, hub = Spy(1), hub_spy()
     with patch(config, "COMMAND_WARMUP_SECONDS", 0), \
             patch(listen, "capture", lambda *a, **k: None), \
-            patch(playback, "say", said), patch(command, "HUB", hub):
+            patch(playback, "say", said), patch(command, "HUB", hub), \
+            patch(ask, "HUB", hub):
         got = command.run(FakeMic([]), threading.Event())
     check("not-heard", got, "not-heard")
     check("sirf do line boli", said.calls, [config.ACK_ON_WAKE,

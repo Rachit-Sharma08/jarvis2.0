@@ -76,6 +76,11 @@ class Tray:
             # ki ek aur raasta hai. Sirf text, click se kuch nahi hota.
             MenuItem("  ya phir %s" % (keys or "koi shortcut nahi"),
                      None, enabled=False),
+            # Battery: "so jao" = sirf mic chalu. Jaagta hai wake word se.
+            MenuItem(
+                config.SLEEP_FROM_TRAY if not state.asleep() else "JAAG JAAO",
+                self._toggle_sleep,
+            ),
             MenuItem(
                 "TOOLS",
                 self._toggle_tools,
@@ -146,6 +151,9 @@ class Tray:
 
     def _toggle_tools(self, icon, item) -> None:
         self._guard(self.actions.toggle_tools)
+
+    def _toggle_sleep(self, icon, item) -> None:
+        self._guard(self.actions.toggle_sleep)
 
     def _restart(self, icon, item) -> None:
         self._guard(self.actions.restart)

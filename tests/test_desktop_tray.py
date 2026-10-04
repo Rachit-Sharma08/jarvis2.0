@@ -55,8 +55,9 @@ def test_tray_menu():
     tray = Tray(actions, state)
     labels = [item.text for item in tray.build()]
     show(f"items = {labels}")
-    check("status + 5 button + hint", len(labels), 9)   # 7 asli + 2 divider
-    for wanted in ("Mic Mute", "Open HUD", "TOOLS", "Restart", "Quit"):
+    check("status + 6 button + hint", len(labels), 10)   # 8 asli + 2 divider
+    for wanted in ("Mic Mute", "Open HUD", config.SLEEP_FROM_TRAY, "TOOLS",
+                   "Restart", "Quit"):
         check(f"'{wanted}' hai", wanted in labels, True)
     check("pehla item haalat", labels[0].startswith("Jarvis"), True)
     check("Quit sabse neeche", labels[-1], "Quit")
@@ -95,7 +96,8 @@ def test_state():
     except ValueError:
         print("  OK   bad mic state block hua")
     check("snapshot me sab", sorted(state.snapshot()),
-          ["hud_open", "mic", "mic_reason", "muted", "tools_on", "version", "wake"])
+          ["asleep", "hud_open", "mic", "mic_reason", "muted", "tools_on",
+           "version", "wake"])
     check("HUD khola", state.set_hud(True), True)
     check("wake state", state.set_wake("listening"), True)
     check("HUD event publish crash nahi kiya", state.set_tools(True), True)

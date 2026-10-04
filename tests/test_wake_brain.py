@@ -23,7 +23,7 @@ from tests.wakecmdhelp import (CHUNKS, FakeEngine, FakeMic, Spy,  # noqa: E402
 import config  # noqa: E402
 from core import events  # noqa: E402
 from desktop import playback  # noqa: E402
-from wake import command, listen  # noqa: E402
+from wake import ask, command, listen  # noqa: E402
 
 
 def _mic():
@@ -95,6 +95,7 @@ def test_ask_confirm_spoken_before_wait():
             patch(listen, "capture", lambda *a, **k: CHUNKS), \
             patch(listen, "to_text", lambda *a, **k: "test.txt bana do"), \
             patch(playback, "say", say_spy), patch(command, "HUB", hub), \
+            patch(ask, "HUB", hub), \
             patch("server.state", "ENGINE", engine):
         command.run(_mic(), threading.Event())
 
@@ -118,6 +119,7 @@ def test_ask_card_never_approves():
             patch(listen, "capture", lambda *a, **k: CHUNKS), \
             patch(listen, "to_text", lambda *a, **k: "test.txt bana do"), \
             patch(playback, "say", said), patch(command, "HUB", hub), \
+            patch(ask, "HUB", hub), \
             patch(keeper, "wait", waited), \
             patch("server.state", "ENGINE", engine):
         got = command.run(_mic(), threading.Event(), on_confirm=opened)

@@ -13,6 +13,7 @@ Test me inhe seedha call kiya ja sakta hai (asli tray/hotkey/wake nahi chalti).
 
 import config
 from desktop import lockwatch
+from desktop import sleep as sleep_mod
 from desktop.state import STATE
 from gatekeeper import keeper
 from log_setup import get_logger
@@ -71,22 +72,35 @@ def _busy(busy: bool) -> None:
                        else config.TRAY_OFF)
 
 
+def _sleep(app=None) -> None:
+    """'So jao' — HUD band + `asleep` flag. Asli kaam `desktop/sleep.py` ka hai;
+    yahan sirf wake ka callback bana dete hain (taaki `wake/` ko `desktop/`
+    ka import na karna pade)."""
+    sleep_mod.enter(app)
+
+
 def on_wake(phrase: str, mic=None, stop=None, _app=None) -> None:
     """Wake mila — Step 2c: HUD + poori command.
 
     Step 1 me yahan sirf HUD khulta tha. Ab `wake/command.py` poori flow chalata
     hai: "Ji, boliye" -> mic suno -> Groq STT -> shared ENGINE -> jawab ki awaaz.
 
-    `mic` aur `stop` `wake/session.py` ke `_fire()` se aate hain. Teeno callback
-    (`allowed`, `on_confirm`, `on_busy`) yahin se jaate hain — `wake/` ko
-    `desktop/` ka import nahi karna padta."""
+    `mic` aur `stop` `wake/session.py` ke `_fire()` se aate hain. Chaar callback
+    (`allowed`, `on_confirm`, `on_busy`, `on_sleep`) yahin se jaate hain — `wake/`
+    ko `desktop/` ka import nahi karna padta.
+
+    **Sleep me bhi yahi raasta hai:** pehle `asleep` hatta hai (jaag gaya), phir
+    HUD khulta hai aur command chalta hai. Is liye "Jarvis" bolte hi app poori
+    tarah uth jaata hai — mic to waise bhi sun raha tha."""
     log.info("WAKE HIT: %r", phrase)
+    sleep_mod.wake_up(_app)
     hud = getattr(_app, "hud", None)
     if hud is not None:
         hud.open()
     STATE.set_hud(True)
     command.run(mic, stop, allowed=allowed,
-                on_confirm=lambda: on_hotkey(_app), on_busy=_busy)
+                on_confirm=lambda: on_hotkey(_app), on_busy=_busy,
+                on_sleep=lambda: _sleep(_app))
 
 
 def on_hotkey(app=None) -> None:

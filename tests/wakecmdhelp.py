@@ -29,7 +29,7 @@ import config  # noqa: E402
 from core import events  # noqa: E402
 from desktop import playback  # noqa: E402
 from tests.wakehelp import FakeMic, loud  # noqa: E402
-from wake import command, listen  # noqa: E402
+from wake import ask, command, listen  # noqa: E402
 
 CHUNKS = [loud(1) for _ in range(25)]
 
@@ -93,10 +93,12 @@ def engine_say(confirm=False):
 
 
 def talk(allowed=None, heard="aaj ka din kya hai", out=None, confirm=False,
-         mic_chunks=None, on_confirm=None):
+         mic_chunks=None, on_confirm=None, on_sleep=None):
     """Poora `command.run` — sab fake ke saath. -> (result, spy, hub, engine).
 
-    `heard` = STT ka text (jo user ne bola). Jawab engine se aata hai."""
+    `heard` = STT ka text (jo user ne bola). Jawab engine se aata hai.
+    `HUB` dono jagah patch hota hai (`command` status bhejta hai, `ask` brain ke
+    event) — sirf ek ko patch karna doosre ke events chup-chaap kho deta hai."""
     mic = FakeMic(mic_chunks if mic_chunks is not None else CHUNKS)
     said, hub = Spy(1), hub_spy()
     engine = FakeEngine(engine_say(confirm=confirm) if out is None else out)
@@ -107,21 +109,29 @@ def talk(allowed=None, heard="aaj ka din kya hai", out=None, confirm=False,
             patch(listen, "to_text", lambda *a, **k: heard), \
             patch(playback, "say", said), \
             patch(command, "HUB", hub), \
+            patch(ask, "HUB", hub), \
             patch("server.state", "ENGINE", engine):
-        got = command.run(mic, stop, allowed=allowed, on_confirm=on_confirm)
+        got = command.run(mic, stop, allowed=allowed, on_confirm=on_confirm,
+                          on_sleep=on_sleep)
     return got, said, hub, engine
 
 
 def gatekeeper_uses():
-    """`wake/command.py` me gatekeeper ka kya use hua — **AST** se.
+    """`wake/` me gatekeeper ka kya use hua — **AST** se.
 
     Docstring me likha 'approve nahi hai' jaisa text se dhoka nahi chahiye —
-    sirf asli `from gatekeeper... import ...` lines gin-te hain."""
+    sirf asli `from gatekeeper... import ...` lines gin-te hain.
+
+    Dono files scan hoti hain (`command.py` + `ask.py`): Step 2 ke baad brain ka
+    hissa `ask.py` me chala gaya tha, sirf `command.py` dekhne se ye check khud
+    chup ho jaata (koi approve import hi na dikhe) — is liye brain wali file
+    bhool-na bhi yahi galti hai."""
     import ast
 
-    src = (ROOT / "wake" / "command.py").read_text(encoding="utf-8")
     used = set()
-    for node in ast.walk(ast.parse(src)):
-        if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("gatekeeper"):
-            used.update(f"{node.module}.{alias.name}" for alias in node.names)
+    for name in ("command.py", "ask.py"):
+        src = (ROOT / "wake" / name).read_text(encoding="utf-8")
+        for node in ast.walk(ast.parse(src)):
+            if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("gatekeeper"):
+                used.update(f"{node.module}.{alias.name}" for alias in node.names)
     return sorted(used)

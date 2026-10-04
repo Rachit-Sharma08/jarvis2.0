@@ -28,6 +28,7 @@ class DesktopState:
         self._tools_on = False
         self._hud_open = False
         self._wake_state = "off"     # Step 1 me stub; baad me wake worker bharega
+        self._asleep = False         # "so jao": sirf mic + gate chalu
         self._version = 0
 
     # ---- padhna ----
@@ -40,6 +41,7 @@ class DesktopState:
                 "tools_on": self._tools_on,
                 "hud_open": self._hud_open,
                 "wake": self._wake_state,
+                "asleep": self._asleep,
                 "version": self._version,
             }
 
@@ -100,6 +102,20 @@ class DesktopState:
         with self._lock:
             changed = self._hud_open != bool(is_open)
             self._hud_open = bool(is_open)
+            if changed:
+                self._version += 1
+        self.publish()
+        return changed
+
+    def asleep(self) -> bool:
+        """'So jao' chal raha hai? Sirf mic + gate chalu, baaki band."""
+        with self._lock:
+            return self._asleep
+
+    def set_asleep(self, on: bool) -> bool:
+        with self._lock:
+            changed = self._asleep != bool(on)
+            self._asleep = bool(on)
             if changed:
                 self._version += 1
         self.publish()

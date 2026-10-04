@@ -5,6 +5,7 @@ Yahi class `desktop/tray.py` ko menu deti hai.
 """
 
 import config
+from desktop import sleep as sleep_mod
 from desktop.state import STATE
 from gatekeeper import keeper
 from log_setup import get_logger
@@ -40,6 +41,12 @@ class Actions:
         on = keeper.set_tools(not keeper.tools_on())
         log.info("tray: TOOLS=%s (auto-OFF %d min me)",
                  on, config.TOOLS_AUTO_OFF_MINUTES)
+
+    def toggle_sleep(self) -> None:
+        """'So jao' palat de. Sirf mic + gate chalta rahega, HUD band. Jaagne ka
+        ek hi raasta: wake word (ya ye same item) — `desktop/sleep.py`."""
+        asleep = sleep_mod.toggle(self.app)
+        log.info("tray: so jao=%s", asleep)
 
     def restart(self) -> None:
         log.info("tray: restart maanga")

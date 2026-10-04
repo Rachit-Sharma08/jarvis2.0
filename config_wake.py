@@ -98,6 +98,16 @@ BRAIN_FAILED = "Abhi jawab nahi mil pa raha."
 CONFIRM_VOICE = "Screen par confirm kijiye."
 STOP_WORD = ("ruk jao", "band karo", "shukriya", "thanks", "stop")
 
+# ---- "so jao" (battery) ----
+# Mic sunna **kabhi band nahi** hota (warna "Jarvis" sunai hi nahi dega). Is liye
+# battery ka asal nuksan hataane ke liye bhaari sab (HUD, stats pump, browser)
+# band karna padta hai — sirf mic + gate chalta reheta hai. Puri tarah band karna
+# tray ke Quit se (CPU 0, phir "Jarvis" kaam nahi karega).
+SLEEP_WORDS = ("so jao", "so jaiye", "sone jao", "soye raho", "soye rahiye",
+               "so jaa", "band ho jao", "soye jao")
+SLEEP_ACK = "So gaya. Jarvis boliye."      # chhota — TTS + playback = waqt
+SLEEP_FROM_TRAY = "SO JAAO"                # tray ka item
+
 # ---- WhatsApp call (Step 2, Option A) ----
 WHATSAPP_WEB = "https://web.whatsapp.com"
 # CDP port. Edge/Chrome is par remote debug mode me chalta hai. Pehli baar
