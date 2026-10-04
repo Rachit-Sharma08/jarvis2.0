@@ -25,6 +25,8 @@ screen par confirm card aata hai.
   (nayi Claude/agent chat me **paste karne wala self-contained prompt** — kya hai, kya use
   hua, kahan tak pahuncha, kya bacha, kaam ke niyam). Chhota handoff → **[CLAUDE.md](CLAUDE.md)**;
   poore niyam → **[AGENTS.md](AGENTS.md)**.
+- Aage ka plan (Stage 02-06 status, bugs + guards, free-only stack, task order) →
+  **[docs/ROADMAP_STATUS.md](docs/ROADMAP_STATUS.md)**
 
 ---
 

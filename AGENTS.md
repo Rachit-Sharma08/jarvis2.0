@@ -7,6 +7,12 @@ se purana context puchhne ki zarurat nahi — sab yahin likha hai.
 - **Nayi session me sabse pehle `NEW_AGENT_BRIEF.md`** — wo ek self-contained prompt hai jo naye
   agent ko project ka pura context deta hai (kya hai, kya use hua hai, kahan tak pahuncha, kya
   bacha hai, kaam karne ke niyam). User use nayi Claude/agent chat me paste karta hai.
+- **Roadmap planning se pehle `docs/ROADMAP_STATUS.md` ke relevant section padho.** Wo file
+  owner ka hai (Stage 02-06 ka status, S1 scoreboard, S5 15 bugs + guards, S7 free-only stack,
+  S8 task order D-1..T-18, S11 progress log). **Ek time par sirf ek T-xx**, VERIFY wale point
+  me pehle code padh kar confirm karo, aur naya package/provider bina owner se poochhe mat jodo.
+  Status/plan update yahin karo — `S11 Progress log` me ek line, `docs/ROADMAP_STATUS.md` ko
+  `opencode.json`/instructions me mat daalo (har request me context + free quota khatam hoga).
 
 ---
 
@@ -109,8 +115,10 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (44 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
+  tests/ (47 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
+  docs/ROADMAP_STATUS.md  → OWNER ka roadmap-vs-reality + free-only plan (S1..S11). Roadmap
+                            planning se pehle iska relevant section padho; naya task bhi wahin likho.
 ```
 
 ### 3.5 Voice privacy ke pakkaurey niyam

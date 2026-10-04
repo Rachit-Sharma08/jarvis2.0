@@ -174,7 +174,10 @@ Exit code 0 hi asli pass. Test file bhi `<=200` lines (hygiene check). Suite ka 
 
 ## 14. Docs ka index
 
-`AGENTS.md` (sabse pehle padho: rules) · `README.md` (install/chalana/test) ·
+`AGENTS.md` (sabse pehle padho: rules) · **`docs/ROADMAP_STATUS.md`** (OWNER ka
+roadmap-vs-reality: S1 scoreboard, S5 15 asli bugs + guards G-1..G-15, S6 tray ka sahi
+order, S7 free-only stack, S8 task order D-1..T-18, S11 progress log) · `README.md`
+(install/chalana/test) ·
 `BRAIN.md` (providers) · `VOICE.md` (mic/wake/STT/TTS/sleep) · `TOOLS.md` (tools +
 privacy) · `TESTS.md` (47 suite) · `CHANGELOG.md` (pura record) · `PLAN.md`,
 `ROUND2.md`, `PLAN-TRUST.md` (purane plan) · `NEW_AGENT_BRIEF.md` (ye file).
