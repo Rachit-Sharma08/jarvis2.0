@@ -4,17 +4,21 @@ Prabh PC ka koi kaam kar sakta hai — file banana, folder dekhna, app kholna, c
 chalana. Har kaam ke pehle **gatekeeper** faisla karta hai. Koi bhi tool bina faisle ke
 nahi chalta.
 
-## Sabse pehle: TOOLS ON karo
+## TOOLS ki haalat (default ON)
 
-Screen par upar **`TOOLS OFF`** button hota hai (default `OFF` hai).
+Screen par upar **`TOOLS ON`** button hota hai (default `ON` hai - 4-Oct ko user ka
+faisla).
 
 - **OFF** — koi bhi PC tool nahi chalega. Chat bilkul waise hi kaam karega.
 - **ON** — tool chal sakte hain, par har tool pehle gatekeeper se gujarta hai.
 - Beech me bichhna ho to **`STOP`** daba do (script bhi, card bhi band ho jaata hai).
 
-Server **har restart par OFF** ho jaata hai (ya `.env` me `PRABH_TOOLS_ON=1` likha ho to
-ON). Matlab band karke chalao to phir se khud ON karna padega — ye jaan-boojh kar rakha
-gaya hai.
+App start hote hi TOOLS **ON** hota hai aur ab apne aap **OFF nahi** hota (pehle 30
+minute baad auto-OFF tha, wo hata diya gaya hai). Wapas purana behaviour chahiye
+to `.env` me `PRABH_TOOLS_AUTOOFF=30`. Default OFF karna ho to `PRABH_TOOLS_ON=0`.
+
+Windows **lock** hone par TOOLS apne aap OFF ho jaata hai — sirf tab. Awaaz se
+OFF nahi hota (awaaz se sirf ALLOW nahi hota, tools bhi nahi).
 
 ## Teeno faisle
 
@@ -66,7 +70,7 @@ gaya hai.
    (replay block). Ek waqt me sirf ek card. 60 second me jawab na aaye to apne aap DENY.
 3. **Limit**: ek request me max **5 tool step**, **20 request/min**.
 4. **ALLOW sirf UI button** se — chat ya awaaz se koi raasta nahi.
-5. **Tools default OFF**; server restart = phir OFF (ya `.env` me `PRABH_TOOLS_ON=1`).
+5. **Tools default ON**; restart = phir ON. Auto-OFF band hai (`.env` me `PRABH_TOOLS_AUTOOFF=30` se wapas 30 min).
 6. **Delete sirf `send2trash`** (Recycle Bin). Permanent delete ka tool mat banao.
 7. **Secret masking** — `gatekeeper/audit.py` ka `mask()` tool output, ACTIVITY panel,
    confirm card, LLM ka text aur log, sab jagah lage. Naya UI output banate hi `textContent`

@@ -133,8 +133,8 @@ Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
 |---|---|
 | Kaam | App shuru hote hi mic khulta hai. **"Jarvis"** (ya "hello/hey jarvis") bolte hi **HUD khul jaata hai**. |
 | Model | `models/vosk-model-small-en-us-0.15` — **Vosk**, 100% offline, awaaz bahar nahi jaati |
-| Grammar | Sirf 3 shabd sunta hai (`hello jarvis`, `hey jarvis`, `jarvis`, `[unk]`) — is liye galat trigger kam aur CPU halka |
-| Audio | 16 kHz mono, 30 ms chunk, energy VAD (threshold `.env` se `PRABH_VAD`) |
+| Grammar | Sirf ye shabd sunta hai: `hello jarvis`, `hey jarvis`, **`hlo jarvis`**, **`helo jarvis`**, **`hi jarvis`**, **`yo jarvis`**, `jarvis`, `[unk]` — trigger hamesha `jarvis` par hi hota hai, bas Hinglish bhi sahi shabd pe chun sake |
+| Audio | 16 kHz mono, 30 ms chunk, energy VAD (threshold `.env` se `PRABH_VAD`, ab **0.010** — door se/dheere "Hlo Jarvis" par trigger aata hai) |
 | Battery | Vosk **sirf awaaz par** chalta hai (`wake/gate.py`) — khamoshi me chunk recognizer tak jaata hi nahi. Napi napa 4.8% → 0.9% core. Mic ka stream phir bhi khula rehta hai, is liye "Jarvis" har waqt sun sakta hai |
 | Gate band | `.env` me `PRABH_VOSK_GATE=0` — purana behaviour (har chunk Vosk ko), debug ke liye |
 | Cooldown | Ek trigger ke baad **1.5 second** dobara nahi pakadta |
@@ -152,19 +152,23 @@ bolega, aap apni baat bolo, aur jawab **awaaz me** aayega:
 | Command capture (pre-roll, VAD, max/min/wait) | `wake/utterance.py` |
 | PCM -> WAV (Groq ko bhejne ke liye) | `wake/wav.py` |
 | Speaker — TTS bytes bajana | `desktop/playback.py` |
-| Mic wale chaar kaam (drain/warmup/capture/STT) | `wake/listen.py` |
-| Poora flow (ack -> suno -> brain -> awaaz) | `wake/command.py` |
+| Mic wale paanch kaam (drain/warmup/**peek**/capture/STT) | `wake/listen.py` |
+| Brain + speaker (awaaz) | `wake/ask.py` |
+| Poora flow (peek -> ack -> suno -> brain -> awaaz) | `wake/command.py` |
 
 #### Window (`.env` se badal sakte ho)
 
 | Kya | Default | `.env` |
 |---|---|---|
-| Chup ho jaane par band | **1.2 s** | `PRABH_CMD_SILENCE` |
+| Chup ho jaane par band | **0.9 s** | `PRABH_CMD_SILENCE` |
+| Ack se pehle sunna ("Ji, boliye" chhod do) | **0.18 s** | `PRABH_ACK_PEEK` |
+| Jawab ki **awaaz** ki limit | **220** char (HUD par poora jawab) | `PRABH_VOICE_MAX` |
 | Sabse lamba command | **30 s** | (constant) |
 | Turn ka max step | 5 | (constant) |
 
-1.2 s: 2.0 s sirf intezaar me tha, 0.9 s se beech ka vaakya kat jaata tha. Beech ka 0.4 s
-`HANGOVER` alag hai aur waise hi hai.
+0.9 s: pehle 2.0 s tha, phir 1.2 s. Beech ka 0.4 s `HANGOVER` alag hai aur waise hi
+hai (warna beech ka vaakya kat jaata). Kam chuppi = tez jawab, par thoda kam pakka
+text — is liye badalna `.env` se easy hai.
 
 #### Kya hota hai, ek line me
 
@@ -212,6 +216,27 @@ Brain to tez tha (~1.1–1.7 s), der **wake path** me thi. Teen fix:
 - Brain ka naya jawab bhi `speak_cached()` se hi jaata hai (awaaz ka ek hi raasta
   hai) — par unique hai to hit nahi hoga. Memory par koi asar nahi (`~50 KB` × 8).
 - Test: `tests/test_tts_cache.py`, `tests/test_speed_fix.py`.
+
+### "So jao" — battery (4-Oct)
+
+| Kya | Kaise |
+|---|---|
+| Awaaz se so jao | "Jarvis, **so jao**" bolo (ya `so jaiye`, `sone jao`, `soye raho`, `band ho jao`) — HUD band, sirf mic sunna bacha |
+| Tray se | Tray menu me **SO JAAO** item (menu me 6 button) |
+| Jaagna | Wake word — "Jarvis" / "Hlo Jarvis". HUD + command dono waise chalte hain |
+| Puri tarah band | Tray ka **Quit** (ya Ctrl+C). CPU 0. **Wake se start nahi hoga** — mic hi nahi bachega. Dobara kholne ke liye Desktop shortcut / launcher |
+
+**Sach baat:** mic ko software se band karna = "Hlo Jarvis" feature hi khatam.
+Is liye battery ka bachat "sunna band karke" nahi, bhaari kaam band karke milta
+hai (HUD/browser/stats). Step 1 ka gate + ye sleep mode = mic+gate ~0.9% core.
+
+### Tez kyun hai (speed fix 2, 4-Oct)
+
+| Kya | Pehle | Ab |
+|---|---|---|
+| "Ji, boliye" | har baar, chahe aap bol bhi rahe ho | Sirf tab jab aap **chup** ho — pehle 0.18 s suno, awaaz mili to ack chhod do (pehle hamari awaaz aapke upar chadh jaati thi) |
+| Chuppi | 1.2 s | **0.9 s** |
+| Jawab ki awaaz | 500 char (playback hi 4.3 s) | **220 char**, vaakya ke end par kata (`tts.clip_answer`) — HUD par poora jawab |
 
 ### Speaker ke do pakkaurey (Step 2)
 

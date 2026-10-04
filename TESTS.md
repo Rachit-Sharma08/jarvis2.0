@@ -1,4 +1,4 @@
-# Tests (45 suites)
+# Tests (47 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -72,7 +72,7 @@ Ek-ek karke:
 | `test_desktop.py` | Desktop shell: config/backoff, HUD `--app` command, launcher ke crash-restart ke faisle, startup ki 4 line, log ASCII, **hygiene (har source + har test file `<=200` lines)** |
 | `test_desktop_single.py` | Single instance + stale PID/lock: `pid_alive`/`http_alive` ke fake probe, 4 "CHAL/atka/stale" combination, stale PID ka apne aap hatna |
 | `test_desktop_guard.py` | App ke do "ruk jaao" pakkaure: TOOLS 30-min auto-off (+crash-safe hook) aur tray ke bina 3 koshish → `EXIT_NO_TRAY` |
-| `test_desktop_tray.py` | Tray icon ke 5 rang, menu ke 5 button, shared state, mic permission key, lock heuristic |
+| `test_desktop_tray.py` | Tray icon ke 5 rang, menu ke **6** button (naya `SO JAAO`), shared state (`asleep` bhi), mic permission key, lock heuristic |
 | `test_desktop_shortcut.py` | HUD ka backup raasta: `open_hud.plan()`, `shortcut.command()` list, Desktop path padhna, app/tray wiring — `.lnk` **kabhi banata nahi** |
 | `test_desktop_hotkey.py` | `hotkey.parse/describe` (pure) + `Hotkey` stub flow + **thread-ownership pakkaura** (`RegisterHotKey` aur pump ek hi thread) + hotkey file ka hygiene |
 | `test_desktop_playback.py` | Speaker: TTS bytes -> 16-bit PCM (`miniaudio.decode`, memory buffer), PCM -> `sounddevice.play`, output device list + filter, `--list`/`--say` (`desktop/playback_cli.py`) |
@@ -88,6 +88,8 @@ Ek-ek karke:
 | `test_wake_command.py` | **Step 2c ka flow** — fake mic + fake STT + fake playback: ack -> capture -> stt -> shared ENGINE -> awaaz; mute/lock par kuch nahi; not-heard / no-text; `via="voice"`; har stage ka time; `ui/app.js` guard |
 | `test_wake_brain.py` | Wake se **brain** tak: brain ne kuch nahi diya / saare provider fail (awaaz par reasons **na** padhe, `BRAIN_FAILED` bole) / brain crash; **ASK card par awaaz se allow nahi** (AST se gatekeeper import check); "confirm kijiye" generator rukne se **pehle** boli jaaye |
 | `test_wake_listen.py` | `listen.py` ke chaar kaam + pause: drain/warmup; **stop par to_text aur speak dono ruke**; command me hold aur baad me chhod; **MUTE hold absorb kare** (MUTE haar nahi maarta) |
+| `test_desktop_sleep.py` | **Battery: 'so jao'** - `desktop/sleep.py` ka pure guard (chhota text hi), `enter`/`wake_up`/`toggle` (`STATE.asleep` + HUD band, band na ho to bhi so jana), wake par **jaag jaana** (`callbacks.on_wake` pehle flag hatata hai), `command.run` par brain/ASK **chalta hi nahi**, tray ka item, aur do guard ki ek jaisi list |
+| `test_wake_ack.py` | **Speed fix 2** - `listen.peek_speech` (awaaz pakdi/khamoshi/khaali queue/stop par ruka; chunks **wapas** queue me), user bol raha hai to **ack skip** (drain sirf goonj phenke), khamoshi me ack boli jaaye, brain ka poora jawab HUD par + awaaz me `tts.clip_answer` (vaakya ke end par kata) |
 | `test_bat.py` | `start_prabh.bat`: CRLF + ASCII + raw-bracket rule, aur asli `cmd` par launch line sach me chalti hai ya nahi |
 
 ### `test_desktop*.py` ke helpers

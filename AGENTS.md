@@ -498,6 +498,54 @@ endpoint mat likho.
 
 ---
 
+### 8.1.2 BATTERY / SPEED KE PAKKAUREY NIYAM (4 Oct 2026) — Step 2 se 5
+
+- **"So jao" ka guard do jagah hai, dono ek jaisa honge** — `desktop/sleep.py`
+  ka `matches()` (pure) aur `wake/command.py` ka `_is_sleep()`. `wake/` ko
+  `desktop/` ka import nahi karwana (niyam), is liye code duplicate hai:
+  `tests/test_desktop_sleep.py` har `config.SLEEP_WORDS` shabd **dono** guard me
+  check karta hai. Ek jagah shabd add karke doosri chup nahi kar sakte.
+- **Chhota-text guard zaroori hai** (4 shabd se kam). "Band ho jao kya matlab
+  hai" jaisa vaakya sun kar app galti se so na jaye. Ye guard hi sleep ka asal
+  nuksan rokta hai.
+- **`sleep_mod.enter()` ka try/except crash ko so jane se nahi rokta** — HUD band
+  na bhi ho to `asleep=True` set hona chahiye (test me `hud.close` crash karke
+  check karta hai). Aise hi `wake_up()` sirf flag hatata hai; HUD/command ka kaam
+  `callbacks.on_wake()` karta hai — **jaagne ka ek hi raasta**.
+- **Sleep = mic band nahi.** Puri band sirf tray ke Quit se (CPU 0), aur uske baad
+  "Jarvis" **kaam nahi** karega. Ye user ko bata-na zaroori hai (VOICE.md me likha
+  hai) — warna "band karo" bolke phir "Hlo Jarvis" kaam na kare to bug samajh
+  nahi aayega.
+- **`drain()` peek se PEHLE chalta hai, aur peek ke baad `warmup()` nahi.**
+  Isi liye wake shabd ki goonj chhoot jaati hai. Galat order me user ki "Hlo Jarvis
+  ke saath boli hui" awaaz drain ho jayegi — `tests/test_wake_ack.py` isi liye
+  `drain_six` (6 chunk) fake use karta hai; poora `drain()` (400 chunk) hone se
+  test chup-chaap galat pass hota hai.
+- **`peek_speech()` chunk phenkta nahi, wapas daalta hai.** `queue.put_nowait`
+  full ho to break — pura data chala gaya behne se behtar hai, par ise chup-chaap
+  mat karo (test me queue full wala raasta add kar lo).
+- **Awaaz ki limit sirf awaaz par hai, HUD par nahi** (`tts.clip_answer` +
+  `VOICE_ANSWER_MAX_CHARS=220`). Brain ka poora text `HUB` events me jaata hai —
+  kati hui copy sirf `speak()` ko.
+- **`clip_answer()` vaakya ke end par katta hai**, beech se nahi; ek hi lambe
+  vaakya me `clip()` par hafta. Chhoti lineen bhi rakho (ACK, sleep ack, confirm) —
+  TTS + playback me hi seconds lagte hain.
+- **Tools ka default aur auto-off alag-alag switch hain.** `TOOLS_ENABLED_DEFAULT`
+  (`PRABH_TOOLS_ON`) = shuru me ON/OFF; `TOOLS_AUTO_OFF_MINUTES`
+  (`PRABH_TOOLS_AUTOOFF`) = timer, `0` matlab **kabhi nahi**. `Limiter._expire()`
+  `auto_off <= 0` par khud early-return karta hai — alag code mat likho. Ye setting
+  `config_tools.py` me hai (tools ke constants ka ghar), `config.py` se hi
+  re-export hota hai.
+- **`config.py` me naya constant bhoolna sabse aam galti hai.** Har nayi
+  `config_*.py` me jo cheez bani wahan **aur** `config.py` ke import list me bhi
+  joga, warna `AttributeError` test me hi pakda jaata hai (Step 5 me 3 suite isi
+  wajah se palat gaye the).
+- **`wake/` file 200 cross kare to seam `ask.py` hai** — `listen.py` mic ka hissa,
+  `ask.py` brain + speaker ka. `command.py` sirf flow rahega. Split ke baad
+  `tests/wakecmdhelp.py` ke helpers check karo: `talk()` ko dono `HUB` patch karwane
+  do, aur `gatekeeper_uses()` **dono** file scan kare (warna AST wala safety check
+  khud chup ho jaata hai).
+
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
 
 - **Tray list me app ka naam nahi, EXE ka naam dikhta hai.** Venv ka `python.exe` sirf
@@ -824,3 +872,22 @@ green**, sab file `<200`.
   `backup\run-key-20261004-083516.reg`, 6 → 7 value). Suite 222 lines cross karke
   `tests/test_desktop_login.py` me split hua. **44 suite green**, app **chalte hue**
   bhi poori suite pass (test app-state par depend nahi karti).
+- **Step 2-5 (4 Oct 2026)** - user ke 4 faisle ek round me: (1) **"so jao"
+  sleep mode** - naya `desktop/sleep.py` (pure `matches` + `enter/wake_up/toggle`),
+  `STATE.asleep`, tray me `SO JAAO` item (menu 5 -> 6), aur `command.run` me
+  `on_sleep` (sleep word par brain/ASK **chalta hi nahi**); jaagna sirf wake word
+  se - `callbacks.on_wake` pehle flag hatata hai. (2) **TOOLS default ON +
+  auto-off hata** (`TOOLS_AUTO_OFF_MINUTES=0`, setting `config_tools.py` me gayi
+  kyunki `config_desktop.py` 202 cross kar raha tha). (3) **"Hlo/Helo/Hi/Yo Jarvis"**
+  grammar me + VAD `0.012 -> 0.010` + pre-roll `0.4 -> 0.6` (trigger faisla waise
+  bhi `WAKE_WORDS` se). (4) **Tez jawab** - `listen.peek_speech()` (0.18 s me
+  awaaz hai to "Ji, boliye" **skip**, wahi 0.18 s warm-up bhi), chuppi
+  `1.2 -> 0.9 s`, awaaz `tts.clip_answer()` se **220 char** (HUD par poora jawab).
+  `wake/command.py` 219 lines cross karne par brain wala hissa `wake/ask.py` me
+  gaya (command 178). **Do asli galti:** split ke baad `wakecmdhelp.talk()`
+  sirf `command.HUB` patch kar raha tha (brain events chhoot gaye) aur
+  `gatekeeper_uses()` sirf `command.py` scan karta tha (AST safety check khud
+  chup ho gaya) - dono reference ek saath update karo. Naye suite
+  `test_desktop_sleep.py` + `test_wake_ack.py`, **47 suite green**. Docs:
+  `CHANGELOG.md` + `VOICE.md` + `TOOLS.md` + `TESTS.md` + naya rules section
+  **8.1.2**.

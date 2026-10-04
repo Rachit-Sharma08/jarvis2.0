@@ -6,6 +6,59 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Step 2-5: battery sleep, tools hamesha ON, "Hlo Jarvis", tez jawab (4 Oct 2026)
+
+User ke 4-Oct ke 4 faisle, ek hi round me. Sab kaam **app hi chalu rakhkar** hua.
+
+### Step 2 - "so jao" (sleep) + `wake/ask.py` split
+
+Mic sunna kabhi band nahi hota, is liye battery ka bachat **baaki sab** band karke
+mila. Naya `desktop/sleep.py`: pure `matches()` + `enter`/`wake_up`/`toggle`.
+Wake ke baad STT se pehle hi text se pata chalta hai ki "so jao" bola ya nahi -
+us case me brain/ASK chalta hi nahi, sirf haalat. Jaagne ka ek hi raasta: wake word
+(`desktop/callbacks.on_wake` pehle `asleep` hatata hai, phir HUD + command wahi
+purana flow). Tray me naya **SO JAAO** item (menu 5 -> 6 button).
+
+`wake/command.py` 219 lines cross kar gaya tha, is liye brain/speaker wala hissa
+nayi `wake/ask.py` me gaya (command 178, sirf flow). Do test me references badalne
+pade - `wakecmdhelp.talk()` ab dono `HUB` patch karta hai, aur
+`gatekeeper_uses()` `command.py` + `ask.py` **dono** scan karta hai (split ke baad
+wo check khud chup ho gaya tha - "approve import hi nahi dikha" wala false pass).
+
+### Step 3 - TOOLS default ON, auto-OFF hata
+
+`TOOLS_ENABLED_DEFAULT` ab ON (`.env` ke `PRABH_TOOLS_ON=0` se wapas OFF) aur
+`TOOLS_AUTO_OFF_MINUTES = 0` (pehle 30). Ye setting `config_tools.py` me gayi
+(tools ke constants ka apna ghar) - `config_desktop.py` 202 par cross kar raha tha.
+Lock par TOOLS apne aap OFF **rehta** hai; awaaz se OFF/ALLOW ka koi raasta nahi.
+
+### Step 4 - "Hlo Jarvis" pakadna
+
+Grammar me `hlo jarvis`, `helo jarvis`, `hi jarvis`, `yo jarvis` bhi daale gaye
+(English Vosk model Hinglish greeting sahi nahi chunta tha). Trigger ka faisla
+waise bhi `WAKE_WORDS` se hota hai - sab ka aakhri shabd `jarvis` hai, is liye
+trigger badalta nahi. VAD threshold **0.012 -> 0.010** (door se/dheere awaaz par
+trigger nahi ho raha tha) aur pre-roll **0.4 -> 0.6 s** (pehla shabd kat raha tha).
+Koi naya Hindi Vosk model (470 MB) nahi download kiya.
+
+### Step 5 - tez jawab
+
+1. **Ack skip** - naya `listen.peek_speech()`: wake ke baad 0.18 s suno; agar
+   user bol hi raha hai to "Ji, boliye" **nahi** bolo (pehle hamari awaaz uske upar
+   chadh jaati thi - isi liye use lagta tha "sun nahi pa raha"), aur wahi 0.18 s mic
+   ka settle + pehli awaaz pakadne ka kaam kar deta hai (warm-up alag se nahi).
+   Chunks wapas queue me daale jaate hain, warna `capture()` ko command milti hi
+   nahi. `drain()` uske **pehle** hi chalta hai taaki wake shabd ki goonj na mile.
+2. **Chuppi 1.2 s -> 0.9 s** (`PRABH_CMD_SILENCE`).
+3. **Chhoti awaaz** - brain ka poora jawab HUD par rehta hai, par awaaz
+   `config.VOICE_ANSWER_MAX_CHARS` (220) se zyada nahi boli jaati. Naya
+   `voice/tts.py` ka `clip_answer()` **vaakya ke end** par katta hai (beech se nahi;
+   ek hi lambe vaakya me `clip()` par hafta). 500 char ka playback hi 4.3 s tha.
+
+Naye suite: `test_desktop_sleep.py`, `test_wake_ack.py` - **47 suite green**.
+
+---
+
 ## Battery fix - 1 (4 Oct 2026) - Vosk khamoshi me nahi, chunk 30 ms sach me
 
 User ki shikayat: "mic har waqt on rehta hai, battery jaldi drain hoti hai". Mic
