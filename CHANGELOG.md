@@ -6,12 +6,79 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
-## T-01: tray icon taskbar me (4 Oct 2026)
+## T-01 fix: tray icon ASLI wajah invisible tha (4 Oct 2026, sha 1929028)
+
+Upar wala T-01 pura **galat diagnosis** tha. Woh likha gaya tha ki icon `^` me chhupa
+hai aur `IsPromoted` missing hai — dono galat. **Asli bug ek line ka tha.**
+
+### Asli bug
+
+`desktop/tray.py` me `run_detached(setup=self._on_setup)` diya tha. **pystray tabhi
+`visible = True` khud karta hai jab `setup` callback na mile** (`_base.py:395` —
+`setup` diya to sirf `setup(icon)` chalta hai, `else` branch `visible = True` karta
+hai). Hamara `_on_setup` sirf `log.info("tray ready")` karta tha → **icon kabhi
+visible nahi hua**.
+
+Isi se sab samjhaya aata hai:
+- `NIM_ADD` chala tha → `NotifyIconSettings` me entry banti thi → `tray_watch`
+  "tray icon taskbar me dikh raha hai" bolta tha (wo **galat** report thi).
+- `IsPromoted=1` likhne se bhi kuch nahi hua — kyunki entry ban chuki thi, sirf
+  icon invisible tha.
+- Settings me sirf "python" dikha — kyunki shell exe ka naam dikhata hai.
+- Tray menu kuch bhi karne par "band" lagta tha.
+
+Fix: `_on_setup` me `icon.visible = True` (comment ke saath, taaki koi na hata de).
+
+### Kaise pakda (3-step live debug — naya tareeka)
+
+Pehle ka pura andaza galat tha, is liye **source code ke bajaye live measurement**:
+
+1. **UIA se taskbar padha** (`.NET AutomationElement`) — `Shell_TrayWnd` ke
+   descendants me hamara icon `Name` se dikhta hai ya nahi, aur overflow flyout
+   (`TopLevelWindowForOverflowXamlIsland`) khol kar uske andar. Pehle: na promoted
+   me, na overflow me.
+2. **raw Win32 probe** (pystray bilkul nahi, sirf `ctypes`) — `NIM_ADD` ka **BOOL
+   return `1`** aaya (shell ne maan liya) aur icon overflow me **dikha**. Is se
+   pichla "GetRect is PC par kaam nahi karta" wala nivaaj bhi confirm hua.
+3. **bare pystray probe** (app ke bina) — `PYSTRAY-PROBE` overflow me dikha. To
+   pystray theek hai, Win32 theek hai → farq **hamare app ke setup** me hai.
+   Hamara asli `desktop.tray.Tray` class chala kar dekha → wo nahi dikha.
+   `print` se `visible = False` confirm hua.
+
+Uske baad `_base.py:395` padha aur fix mil gaya.
+
+### Live proof
+
+App restart → promoted tray me `Jarvis - band` dikha (UIA se verify). Pehle kabhi
+nahi tha.
+
+### S6 step 6: base `python.exe` — try kiya, chhoda
+
+`child_python()` ko `D:\Python312\python.exe` par pin karne se child
+`ModuleNotFoundError: No module named 'uvicorn'` se mar gaya (base venv me
+`include-system-site-packages = false`). **Asli masla interpreter nahi tha** —
+wapas venv `sys.executable`. Docstring me wajah likhi.
+
+### Baaki
+
+- `tray_watch.py` ke dono message ab "lagta hai" jaisa shabd use karte hain —
+  registry entry **register** hona proof hai, **visible** hona nahi.
+- Naya regression test `tests/test_desktop.py::test_tray_visible`.
+- `AGENTS.md` 8.2 me 4 naye bullet (asli bug + UIA tareeka + ctypes dtype traps).
+- **48 suite green.**
+
+---
+
+## T-01: tray icon taskbar me (4 Oct 2026) — ye diagnosis GALAT thi
 
 Roadmap ka pehla task. Owner ne confirm kiya ki icon `^` (hidden icons) me **nahi**
 dikhta — matlab pehle ka "overflow me chhupa hai" wala andaza adhoora tha.
 
-### Asli kya mila (3 tareeke se prove kiya)
+> ⚠️ **Neeche ka poora section galat diagnosis hai** — asli bug `visible=True` tha
+> (upar wala section padho). Yahan jo likha hai wo "registry se faisla" wala galat
+> raasta document karta hai, is liye rakha hai taaki dobara na ho.
+
+### Asli kya mila (3 tareeke se prove kiya — ye teen galat the)
 
 1. **`Shell_NotifyIconGetRect` is PC par kaam hi nahi karta.** Sahi hwnd + sahi uid
    ke saath bhi `E_INVALIDARG (0x80070057)`. Doosre process se bhi same. Pehle isi

@@ -599,6 +599,34 @@ endpoint mat likho.
   ⚠️ Registry entry **stale** bhi rehti hai (`Stop-Process -Force` par shell icon
   hata nahi) — is liye sirf entry dekhna "icon abhi hai" ka proof nahi, `IsPromoted`
   + owner ki aankh asli hai.
+- **⚠️⚠️ 4-Oct ko ASLI BUG mila — pehle 3 din hum galat source dekh rahe the.**
+  `desktop/tray.py` me `run_detached(setup=self._on_setup)` tha. **pystray tabhi
+  `visible = True` khud karta hai jab `setup` callback na mile** (`_base.py:395` —
+  `setup` diya to sirf `setup(icon)` chalta hai). `_on_setup` sirf
+  `log.info("tray ready")` karta tha → icon **kabhi visible nahi hua** → `NIM_ADD`
+  chala tha (registry entry banti thi, `tray_watch` "dikh raha hai" bolta tha) par
+  shell use **render hi nahi** karta tha. Fix: `_on_setup` me `icon.visible = True`.
+  **Niyam:** `setup=` diye to us callback me `icon.visible = True` likhna
+  **zaroori** hai — warna pystray chup-chaap invisible icon chhod deta hai.
+- **⚠️ Registry entry "visible" ka PROOF nahi hai — `desktop/tray_watch.py` ka log
+  guess hai.** Entry banna matlab shell ne icon **register** kiya (`NIM_ADD` chal
+  chuka), yehi invisible icon par bhi hota hai. `IsPromoted=1` likhwane se bhi
+  koi fark nahi pada (backup ke saath likha, phir bhi icon invisible raha). Asli
+  sach **owner ki aankh** hai; program se verify karna ho to **UIA** se taskbar
+  padho (`Shell_TrayWnd` ka `Shell_TrayWnd`/`TopLevelWindowForOverflowXamlIsland`
+  window, `AutomationElement` ke `Name` = tooltip). Yehi method se 4-Oct ko bug
+  pakda gaya — `probe_overflow2.ps1` (`%TEMP%\opencode`) me hai.
+- **Live debug ka asli tareeka (3-step, isi bug ke liye):** (1) raw Win32 probe
+  (pystray nahi) se `NIM_ADD` ka **BOOL return** dekho — `1` matlab shell ne maan
+  liya; (2) UIA se overflow flyout khol kar naam padho — icon dikhta hai ya nahi;
+  (3) bare pystray alag chala kar same check — agar woh dikhe par hamara na dikhe,
+  to galti **hamare app ke setup** me hai. Ye teen step isi bug ko 3 step me pakad
+  gaye the (`probe_raw_tray.py`, `probe_pystray.py`, `probe_ourtray.py`).
+- **Probe me `ctypes` ka dtype chhootna mat bhoolna** (throwaway scripts me 4 baar
+  laga): `GetModuleHandleW.restype` `c_void_p` (default `c_int` → `CreateWindowExW`
+  ka hInstance overflow), `CreateWindowExW`/`DefWindowProcW` ke saare `argtypes`
+  (warna `WNDPROC` callback me `NameError`/`OverflowError` aata hai), `WS_POPUP`
+  `ctypes.wintypes` me **nahi** hai (`0x80000000` likh do).
 - **HUD ke teen raasta ek hi function se:** `desktop/open_hud.py`. Server band ho to crash
   karne ke bajaye message box (pythonw me stdout nahi hota, is liye print kaam nahi karta).
 - **PowerShell quoting JS me mat todo.** `.lnk` banane wala `.ps1` **alag file** rakho aur
