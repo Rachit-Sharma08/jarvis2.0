@@ -19,14 +19,23 @@ turant padhne ko mile) **aur** `logs/desktop.out` me (pythonw me koi console
 hota hi nahi, to traceback wahin se padha jaayega).
 """
 
+import os
 import subprocess
 import sys
 import threading
 import time
 from pathlib import Path
 
-import config
-from log_setup import ascii_text, get_logger
+# Windows login par Run key se chalu hone ka cwd `C:\Windows\System32` hota
+# hai, is liye `-m desktop.launcher` wahan se import hi nahi hota (ModuleNotFound).
+# Is liye BASE_DIR ko khud `sys.path` me daal do — script se chalao ya module
+# se, dono me kaam kare. `config.py` me bhi isi wajah se `# noqa: E402` hai.
+BASE = Path(__file__).resolve().parent.parent
+if str(BASE) not in sys.path:
+    sys.path.insert(0, str(BASE))
+
+import config  # noqa: E402
+from log_setup import ascii_text, get_logger  # noqa: E402
 
 log = get_logger("launcher")
 
@@ -160,6 +169,10 @@ def supervise(max_restarts: int = None, window: int = None) -> int:
 
 
 def main() -> int:
+    # Login par cwd System32 hota hai. Child ko `-m desktop.app` se chalaate
+    # hain, aur *uska* bhi apna cwd chahiye — warna child bhi "module not
+    # found" mar jaata hai. Yahi pehla fix tha jo reh gaya tha.
+    os.chdir(config.BASE_DIR)
     config.ensure_workspace()
     return supervise()
 

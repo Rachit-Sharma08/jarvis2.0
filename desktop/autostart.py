@@ -1,9 +1,15 @@
-"""Windows login par auto-start — `HKCU\\...\\Run` me ek value (Phase 5 Step 3).
+r"""Windows login par auto-start — `HKCU\\...\\Run` me ek value (Phase 5 Step 3).
 
-Value: `pythonw.exe -m desktop.launcher` — supervisor wahi hai jo
+Value: `pythonw.exe D:\prabh\desktop\launcher.py` — supervisor wahi hai jo
 `start_prabh.bat` chalaata hai, bas pythonw se. Is liye login par koi black
 console nahi aata, aur crash `logs/desktop.out` me padha jaata hai
 (`desktop/launcher.py` ka `_tee`). Haath se chalane ka raasta waise hi hai.
+
+**`-m` mat likhna.** Windows Run key ka cwd `C:\Windows\System32` hota hai, aur
+wahin se `-m desktop.launcher` import hi nahi hota (ModuleNotFoundError) — app
+chup-chaap mar jaata. File ka path likhne se launcher apna `BASE_DIR` khud
+`sys.path` me daal leta hai, aur `main()` cwd bhi theek kar deta hai (child ko
+bhi chahiye).
 
 Teen niyam, is file me chipke:
 
@@ -42,16 +48,26 @@ def pythonw() -> str:
     return str(exe if exe.is_file() else Path(sys.executable))
 
 
-def command(exe: str = "", target: str = "") -> list:
+def script() -> Path:
+    """`desktop/launcher.py` ka full path. **Script** `-m` se nahi, file se:
+    Windows login par Run key ka cwd `C:\Windows\System32` hota hai, aur wahin
+    se `-m desktop.launcher` import hi nahi hota (ModuleNotFoundError) — isi
+    liye login par app chup-chaap mar jaata. `launcher.py` apne aap BASE_DIR ko
+    `sys.path` me daalta hai, is liye file se chalane se bhi wahi supervisor
+    chalta hai (ek hi raasta)."""
+    return Path(config.BASE_DIR) / config.AUTOSTART_SCRIPT
+
+
+def command(exe: str = "", script_path: Path = None) -> list:
     """Run value ke liye argv. Test yahi list check karta hai — koi process
     nahi chalta."""
-    return [exe or pythonw(), "-m", target or config.AUTOSTART_TARGET]
+    return [exe or pythonw(), str(script_path or script())]
 
 
-def run_value(exe: str = "", target: str = "") -> str:
+def run_value(exe: str = "", script_path: Path = None) -> str:
     """-> wo ek string jo registry me jaati hai. Path me space ho to `list2cmdline`
     khud quote kar deta hai — haath se quote karna mat karo."""
-    return subprocess.list2cmdline(command(exe, target))
+    return subprocess.list2cmdline(command(exe, script_path))
 
 
 def _winreg():

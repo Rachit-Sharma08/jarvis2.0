@@ -85,7 +85,7 @@ prabh/
   desktop/hotkey.py   -> global hotkey (Ctrl+Alt+S), sirf ctypes + RegisterHotKey
   desktop/playback.py -> Step 2 speaker: TTS bytes -> miniaudio PCM -> sounddevice
   desktop/open_hud.py -> shortcut + hotkey dono ka EK raasta (server zinda -> HUD)
-  desktop/autostart.py -> Windows login par chalu (HKCU Run, pythonw -m desktop.launcher);
+  desktop/autostart.py -> Windows login par chalu (HKCU Run, pythonw desktop/launcher.py);
                            sirf main() likhta hai, module me koi registry call nahi
   desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Jarvis HUD" .lnk banao/hatao
   wake/worker.py     -> Step 1 ka module-level raasta (poori app me EK worker)
@@ -105,7 +105,7 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (43 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
+  tests/ (44 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
 ```
 
@@ -296,7 +296,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 43 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 44 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -496,7 +496,14 @@ endpoint mat likho.
   (`python -m desktop.autostart install`). Module me koi module-level registry call
   **nahi** — test me har function ka `reg` fake (`FakeReg`) deta hai, asli registry kabhi
   nahi chhooti. Quote ka kaam `subprocess.list2cmdline` karta hai, haath se `"` mat lagao.
-  Value `pythonw -m desktop.launcher` hai (black console nahi); crash `logs/desktop.out`
+- **⚠️ Run key ka cwd `C:\Windows\System32` hota hai — auto-start me `-m module` KABHI
+  mat likho.** Wahan se `import config` fail hota hai (ModuleNotFoundError) aur app har
+  login par **chup-chaap** mar jaati hai (pythonw me stdout hota hi nahi, is liye crash
+  bhi nahi dikhta). Sahi raasta: value me **file ka path** (`pythonw desktop/launcher.py`),
+  aur `desktop/launcher.py` khud `BASE_DIR` `sys.path` me daalta hai + `main()` me
+  `os.chdir(config.BASE_DIR)` karta hai (child `desktop.app` ko bhi sahi cwd chahiye).
+  Test: `tests/test_desktop_login.py` launcher ko System32 par load karke prove karta hai.
+  Value `pythonw desktop/launcher.py` hai (black console nahi); crash `logs/desktop.out`
   me bachta hai, is liye "crash chup mat ho" wala niyam bhaala jaata hai.
 
 ---
@@ -522,11 +529,17 @@ endpoint mat likho.
   nahi). Teen naye suite: `test_wake_command.py` (flow), `test_wake_brain.py` (brain + ASK),
   `test_wake_listen.py` (mic/pause) + `tests/wakecmdhelp.py` (fakes). Record
   `CHANGELOG.md`, detail `VOICE.md`.
-- **Phase 5 Step 3 ka CODE ho gaya (4 Oct 2026) — 43 suite green.** Naya `desktop/autostart.py`
-  (`python -m desktop.autostart install|remove|status`), value `pythonw -m desktop.launcher`,
-  `AUTOSTART_NAME` ab `ASSISTANT_NAME` se banta hai, launcher ka dead `_NO_WINDOW` flag use
-  me aaya. **Registry me abhi kuch nahi likha** — entry sirf tab bani jab user "haan" bole
-  (`reg export` backup → sirf ek value → entry-count proof). Face/trust/learn/maker baad me.
+- **Phase 5 Step 3 POORA ho gaya + entry chalu (4 Oct 2026) — 44 suite green.** Naya
+  `desktop/autostart.py` (`python -m desktop.autostart install|remove|status`), value
+  `pythonw desktop\launcher.py`, `AUTOSTART_NAME` ab `ASSISTANT_NAME` se banta hai.
+  Registry me `Jarvis` value likhi gayi (`reg export` backup
+  `backup\run-key-20261004-083516.reg`, Run key 6 → 7 value, baaki shaant).
+  **Asli bug pakda:** Run key ka cwd `C:\Windows\System32` hai, wahan se `-m module`
+  ModuleNotFound mar jaata tha — app chup-chaap marta. Ab value me file ka path +
+  `launcher.py` khud `BASE_DIR` `sys.path` me daalta hai aur `main()` me `os.chdir`
+  karta hai (child ko bhi chahiye). Proof: `Start-Process ... -WorkingDirectory
+  C:\Windows\System32` se asli launch → `GET /` 200, startup ki 4 line, tray register.
+  Test `tests/test_desktop_login.py`. Face/trust/learn/maker baad me.
 - **Fix round 4 ho gaya (2 Oct 2026)** — tray entry `IsPromoted=1` (backup ke saath), Desktop
   `Sunday HUD` shortcut + global hotkey `Ctrl+Alt+S`, dono ka ek raasta
   (`desktop/open_hud.py`). Record `CHANGELOG.md` me.
@@ -748,7 +761,7 @@ green**, sab file `<200`.
   "chal raha hai / nahi" par depend mat karo. **39 suite green**, sab file `<=200`.
 - **Phase 5 Step 3 (4 Oct 2026)** — Windows login par auto-start. Naya
   `desktop/autostart.py` (`install|remove|status`), value
-  `pythonw -m desktop.launcher` (login par koi black console nahi; crash
+  `pythonw desktop/launcher.py` (login par koi black console nahi; crash
   `logs/desktop.out` me bachta hai). **Ek asli bhooli hui baat pakdi:** Step 1 me
   naam "Prabh" → "Jarvis" karte waqt `config_desktop.AUTOSTART_NAME = "Prabh"`
   hard-code reh gaya tha — ab `ASSISTANT_NAME` se banta hai. Doosra: launcher ka
@@ -756,3 +769,14 @@ green**, sab file `<200`.
   `creationflags` me lag gaya hai, warna pythonw ke baad child par console chhoot
   jaata. Test me `FakeReg` (dict-based nakli `winreg`) + `main()` ka CLI dispatch
   patch karke check — **asli registry kabhi nahi chhoti**. **43 suite green**.
+- **Step 3 ka asli bug + entry (4 Oct 2026)** — value pehle `-m desktop.launcher` thi,
+  jo **chalti hi nahi**: Run key ka cwd `C:\Windows\System32` hota hai aur wahan se
+  `import config` fail hota hai (ModuleNotFoundError) — har login par app chup-chaap
+  mar jaati, pythonw me crash dikhta hi nahi. Do fix: value me **file ka path**, aur
+  `desktop/launcher.py` me `BASE_DIR` → `sys.path` + `main()` me `os.chdir` (child
+  `desktop.app` ko bhi sahi cwd chahiye). Proof **asli** launch se liya —
+  `Start-Process -WorkingDirectory C:\Windows\System32` → `GET /` 200, startup ki 4
+  line, tray register. Registry me `Jarvis` value likhi (`reg export` backup
+  `backup\run-key-20261004-083516.reg`, 6 → 7 value). Suite 222 lines cross karke
+  `tests/test_desktop_login.py` me split hua. **44 suite green**, app **chalte hue**
+  bhi poori suite pass (test app-state par depend nahi karti).

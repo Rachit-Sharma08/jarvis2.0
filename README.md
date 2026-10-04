@@ -161,9 +161,12 @@ On karna ho to (ye **sirf ek value** likhta hai):
 ```
 
 - Value ka naam `Jarvis` hai, aur value khud ye chalati hai:
-  `D:\prabh\.venv\Scripts\pythonw.exe -m desktop.launcher` — wahi supervisor
-  jo `start_prabh.bat` chalaata hai. `pythonw` ki wajah se login par koi
-  black console nahi aata.
+  `D:\prabh\.venv\Scripts\pythonw.exe D:\prabh\desktop\launcher.py` — wahi
+  supervisor jo `start_prabh.bat` chalaata hai. `pythonw` ki wajah se login par
+  koi black console nahi aata.
+- Value me `-m desktop.launcher` **nahi** likha jaata: Windows Run key par cwd
+  `C:\Windows\System32` hota hai aur wahan se module import hi nahi hota. File
+  ka path likhne se app sahi chalti hai.
 - Crash par kuch dikhta nahi hai, par `logs\desktop.out` me likha hota hai —
   wahi jagah, jahan pehle bhi tha.
 - Wapas sab theek karna ho to Windows ka apna **Task Manager → Startup** tab
@@ -309,7 +312,7 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `desktop/open_hud.py` | Shortcut **aur** hotkey dono ka ek hi raasta: server zinda hai to HUD khulo |
 | `desktop/shortcut.py`, `hud_shortcut.ps1` | Desktop ka "Jarvis HUD" `.lnk` banao / hatao (`WScript.Shell`) |
 | `desktop/single.py` | Ek hi instance (doosra `"already running"` band ho jaata hai) |
-| `desktop/autostart.py` | Login par khud chalna (`HKCU\...\Run`, `pythonw -m desktop.launcher`) |
+| `desktop/autostart.py` | Login par khud chalna (`HKCU\...\Run`, `pythonw desktop\launcher.py`) |
 | `desktop/launcher.py`, `playback.py`, `playback_cli.py` | Supervisor (crash par restart) + speaker (TTS bytes → sounddevice) |
 | `desktop/state.py`, `micperm.py`, `lockwatch.py` | Ek shared haalat, Windows mic permission check, lock ka pata |
 | `wake/worker.py`, `session.py` | Wake word: module ka ek raasta + uska asli loop (thread, cooldown, mute) |

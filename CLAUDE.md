@@ -18,7 +18,7 @@ kaam kar sakta hai.
 ## 2. Ab ka haal (3 Oct 2026)
 
 - Git **clean**, commit `07161c0` (GitHub par push ho chuka hai).
-- **43 test suite green** (`SUITE GREEN`). Sab standalone, koi real API call nahi.
+- **44 test suite green** (`SUITE GREEN`). Sab standalone, koi real API call nahi.
 - App chalta hai: `GET http://127.0.0.1:8000/` = 200, tray + HUD live.
 - Phase 5 **Step 1 (Vosk wake word)**, **Step 2a** (command capture + WAV),
   **Step 2b** (speaker `desktop/playback.py`) aur **Step 2c** (poora command:
@@ -52,7 +52,7 @@ if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
 - Exit code **0** hi asli pass hai. `print("FAIL: koi nahi")` matlab **sab pass**.
-- 3–5 min leti hai (43 suite) — `Start-Job` + result file wala tarika `TESTS.md` me
+- 3–5 min leti hai (44 suite) — `Start-Job` + result file wala tarika `TESTS.md` me
   hai. Har naye shell me `Start-Job` mar jaata hai, is liye **detached** process chalao
   (`Start-Process powershell -File <script> -WindowStyle Hidden`).
 
@@ -98,8 +98,9 @@ me provider ki list badlo, engine me kabhi hard-code mat likho.
   (2 Oct ki ye line ab purani hai.)
 - ❌ **Awaaz se tool nahi chalta** — tool sirf chat se. Aur ALLOW hamesha screen par
   button se hoga, awaaz se kabhi nahi.
-- ❌ **Auto-start ki registry value abhi likhi nahi gayi** — code taiyar hai
-  (`python -m desktop.autostart install`), entry tab bani jab owner ne "haan" bola.
+- ✅ **Auto-start chalu hai** — `HKCU\...\Run` me `Jarvis` value likhi hai (4 Oct):
+  `pythonw.exe D:\prabh\desktop\launcher.py`. Band karna ho:
+  `python -m desktop.autostart remove`.
 - ❌ **Prabh mode band** — code maujood hai, `PRABH_SUNDAY_ONLY=1` se off.
 - ❌ Cartesia ki female voice id nahi mili → wo provider skip ho jaati hai.
 - ❌ **Cartesia voice id** (`CARTESIA_VOICE_*`) abhi khaali hai.
@@ -130,8 +131,11 @@ me provider ki list badlo, engine me kabhi hard-code mat likho.
 16. **Test file 200+ ho to split karo**, aur helper **module level** par rakh —
     warna doosre function me `NameError` se chup-chaap fail ho jaata hai.
 17. **Auto-start sirf `desktop/autostart.py`** likhta hai, aur sirf `main()` se
-    (`python -m desktop.autostart install`). Registry value tabhi bane jab owner
-    ne "haan" bola — pehle `reg export` backup, phir sirf ek value.
+    (`python -m desktop.autostart install`). Registry change se pehle `reg export`
+    backup, phir sirf ek value.
+18. **Auto-start me `-m module` kabhi mat likho** — Run key ka cwd
+    `C:\Windows\System32` hai, wahan se import fail hota hai aur app chup-chaap
+    mar jaati hai. File ka path likho (`pythonw desktop\launcher.py`).
 
 Poora niyam → **`AGENTS.md`** (section 3.1–3.4, 8, 8.1, 8.2).
 
@@ -144,7 +148,7 @@ Poora niyam → **`AGENTS.md`** (section 3.1–3.4, 8, 8.1, 8.2).
 | **2b** | Speaker — TTS bytes bajana (`desktop/playback.py`) | **ho gaya** (3 Oct) |
 | **2c** | Glue: "Ji, boliye" → mic drain + warm-up → capture → Groq STT → `ENGINE` → HUD events → awaaz me jawab | **ho gaya** (3 Oct) |
 | **2** | Der wala fix: TTS cache + warm-up deadline + 1.2 s chuppi | **ho gaya** (3 Oct) |
-| 3 | Auto-start (HKCU Run) — `desktop/autostart.py` taiyar | **sirf jab owner "haan" bole** (value abhi nahi likhi) |
+| **3** | Auto-start (HKCU Run) — `desktop/autostart.py`, value `pythonw desktop\launcher.py` | **ho gaya + entry chalu** (4 Oct) |
 | — | Face / trust / learn / maker | aage, decided nahi |
 
 **Step 2c me dhyan rakhne ki baat:** `Session._fire()` `on_wake` ko wake thread par
@@ -179,7 +183,7 @@ desktop/           launcher, app, tray, state, hud_window, hotkey, open_hud,
 wake/              worker (module-level ek hi worker) + session, audio, model,
                    detect, phrase (Step 1) + utterance, wav (Step 2a)
 ui/                index.html + hud_*.js + hud_*.css
-tests/             43 suite + poolhelp.py / desktophelp.py / wakehelp.py / hud_*.py
+tests/             44 suite + poolhelp.py / desktophelp.py / wakehelp.py / hud_*.py
 ```
 
 ## 11. Privacy warning

@@ -11,7 +11,7 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 Har login par Jarvis khud chalega - double-click nahi. `HKCU\...\Run` me **ek**
 value, is liye admin/UAC nahi chahiye.
 
-**Value kya hai:** `D:\prabh\.venv\Scripts\pythonw.exe -m desktop.launcher`
+**Value kya hai:** `D:\prabh\.venv\Scripts\pythonw.exe D:\prabh\desktop\launcher.py`
 
 Wahi supervisor jo `start_prabh.bat` chalaata hai, bas `pythonw` se - login par
 koi black console nahi aata. Crash phir bhi `logs/desktop.out` me padha jaata
@@ -21,15 +21,51 @@ hai (`launcher` ka `_tee`), matlab "crash chup mat ho" wala niyam bhaala gaya.
 
 | File | Kya |
 |---|---|
-| `desktop/autostart.py` (naya) | `value_name` / `pythonw` / `command` / `run_value` / `read` / `enabled` / `install` / `remove` / `status` / `main` |
-| `config_desktop.py` | `AUTOSTART_NAME` ab `ASSISTANT_NAME` se banta hai (pehle `"Prabh"` hard-code tha - naam badle to bhool gaye the) + naya `AUTOSTART_TARGET` |
-| `config.py` | `AUTOSTART_TARGET` re-export |
-| `desktop/launcher.py` | `_NO_WINDOW` constant **dead** tha (line 63) - ab `Popen(creationflags=)` me use ho raha hai |
+| `desktop/autostart.py` (naya) | `value_name` / `pythonw` / `script` / `command` / `run_value` / `read` / `enabled` / `install` / `remove` / `status` / `main` |
+| `config_desktop.py` | `AUTOSTART_NAME` ab `ASSISTANT_NAME` se banta hai (pehle `"Prabh"` hard-code tha - naam badle to bhool gaye the) + naya `AUTOSTART_SCRIPT` |
+| `config.py` | `AUTOSTART_SCRIPT` re-export |
+| `desktop/launcher.py` | (a) `_NO_WINDOW` constant **dead** tha - ab `Popen(creationflags=)` me use; (b) `BASE_DIR` khud `sys.path` me + `main()` me `os.chdir` (neeche padho) |
 | `tests/test_desktop_autostart.py` (naya) | `FakeReg` (dict-based nakli `winreg`) - **asli registry kabhi nahi chhooti** |
+| `tests/test_desktop_login.py` (naya) | Foreign-cwd ka **asli** pakkaura (launcher ko System32 par load karke) |
 
 Ek hi raasta: value wahi supervisor chalaati hai jo haath se. Quote ka kaam
 `subprocess.list2cmdline` karta hai (path me space ho to khud `"` lagata hai) -
 haath se quote karna kisi aur jagah nahi.
+
+**2. Sabse bada asli bug: Run key ka cwd `C:\Windows\System32` hota hai**
+
+Pehle value `-m desktop.launcher` thi. Wo **chalti hi nahi** - par chup-chaap:
+
+```
+D:\prabh\.venv\Scripts\python.exe: Error while finding module specification
+for 'desktop.launcher'
+```
+
+Wahan se `import config`/`desktop` fail hota hai, yaani har login par app mar
+jaati - bina tray, bina HUD, bina crash message (pythonw me stdout hota hi
+nahi). Do fix:
+
+1. Value me `-m module` ki jagah **file ka path** (`desktop/launcher.py`).
+2. `desktop/launcher.py` khud apna `BASE_DIR` `sys.path` me daalta hai
+   (`import config` se **pehle**), aur `main()` me `os.chdir(config.BASE_DIR)`
+   karta hai - **child** (`python -m desktop.app`) ko bhi sahi cwd chahiye,
+   warna wahi ModuleNotFound mar jaata.
+
+Yeh sirf "test me theek tha" se nahi pakda - asli Windows jaisa launch
+`Start-Process ... -WorkingDirectory C:\Windows\System32` se chala kar proof
+liya (us raaste ka bhi ek test bana: `tests/test_desktop_login.py`).
+
+**3. Entry chalu kar di (owner ke "haan" par)**
+
+- Pehle `reg export` backup: `backup\run-key-20261004-083516.reg` (1854 byte).
+- Phir **sirf ek** value: `python -m desktop.autostart install`.
+- Proof: Run key me value **6 → 7**, nayi value ka naam `Jarvis`. Baaki 6
+  (OneDrive, Teams, Hermes x2, Microsoft.Lists, Edge) **shaant**.
+- **Login jaisa launch pakda** (`pythonw.exe desktop\launcher.py`, cwd
+  `C:\Windows\System32`): supervisor + dono child zinda, `GET /` = **200**,
+  log me startup ki chaar line (`server up` / `tray started` / `HUD ready` /
+  `wake: sun raha hai (jarvis)`), mic khula, `Ctrl+Alt+S` hotkey chalu, aur
+  tray icon register (`Jarvis2239513293984SystemTrayIcon`).
 
 **Teeno niyam jo is module me chipke hain**
 
@@ -37,11 +73,11 @@ haath se quote karna kisi aur jagah nahi.
 2. Module me **koi module-level registry call nahi** - sirf `main()` se
    (`python -m desktop.autostart install`). Test me har function ka `reg`
    fake deta hai, is liye suite asli registry chhooti hi nahi.
-3. **Value abhi tak likhi nahi gayi.** Ye sirf tayyar code + test hai; entry
-   tabhi bani jab owner ne "haan" bola (us raaste me pehle `reg export` backup,
-   phir sirf ek value, phir entry-count ka proof).
+3. Wapas karna ho to `python -m desktop.autostart remove` (ya Task Manager →
+   Startup me `Jarvis` disable).
 
-**43 suite green**, sab file `<=200`.
+**44 suite green**, sab file `<=200` (`test_desktop_autostart.py` 222 lines ho
+gaya tha, is liye `test_desktop_login.py` me launcher wala hissa alag kiya).
 
 ---
 

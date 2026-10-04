@@ -154,11 +154,14 @@ AUTOSTART_RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
 # Registry value ka naam bhi naam se banta hai (Step 1 ka niyam) - "Prabh" ya
 # "Sunday" dobara mat likho.
 AUTOSTART_NAME = ASSISTANT_NAME
-# Login par kya chalta hai: **supervisor** (wo child `desktop.app` khud
-# banata hai). `pythonw` se chalta hai, is liye koi black console nahi aata;
-# crash `logs/desktop.out` me padha jaata hai. Haath se chalane ka raasta alag
-# hai - `start_prabh.bat` (console khula, crash turant screen par).
-AUTOSTART_TARGET = "desktop.launcher"
+# Login par kya chalta hai: **supervisor** (`BASE_DIR` se relative). `pythonw`
+# se chalta hai, is liye koi black console nahi aata; crash
+# `logs/desktop.out` me padha jaata hai. Haath se chalane ka raasta alag hai -
+# `start_prabh.bat` (console khula, crash turant screen par).
+# ⚠️ Ye path `-m module` nahi hai: Run key ka cwd `C:\Windows\System32` hota
+# hai aur wahan se `-m` import hota hi nahi. `desktop/launcher.py` apna BASE_DIR
+# khud `sys.path` me daalta hai, is liye file se chalna safe hai.
+AUTOSTART_SCRIPT = "desktop/launcher.py"
 
 # "Let desktop apps access your microphone" ka master switch. Value = Deny
 # hua to sounddevice device khol hi nahi paayega.

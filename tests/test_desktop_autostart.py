@@ -97,15 +97,18 @@ def test_command():
     print("[autostart] command")
     cmd = autostart.command()
     truthy("pythonw hi", Path(cmd[0]).name == "pythonw.exe")
-    check("module flag", cmd[1], "-m")
-    check("supervisor hi", cmd[2], config.AUTOSTART_TARGET)
-    check("target launcher hai", config.AUTOSTART_TARGET, "desktop.launcher")
-    # Haath se chalane ka raasta alag: .bat pythonw se nahi, python se.
-    check("run value ek string", autostart.run_value(), cmd[0] + " -m " + cmd[2])
+    check("argv sirf 2 hisse", len(cmd), 2)
+    check("launcher.py ka path", cmd[1], str(autostart.script()))
+    truthy("file maujood", autostart.script().is_file())
+    check("config se bana", config.AUTOSTART_SCRIPT, "desktop/launcher.py")
+    # `-m` se chalu karne ka koi raasta nahi — Run key ka cwd System32 hota
+    # hai aur wahan se `-m` import hi nahi hota (Step 3 ka asli bug).
+    check("-m nahi", "-m" in autostart.run_value(), False)
+    check("run value ek string", autostart.run_value(), cmd[0] + " " + cmd[1])
     # Space wale path me quote khud lagta hai.
     quoted = autostart.run_value(exe=r"D:\My Drive\pythonw.exe")
     check("quote khud laga", quoted,
-          '"D:\\My Drive\\pythonw.exe" -m ' + config.AUTOSTART_TARGET)
+          '"D:\\My Drive\\pythonw.exe" ' + cmd[1])
     show(quoted)
 
 
