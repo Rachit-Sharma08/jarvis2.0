@@ -38,12 +38,17 @@ REG_PATH = r"Control Panel\NotifyIconSettings"
 VISIBLE, HIDDEN, MISSING = "visible", "hidden", "missing"
 
 MESSAGE = {
-    VISIBLE: "tray icon taskbar me dikh raha hai - theek hai",
-    HIDDEN: "tray icon shell me hai par ^ (hidden icons) me chhupa hai - taskbar "
-            "ke ^ par click karke is icon par 'Always show icons' karo, warna "
-            "app band karne ka koi raasta nahi dikhega",
-    MISSING: "tray icon shell me nahi hai (registry entry hi nahi mili) - "
-             "Ctrl+Alt+S se HUD kholo, ya app restart karo",
+    # NOTE (4-Oct): ye **guess** hai, proof nahi. `NotifyIconSettings` entry
+    # banna matlab shell ne icon **register** kiya - yehi `NIM_ADD` ke baad
+    # hota hai, chahe icon invisible bhi ho. `pystray` ka `visible=False` bug
+    # pakda tha, tab bhi ye yahan "dikh raha hai" bol raha tha. Is liye dono
+    # message me "lagta hai" jaisa shabd hai - sach owner ki aankh par hai.
+    VISIBLE: "tray icon shell me registered hai aur promoted bhi - taskbar me "
+             "dikhta hua hai (pakka nahi, owner dekh le)",
+    HIDDEN: "tray icon shell me registered hai par ^ (hidden icons) me hai - "
+            "taskbar ke ^ par click karke is icon par 'Always show icons' karo",
+    MISSING: "tray icon shell me registered nahi hai (registry entry hi nahi "
+             "mili) - Ctrl+Alt+S se HUD kholo, ya app restart karo",
 }
 
 

@@ -185,7 +185,7 @@ def test_launcher_no_console():
     src = Path(launcher.__file__).read_text(encoding="utf-8")
     truthy("creationflags lagi", "creationflags=_NO_WINDOW" in src)
     check("flag value", launcher._NO_WINDOW, 0x08000000)
-    check("child wahi python", launcher.child_command()[0], sys.executable)
+    check("child wahi python", launcher.child_command()[0], launcher.child_python())
 
 
 for fn in (test_name, test_command, test_cycle, test_errors, test_cli,

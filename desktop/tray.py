@@ -141,6 +141,12 @@ class Tray:
 
     # ---- item callbacks (pystray thread) ----
     def _on_setup(self, icon) -> None:
+        # ZAROORI: pystray tabhi `visible = True` khud karta hai jab `setup`
+        # callback na diya ho. `setup` diya to sirf `setup(icon)` chalta hai -
+        # icon **invisible** reh jaata hai: `NIM_ADD` chala tha (registry entry
+        # banti hai) par shell use taskbar me render **nahi** karta.
+        # Isi wajah se tray menu kuch bhi karne par band lagta tha.
+        icon.visible = True
         log.info("tray ready")
 
     def _toggle_mute(self, icon, item) -> None:

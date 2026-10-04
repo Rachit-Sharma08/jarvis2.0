@@ -68,7 +68,9 @@ def test_hud_window():
 
 def test_launcher():
     print("LAUNCHER (crash restart)")
-    check("child wahi python", launcher.child_command()[0], sys.executable)
+    check("child wahi python (base nahi - S6 step 6 try hua, chhoda)",
+          launcher.child_command()[0], sys.executable)
+    check("child python venv wala hai", ".venv" in launcher.child_python(), True)
     check("child desktop.app", launcher.child_command()[2], "desktop.app")
     # next_step pure function hai — asli child kabhi spawn nahi hota
     q, r = config.EXIT_QUIT, config.EXIT_RESTART
@@ -156,8 +158,38 @@ def test_hygiene():
         check(f"tests/{path.name} <=200 lines ({lines})", lines <= 200, True)
 
 
+def test_tray_visible():
+    """REGRESSION (4-Oct): tray icon invisible reh jaata tha.
+
+    `pystray` tabhi `visible = True` khud karta hai jab `run_detached()` ko
+    `setup` callback **na** mile. Humne `setup=self._on_setup` diya tha, aur
+    `_on_setup` sirf log karta tha — is liye icon **kabhi visible nahi hua**.
+    `NIM_ADD` chala tha (registry entry banti thi) par shell use taskbar me
+    render nahi karta tha. Yahi pura "tray icon nahi dikhta" bug tha.
+    """
+    print("TRAY VISIBLE")
+    from desktop import tray as tray_mod
+
+    calls = []
+
+    class FakeIcon:
+        visible = False
+        def __init__(self):
+            self.visible = False
+
+    icon = FakeIcon()
+    tray_mod.Tray.__dict__["_on_setup"](None, icon)
+    check("_on_setup ne visible=True kiya", icon.visible, True)
+    check("_on_setup sirf ek hi kaam karta hai", len(calls), 0)
+
+    # Aur `run_detached` ko setup dena hi padta hai - warna log kahaan se aayega.
+    src = (ROOT / "desktop" / "tray.py").read_text(encoding="utf-8")
+    check("run_detached(setup=...) zaroori hai",
+          "run_detached(setup=" in src, True)
+
+
 for fn in (test_config, test_hud_window, test_launcher,
-           test_startup_lines, test_log_ascii, test_hygiene):
+           test_startup_lines, test_log_ascii, test_tray_visible, test_hygiene):
     fn()
 
 finish("Saare desktop shell test pass.")

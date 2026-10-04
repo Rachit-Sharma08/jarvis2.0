@@ -66,7 +66,7 @@ def test_bootstrap_order():
     truthy("cwd theek hota hai", "os.chdir(config.BASE_DIR)" in text)
     truthy("creationflags lagi", "creationflags=_NO_WINDOW" in text)
     check("flag value", launcher._NO_WINDOW, 0x08000000)
-    check("child wahi python", launcher.child_command()[0], sys.executable)
+    check("child wahi python", launcher.child_command()[0], launcher.child_python())
 
 
 for fn in (test_value_has_no_dash_m, test_loads_from_other_cwd,

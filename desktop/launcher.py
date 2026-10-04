@@ -73,12 +73,15 @@ _NO_WINDOW = 0x08000000
 
 
 def child_python() -> str:
-    """Child wahi python se chalta hai jis se supervisor chala.
+    """Child **usi** python se chalta hai jis se supervisor chala.
 
-    `start_prabh.bat` (haath se) par `python.exe` — console dikhta hai, crash
-    turant padha jaata hai. Windows login par `pythonw.exe` — koi black console
-    nahi aata. Pythonw me bhi stdout/stderr redirect ho raha hai, is liye
-    crash ka traceback `logs/desktop.out` me hi milega.
+    4-Oct ko S6 step 6 (base `python.exe` pin) **try kiya aur chhoda**: base
+    `D:\Python312\python.exe` me `uvicorn` hai hi nahi (`include-system-site-
+    packages = false`), to child `ModuleNotFoundError` se mar jaata hai — app
+    chalta hi nahi. Tray ka asal masla interpreter nahi tha.
+
+    Yaani raasta wahi hai: venv ka `pythonw.exe` (login par koi black console
+    nahi) + `creationflags=_NO_WINDOW`. Crash `logs/desktop.out` me bachta hai.
     """
     return sys.executable
 
