@@ -22,7 +22,7 @@ from core import sysstats
 from desktop import actions as actions_mod
 from desktop import callbacks
 from desktop import hud_window, hotkey as hotkey_mod
-from desktop import lockwatch, micperm, single as single_mod, startup
+from desktop import lockwatch, micperm, single as single_mod, startup, tray_watch
 from desktop.state import STATE
 from desktop.tray import Tray
 from gatekeeper import keeper
@@ -120,6 +120,10 @@ class SundayApp:   # naam Step 1 me user-facing hua, class id wahi rakha
             self.stop(config.EXIT_NO_TRAY)
             return
         startup.say(config.STARTUP_TRAY, config.TRAY_NAME)
+        # pystray `NIM_ADD` bhej chuka hai, par icon taskbar me dikh raha hai ya
+        # `^` me chhupa hai - ye koi nahi pata karta. Watchdog roz registry se
+        # dekh kar **sirf log** karta hai (roadmap T-01, S6 step 3+5).
+        tray_watch.start()
         # Tools ka asli haalat (env se ON ho sakta hai) state me daalo.
         STATE.set_tools(keeper.tools_on())
         # TOOLS kahin se bhi badle - UI button, tray, lock, auto-off timer -
@@ -161,6 +165,7 @@ class SundayApp:   # naam Step 1 me user-facing hua, class id wahi rakha
         log.info("band ho raha hai (code=%s)", self._code)
         wake_worker.stop()
         self.hotkey.stop()
+        tray_watch.stop()
         self.tray.stop()
         self.hud.close()
         STATE.set_hud(False)

@@ -72,6 +72,7 @@ prabh/
   config_desktop.py   -> tray rang, HUD size/path, crash backoff, exit codes, mic/lock helpers,
                         HUD_HOTKEY + HUD_SHORTCUT_NAME
   config_wake.py      -> wake word, VAD, command window, WhatsApp call ke constants
+  config_tray.py      -> tray watchdog ki timing (taskbar me icon dikhta hai ya ^ me)
   config_name.py      -> assistant ka naam (ASSISTANT_NAME/DISPLAY_NAME) + wake shabd
                          (+ purane "sunday" shabd LEGACY_WAKE_PHRASES me, default band)
   gatekeeper/keeper.py, rules.py, patterns.py, paths.py, approvals.py, limiter.py, audit.py
@@ -92,6 +93,8 @@ prabh/
   desktop/callbacks.py -> app ke 4 callback ka matlab (lock/tools/wake/hotkey), app.py se alag
   desktop/startup.py  -> startup ki 4 line + say_hud()/say_wake() (line yahin banti hai)
   desktop/hotkey.py   -> global hotkey (Ctrl+Alt+S), sirf ctypes + RegisterHotKey
+  desktop/tray_watch.py -> tray icon ka haal (taskbar me dikhta hai ya ^ me chhupa);
+                           sirf registry PADHTA hai, app kabhi likhta nahi
   desktop/playback.py -> Step 2 speaker: TTS bytes -> miniaudio PCM -> sounddevice
   desktop/open_hud.py -> shortcut + hotkey dono ka EK raasta (server zinda -> HUD)
   desktop/autostart.py -> Windows login par chalu (HKCU Run, pythonw desktop/launcher.py);
@@ -115,7 +118,7 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (47 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
+  tests/ (48 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
   docs/ROADMAP_STATUS.md  → OWNER ka roadmap-vs-reality + free-only plan (S1..S11). Roadmap
                             planning se pehle iska relevant section padho; naya task bhi wahin likho.
@@ -582,6 +585,20 @@ endpoint mat likho.
   64-bit par `lParam` kat jaata hai. `MOD_NOREPEAT` mat lagao (kuch build me fail).
   `hWnd=NULL` hone ki wajah se `RegisterHotKey` aur message pump **ek hi thread** par
   hone chahiye — warna `WM_HOTKEY` kisi aur thread ki queue me chala jaata hai.
+- **⚠️ `Shell_NotifyIconGetRect` is PC par KAAM NAHI KARTA — 4-Oct ko live proof.**
+  Sahi hwnd + sahi uid ke saath bhi `E_INVALIDARG (0x80070057)` deta hai, doosre
+  process se bhi. Throwaway probe se pata chala: naya pystray icon bana kar shell ne
+  uski registry entry **bana di** (icon accept hua) par GetRect phir bhi fail raha.
+  Is liye GetRect par koi faisla (watchdog/retry/promote) **mat likho** — galat warning
+  aati hai aur asli kaam chhoot jaata hai. **Sahi source: `HKCU\Control Panel\
+  NotifyIconSettings`** — shell sirf wahi entry banata hai jab icon uske paas ho.
+  Entry apni `InitialTooltip` se pehchan (`Jarvis - ...` shuru hota hai), aur
+  `IsPromoted` sirf tab hota hai jab icon **taskbar me dikhta** hai. Yehi check
+  `desktop/tray_watch.py` karta hai — **sirf padhta hai, kabhi likhta nahi**
+  (`IsPromoted=1` likhna owner ke confirm + `reg export` ke baad, jaise 8.2).
+  ⚠️ Registry entry **stale** bhi rehti hai (`Stop-Process -Force` par shell icon
+  hata nahi) — is liye sirf entry dekhna "icon abhi hai" ka proof nahi, `IsPromoted`
+  + owner ki aankh asli hai.
 - **HUD ke teen raasta ek hi function se:** `desktop/open_hud.py`. Server band ho to crash
   karne ke bajaye message box (pythonw me stdout nahi hota, is liye print kaam nahi karta).
 - **PowerShell quoting JS me mat todo.** `.lnk` banane wala `.ps1` **alag file** rakho aur

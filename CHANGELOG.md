@@ -6,6 +6,61 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## T-01: tray icon taskbar me (4 Oct 2026)
+
+Roadmap ka pehla task. Owner ne confirm kiya ki icon `^` (hidden icons) me **nahi**
+dikhta — matlab pehle ka "overflow me chhupa hai" wala andaza adhoora tha.
+
+### Asli kya mila (3 tareeke se prove kiya)
+
+1. **`Shell_NotifyIconGetRect` is PC par kaam hi nahi karta.** Sahi hwnd + sahi uid
+   ke saath bhi `E_INVALIDARG (0x80070057)`. Doosre process se bhi same. Pehle isi
+   API par watchdog likha tha, aur wo **galat** warning de raha tha ("icon shell me
+   nahi") — jabki icon shell me tha. Throwaway probe se confirm: ek naya, alag
+   pystray icon banaya, shell ne uski registry entry bana di (matlab icon accept
+   hua) par GetRect phir bhi fail raha. **API ko hata diya** — galat warning asli
+   kaam chhupa deti hai.
+2. **Sahi source `HKCU\Control Panel\NotifyIconSettings`.** Shell sirf usi exe ki
+   entry banata hai jiska icon uske paas hai. Entry apni `InitialTooltip` se pehchan
+   hui (`Jarvis - band` — naam se shuru). `IsPromoted` sirf tab hota hai jab icon
+   **taskbar me dikhta** hai; missing = `^` me chhupa.
+3. **Stale entry ka dhoka.** Pehle ka `MyJarvis.Desktop` entry 2 din se pada tha
+   (`Stop-Process -Force` par shell icon hata nahi). Naye probe ka entry bhi
+   `icon.stop()` ke baad pada raha — matlab "entry hai" akela proof nahi.
+
+### Kya badla
+
+- Naya `desktop/tray_watch.py` (~150 lines): roz registry **padh** kar batata hai
+  `visible` / `hidden` (`^` me) / `missing` (entry hi nahi), aur **sirf tab log
+  karta hai jab haal badle** — ek start = ek line. `VISIBLE` par INFO, baaki par
+  WARNING + sahi raasta (`^` par click karo / `Ctrl+Alt+S`).
+- Naya `config_tray.py` (timing: pehle 60 s har 3 s, phir har 30 s;
+  `PRABH_TRAY_WATCH=0` se band). `config_desktop.py` 198 par tha, is liye naye
+  switches wahin nahi daale. `config.py` me re-export.
+- `desktop/app.py`: `_start_tray()` ke baad `tray_watch.start()`, `_shutdown()` me
+  `tray_watch.stop()`. Ek hi raasta.
+- **Registry:** backup `backup/notifyicon-traywatch-20261004-123546.reg` (23 entry,
+  329 KB) → sirf apni entry `1254505825646409161` par `IsPromoted=1`. Entry count
+  23 → 23 (baaki 22 icon chhua nahi), `SHChangeNotify` bheja.
+- Naya suite `tests/test_tray_watch.py` (pure + fake `entries_fn`, asli registry
+  kabhi nahi). **48 suite green.**
+- Probe ka apna entry (`ProbeTestIcon`) delete kiya — 24 → 23.
+
+### Proof (live log)
+
+```
+tray watchdog chalu (pehle 60s, phir 30s me ek dekh)
+tray icon taskbar me dikh raha hai - theek hai
+```
+
+### S6 ke baaki steps
+
+Step 6 (`python.exe + CREATE_NO_WINDOW`) **zarurat nahi padi** — icon asli me shell
+me tha, sirf promote nahi tha. Interpreter badalne se ye bug solve nahi hota, sirf
+ek aur cheez badalti hai. Decided: mat karo.
+
+---
+
 ## Step 2-5: battery sleep, tools hamesha ON, "Hlo Jarvis", tez jawab (4 Oct 2026)
 
 User ke 4-Oct ke 4 faisle, ek hi round me. Sab kaam **app hi chalu rakhkar** hua.

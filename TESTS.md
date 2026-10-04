@@ -1,4 +1,4 @@
-# Tests (47 suites)
+# Tests (48 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 45 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 48 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -91,6 +91,7 @@ Ek-ek karke:
 | `test_desktop_sleep.py` | **Battery: 'so jao'** - `desktop/sleep.py` ka pure guard (chhota text hi), `enter`/`wake_up`/`toggle` (`STATE.asleep` + HUD band, band na ho to bhi so jana), wake par **jaag jaana** (`callbacks.on_wake` pehle flag hatata hai), `command.run` par brain/ASK **chalta hi nahi**, tray ka item, aur do guard ki ek jaisi list |
 | `test_wake_ack.py` | **Speed fix 2** - `listen.peek_speech` (awaaz pakdi/khamoshi/khaali queue/stop par ruka; chunks **wapas** queue me), user bol raha hai to **ack skip** (drain sirf goonj phenke), khamoshi me ack boli jaaye, brain ka poora jawab HUD par + awaaz me `tts.clip_answer` (vaakya ke end par kata) |
 | `test_bat.py` | `start_prabh.bat`: CRLF + ASCII + raw-bracket rule, aur asli `cmd` par launch line sach me chalti hai ya nahi |
+| `test_tray_watch.py` | **T-01 tray icon** - `desktop/tray_watch.py`: `status()` ke teen haal (`IsPromoted=1` = visible / missing = hidden `^` / entry hi nahi = missing), apni entry tooltip se pehchan (`MyJarvis.Desktop` jaisa purana entry chhoda), tez→dheere timing, **sirf haal badne par** message, registry fail par chup, aur `start`/`stop` (ek hi watchdog, env `PRABH_TRAY_WATCH=0` par thread nahi). **Asli registry kabhi nahi** — fake `entries_fn` |
 
 ### `test_desktop*.py` ke helpers
 

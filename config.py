@@ -5,6 +5,7 @@ Bade hisse alag file me hain (ek file, ek kaam):
   - config_voice.py  → TTS/STT constants + voice id ka faisla
   - config_hud.py    → HUD ka rang, weather, stats interval, quick buttons
   - config_desktop.py → desktop shell: HUD window, tray, supervisor, autostart
+  - config_tray.py   → tray watchdog ki timing (Explorer ne icon liya ya nahi)
   - config_wake.py   → wake word, VAD, command window, WhatsApp call ke constants
   - config_name.py   → assistant ka naam + usko bulane ke shabd (Step 1: Jarvis)
 Yahan woh sab re-export hote hain, isliye `config.GROQ_API_KEY` aur
@@ -62,6 +63,10 @@ from config_desktop import (  # noqa: E402
     TRAY_ERROR, TRAY_IDLE, TRAY_LISTENING, TRAY_MUTED, TRAY_NAME, TRAY_OFF,
     TRAY_START_ATTEMPTS, TRAY_TITLE, backoff_for,
     browser_path, tray_color, tray_title,
+)
+from config_tray import (  # noqa: E402
+    TRAY_WATCH_ENABLED, TRAY_WATCH_FAST_SECONDS, TRAY_WATCH_FIRST_SECONDS,
+    TRAY_WATCH_SLOW_SECONDS,
 )
 from config_wake import (  # noqa: E402
     ACK_ON_WAKE, BLOCK_MS, BRAIN_FAILED, CALL_ASK_FIRST, CDP_HOST, CDP_PORT,

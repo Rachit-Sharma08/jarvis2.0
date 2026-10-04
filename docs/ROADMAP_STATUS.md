@@ -39,7 +39,7 @@ Roadmap (Stage 01 ke baad) ek **Mac** par chalne wale **smart room** ke liye lik
 
 Isliye comparison 'idea ke hisaab se' hai, device ke hisaab se nahi: roadmap ka 'tool layer' = tumhare 10 PC tools; 'room' = tumhara PC; 'launchd' = HKCU Run + launcher.py; 'menu-bar app' = tray; 'Keychain' = .env. Room-device wale hisse (AC, projector, plugs) is repo me nahi hain - woh D-1 decision par rukte hain.
 
-**Decision D-1 (owner):** A) PC-first (recommended) ya B) smart-room bhi (hardware paid). Jab tak jawab nahi, room/hardware kaam shuru na ho.
+**Decision D-1 (owner, 4-Oct — BAAT KHATAM):** **A) PC-first final.** AC/TV/smart-room/hardware **permanently chhoda** — koi hardware/room task roadmap me nahi. Is roadmap ka "room" = **PC + phone** (phone ka scope S12 me).
 
 ## S3. Stage-by-stage status
 
@@ -188,18 +188,18 @@ Stage 01: codebase DONE, dev loop DONE (opencode), runtime = Windows PC, smart r
 | Scheduling | APScheduler (free) ya Windows Task Scheduler. Auto-start HKCU Run (done). | Naya package = owner se poochho. |
 | State / memory | sqlite3 (Python stdlib) + plain Markdown/YAML files. | Koi naya package nahi (YAML ko chhod kar). |
 | Secrets (macOS Keychain) | Windows par .env (git-ignored) rakho. Optional: Windows Credential Manager (keyring library). | Roadmap ka Keychain Mac-only hai. |
-| Smart-room (Broadlink, plugs) | Software free: python-broadlink, Home Assistant. Hardware paid hai. | D-1 ke baad. Tab tak 'virtual/fake adapter' se logic test karo. |
-| Phone access | Free VPN (jaise Tailscale personal plan - current terms check karo). Kabhi port open nahi. | Last stage. |
+| Smart-room (Broadlink, plugs) | Software free: python-broadlink, Home Assistant. Hardware paid hai. | **Chhoda gaya (D-1 = A, 4-Oct).** Koi room/hardware task nahi — sirf PC + phone. |
+| Phone access | Sirf **USB ADB** (platform-tools, free) — Wi-Fi ADB ya VPN nahi (D-2, 4-Oct). | P-01 (S12), T-01 ke baad. |
 | Dashboard | Existing HUD + JSONL/sqlite3 metrics. | Koi paid tool nahi chahiye. |
 
 ## S8. Ordered tasks
 
 | ID | Task | How | Done when |
 |---|---|---|---|
-| D-1 | Scope decide karo (owner) | A) PC-first (recommended): roadmap ko PC tools + work par lagao; room devices sirf virtual adapter. B) Smart-room bhi: hardware kharidna padega (paid). | Owner ne A ya B bol diya. Tab tak opencode room/hardware kaam shuru na kare. |
-| D-2 | Naye packages/providers ki permission (owner) | Candidates: Piper ya Kokoro, faster-whisper, PyYAML/APScheduler, Cerebras provider, Ollama. | Owner ne list me se jo chahiye 'haan' bola. |
+| D-1 | ~~Scope decide karo (owner)~~ **4-Oct: A FINAL** | A) PC-first chuna gaya. AC/TV/smart-room/hardware **permanently chhoda** gaya — koi bhi naya hardware/room kaam nahi. Is roadmap ka "room" = **PC + phone**. | **Ho gaya.** Na AC/TV/buying ka koi task nahi. |
+| D-2 | ~~Naye packages/providers ki permission~~ **4-Oct: sirf ADB** | Sirf **Google platform-tools (adb)** allowed hai (phone control ke liye). Piper/Kokoro/faster-whisper/Cerebras/Ollama **abhi nahi**; baaki har naya package/provider pehle owner se poochhna hai (AGENTS rule 2/8). | **Ho gaya (4-Oct).** P-01 me sirf adb use hoga; adb ke alawa koi package nahi bina poochhe. |
 | D-3 | PLAN-TRUST.md (brief item 2) | Baad me, owner se confirm karke - bina poochhe shuru nahi. | Owner confirm. |
-| T-01 | Tray icon fix | Section 6 ke steps 1-6 order me. watchdog <=200 lines, desktop/ ke andar. | Reboot ke baad icon taskbar/^ me dikhe; test fake tray se (rule 10). |
+| T-01 | Tray icon fix | Section 6 ke steps 1-6 order me. Registry **sirf padho** (GetRect is PC par kaam nahi karta - live proof). | ~~Reboot ke baad icon taskbar/^ me dikhe~~ **4-Oct: shell me tha, sirf `^` me chhupa tha** → `IsPromoted=1` (backup ke saath). Test fake entries se. **Ho gaya.** |
 | T-02 | Guards G-1..G-15 (sirf tests) | Section 5 ke guards. Behaviour mat badlo. TESTS.md me rows. | Suite green; har guard ek purani bug ko pakad sake (temporarily tod kar dekho). |
 | T-03 | Action log + dry-run + AMBER caps | audit.py me ts/via/tool/verdict/ok/duration_ms; DRY_RUN setting; per-tool rate cap. | Har tool call ek masked log line banata hai; DRY_RUN me kuch execute nahi hota. |
 | T-04 | Tool hammer (20x) + verify-after-act | tests/test_tools_hammer.py; open_app/close_app ke baad process confirm. | Har SAFE tool 20/20 pass ya failure detect+report. |
@@ -217,6 +217,35 @@ Stage 01: codebase DONE, dev loop DONE (opencode), runtime = Windows PC, smart r
 | T-16 | Readable memory file | memory/preferences.md; persona me load; owner edit kar sake. | Preference badli to agla jawab badle. |
 | T-17 | Dashboard panel | Success rate, latency, errors (textContent only). | 7-din success rate dikhe. |
 | T-18 | Sleep/reboot soak | Run ke dauraan PC sleep roko (Windows API) ya watchdog; reboot test. | Reboot ke baad bina haath lagaye live. |
+| **P-01** | **Phone control SPIKE (spike = chhota paroda, poora feature nahi)** | **Sirf adb** (D-2). USB se phone jodo; `adb devices` se device ka model/OS pata karo; phir **3 cheezein** chala kar dekho: (1) **incoming call ki state** (`dumpsys telephony.registry` ya `adb shell dumpsys`), (2) **call uthana / kat-na** ka adb command (ya ADB se nahi hota to SEEDHA bol do — WhatsApp-web/USB-C SDK ka option), (3) **call state ka HUD event** (Hub par, `via="voice"` ke saath). **Koi permanent code nahi** - sirf probe + likha hua "haan/na" ka jawab. | Owner ne phone ka type/OS/USB-debugging bataya; spike report likhi (kaam karta hai / nahi karta, kaunsi command, kitni der). **P-01 ke baad hi T-02 shuru hoga.** |
+
+## S12. Phone control ka plan (owner ke faisle ke baad, 4-Oct)
+
+Owner ne 4-Oct ko scope band kiya. Ye sirf **record** hai — implementation
+**P-01 ke baad** shuru hoga, aur P-01 owner ke phone type ke bina nahi.
+
+**Jo pakka hai (faisal):**
+
+| Item | Faisla |
+|---|---|
+| Scope | Sirf **incoming call**: uthana, khatam karna, aur call ki **state** batana (aaya/ringing/chala gaya). Message/sms/camera baad me — abhi koi nahi. |
+| Inkaam ka raasta | Sirf **USB ADB** (Google platform-tools). Wi-Fi/network ADB nahi. |
+| Call uthana | **ASK** — gatekeeper ka confirm card, sirf UI ka **ALLOW** button. Awaaz se ya chat se allow **nahi** (AGENTS 3.5). Decline bhi user ke confirm se hi. |
+| Naya package | Adb ke alawa **kuch nahi** bina owner ke 'haan' ke (D-2). |
+| Order | **T-01 → P-01 → T-02 baaki** (ek time par ek hi kaam). |
+
+**Code me pehle se pada hai par dead hai (P-01 me mat use karo):**
+`config_wake.py` me `WHATSAPP_WEB`, `CDP_HOST`, `CDP_PORT`, `CALL_ASK_FIRST`
+constants hain, par aaj koi code unhe **use nahi** karta (grep verified).
+Ye WhatsApp-web + Chrome-CDP ka purana idea hai — **ADB ka raasta nahi**. P-01 me
+inhe hata kar `CALL_ASK_FIRST` ki jagah adb-based settings rakhi jayengi, warna
+do raasta ban jayenge (AGENTS: "ek hi raasta").
+
+**VERIFY (code padh kar, koi naya kaam nahi):**
+
+| Item | Kya mila (4-Oct) |
+|---|---|
+| 3.9 mic-during-playback | `config_wake.PLAYBACK_MUTE_MIC = True` **constant hai par use nahi** hoti — matlab pehla VERIFY step (implement karna) T-07 me hai, confirm nahi kiya gaya. |
 
 ## S9. Definition of done (PC version)
 
@@ -256,4 +285,7 @@ Stage 01: codebase DONE, dev loop DONE (opencode), runtime = Windows PC, smart r
 
 Format: `T-xx | date | kya hua | file/commit | baaki`
 
-_(abhi khaali — pehla entry T-01 ke baad)_
+| Task | Date | Kya hua | File / commit | Baaki |
+|---|---|---|---|---|
+| T-01 | 4-Oct-2026 | Tray icon: `^` me chhupa tha, shell me nahi — **nahi**, `Shell_NotifyIconGetRect` is PC par **kaam hi nahi karta** (live proof, E_INVALIDARG; naye probe icon ki entry bani par GetRect fail raha → galat warning). Sach pakda: `NotifyIconSettings` me `Jarvis - band` entry par `IsPromoted` missing = `^` me chhupa. Backup ke saath `IsPromoted=1` likha (entry 23 → 23), naya `tray_watch.py` roz **padh** kar `visible/hidden/missing` log karta hai (sirf haal badne par), S6 step 6 (`python.exe`) **zarurat nahi padi**. 48 suite green | `config_tray.py`, `desktop/tray_watch.py`, `desktop/app.py`, `config.py`, `.env.example`, `tests/test_tray_watch.py`, `AGENTS.md` 8.2, `TESTS.md`, `CHANGELOG.md`, backup `notifyicon-traywatch-20261004-123546.reg` | Owner se confirm: taskbar par icon **dikh raha hai**? Fir **P-01** (phone type chahiye). |
+| (decide) | 4-Oct-2026 | **D-1 = A final** (PC-first; AC/TV/hardware permanently chhoda; "room" = PC + phone) · **D-2 = sirf ADB** allowed. `WHATSAPP_WEB`/`CDP_*`/`CALL_ASK_FIRST` dead constants (grep verified) | `docs/ROADMAP_STATUS.md` S8 + S12 | D-3 (PLAN-TRUST.md) abhi bhi owner-confirm ka wait me. |
