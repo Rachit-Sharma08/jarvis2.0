@@ -77,6 +77,32 @@ def test_tray_menu():
     print("  OK   crash guard (app nahi giri)")
 
 
+def test_default_item():
+    """REGRESSION (4-Oct): ek click = app band.
+
+    pystray left-click (`WM_LBUTTONUP`) par menu ka **default** item chalta
+    hai (`_win32.py:200` -> `_base.py:108`). `Quit` par `default=True` tha to
+    tray icon par ek click se app band ho gaya tha (log: `tray: quit maanga`).
+    Ab default `Open HUD` hai. `Quit` kabhi bhi default nahi hona chahiye -
+    ek galti se poora app ek click me chala jaata hai.
+    """
+    print("TRAY DEFAULT ITEM")
+    tray = Tray(_FakeActions())
+    defaults = [item.text for item in tray.build() if getattr(item, "default", False)]
+    check("sirf ek default item", len(defaults), 1)
+    check("wo 'Open HUD' hai", defaults[0], "Open HUD")
+    check("Quit default NAHI hai", "Quit" in defaults, False)
+    # Quit abhi bhi menu me hai (right-click se chalta hai) - sirf click nahi.
+    labels = [item.text for item in tray.build()]
+    check("Quit menu me hai", labels[-1], "Quit")
+    # Source-level guard: koi aur default=True na aaye.
+    src = (Path(__file__).resolve().parent.parent / "desktop" / "tray.py"
+           ).read_text(encoding="utf-8")
+    real = [ln.strip() for ln in src.splitlines()
+            if "default=True" in ln and not ln.strip().startswith("#")]
+    check("source me bhi sirf ek default=True", len(real), 1)
+
+
 def test_state():
     print("DESKTOP STATE")
     state = DesktopState()
@@ -120,7 +146,8 @@ def test_lock_watch():
     show(f"abhi locked={lockwatch.is_locked()}  (PC lock karke dekh sakte ho)")
 
 
-for fn in (test_tray_icon, test_tray_menu, test_state, test_mic_permission, test_lock_watch):
+for fn in (test_tray_icon, test_tray_menu, test_default_item, test_state,
+           test_mic_permission, test_lock_watch):
     fn()
 
 finish("Saare tray/state test pass.")

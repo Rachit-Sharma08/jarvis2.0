@@ -71,7 +71,13 @@ class Tray:
                 self._toggle_mute,
                 checked=lambda item: state.muted(),
             ),
-            MenuItem("Open HUD", self._open_hud),
+            MenuItem(
+                # ZAROORI: `default=True` sirf **ek** item par hona chahiye.
+                # pystray left-click (WM_LBUTTONUP) par default item chalata
+                # hai (`_win32.py:200` -> `_base.py:108`). `Quit` par default
+                # tha to **ek click = app band** (4-Oct ko hua bhi). Ab click
+                # se HUD khulta hai; Quit sirf menu se.
+                "Open HUD", self._open_hud, default=True),
             # Hotkey dikhana zaroori hai - warna user ko pata hi nahi chalta
             # ki ek aur raasta hai. Sirf text, click se kuch nahi hota.
             MenuItem("  ya phir %s" % (keys or "koi shortcut nahi"),
@@ -88,7 +94,7 @@ class Tray:
             ),
             Menu.SEPARATOR,
             MenuItem("Restart", self._restart),
-            MenuItem("Quit", self._quit, default=True),
+            MenuItem("Quit", self._quit),
         )
 
     # ---- chalao ----
