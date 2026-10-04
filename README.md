@@ -21,8 +21,10 @@ screen par confirm card aata hai.
 - Awaaz ke liye → [VOICE.md](VOICE.md)
 - Brain (models, fallback, error) ke liye → [BRAIN.md](BRAIN.md)
 - PC ke kaam ke liye → [TOOLS.md](TOOLS.md)
-- Kisi bhi AI ko ye project sikhana ho → **[CLAUDE.md](CLAUDE.md)** (chhota handoff:
-  haalaat, chalti cheezein, pakkaurey, roadmap). Poore niyam → `AGENTS.md`.
+- Kisi bhi AI ko ye project sikhana ho → **[NEW_AGENT_BRIEF.md](NEW_AGENT_BRIEF.md)**
+  (nayi Claude/agent chat me **paste karne wala self-contained prompt** — kya hai, kya use
+  hua, kahan tak pahuncha, kya bacha, kaam ke niyam). Chhota handoff → **[CLAUDE.md](CLAUDE.md)**;
+  poore niyam → **[AGENTS.md](AGENTS.md)**.
 
 ---
 

@@ -3,7 +3,10 @@
 - **Ye file har AI agent ko pehle padhni hai.** Kaam shuru karne se pehle ise poora padh lo. Iske baad user
 se purana context puchhne ki zarurat nahi — sab yahin likha hai.
 - Project `D:\prabh` — ye **local personal app** hai (sirf us PC par, web app nahi). Owner coding nahi
-jaanta, har baat **simple Hinglish** me samjhana hai.
+  jaanta, har baat **simple Hinglish** me samjhana hai.
+- **Nayi session me sabse pehle `NEW_AGENT_BRIEF.md`** — wo ek self-contained prompt hai jo naye
+  agent ko project ka pura context deta hai (kya hai, kya use hua hai, kahan tak pahuncha, kya
+  bacha hai, kaam karne ke niyam). User use nayi Claude/agent chat me paste karta hai.
 
 ---
 
