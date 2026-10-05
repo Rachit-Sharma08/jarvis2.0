@@ -101,8 +101,10 @@ prabh/
                            sirf main() likhta hai, module me koi registry call nahi
   desktop/shortcut.py + hud_shortcut.ps1 -> Desktop ka "Jarvis HUD" .lnk banao/hatao
   wake/worker.py     -> Step 1 ka module-level raasta (poori app me EK worker)
-  wake/session.py    -> asli loop: mic -> VAD/gate -> Vosk -> trigger (thread, cooldown, pause)
-  wake/gate.py       -> "Vosk ko ye chunk chahiye?" ka faisla (khamoshi me Vosk nahi = battery)
+  wake/session.py    -> mic + loop: chunk -> VAD/gate -> Vosk (thread, pause, mic retry)
+  wake/trigger.py    -> trigger ka faisla: cooldown + final/partial/flush -> on_wake
+  wake/lifecycle.py  -> Session ka zindagi hissa: mic band, state, crash-safe callbacks
+  wake/gate.py       -> "Vosk ko ye chunk chahiye?" + silence par flush (battery)
   wake/utterance.py + wake/wav.py -> Step 2a: command capture + WAV
   wake/listen.py     -> Step 2c ka mic wala hissa: drain/warmup/capture/to_text (STT)
   wake/command.py    -> Step 2c ka flow: ack -> suno -> brain -> awaaz (policy nahi)
@@ -138,7 +140,7 @@ prabh/
 
 ### 3.6 Step 2c (wake command) ke pakkaurey niyam
 
-- **`on_wake(phrase, mic, stop)`** — `wake/session.py` ka `_fire()` teeno deta
+- **`on_wake(phrase, mic, stop)`** — `wake/trigger.py` teeno deta
   hai, kahin aur se mic **kabhi** mat lo. Ye **synchronous** hai (wake thread par),
   is liye command poore chal jaane tak sunna ruka rehta hai aur dobara "Jarvis"
   trigger nahi hoga.
@@ -560,6 +562,45 @@ endpoint mat likho.
   do, aur `gatekeeper_uses()` **dono** file scan kare (warna AST wala safety check
   khud chup ho jaata hai).
 
+### 8.1.3 WAKE KE TEEN RAASTE + SPLIT KE PAKKAUREY NIYAM (5 Oct 2026)
+
+- **200 lines cross karte hi split karo — seam `trigger.py` hai.** `session.py`
+  235 par tha. Ab teen file: `session.py` (mic + loop, 175) · `trigger.py`
+  (trigger ka faisla + cooldown) · `lifecycle.py` (`_end`/`_fail`/`_close`/`_say`).
+  Sirf production file copy karna chup-chaap fail karta hai — test ke fake bhi
+  naye module ka naam lete hain (`session_mod.detect`, `worker.wakes()`).
+- **`Listener.reset()` se PEHLE `flush()` karo.** Purana gate silence par sirf
+  `reset()` karta tha, jisse Vosk ka pending partial chhoot jata tha — "ek command
+  ke baad doosra nahi chalta" ka asli bug. Ab teen raaste: `final` (purana),
+  `partial` (naya, tez), `flush` (`FinalResult()` se wapas). Trigger ka faisla
+  **ek** jagah: `wake/trigger.py`.
+- **Vosk grammar me poori phrase mat likho — shabd likho.** Kaldi multi-word
+  phrase apne lexicon se map nahi kar pata; live me `"hello jarvis"` do tukde me
+  toot gaya (`'hello'`, phir `'yo'`). `config_name.grammar_words()` har shabd
+  alag deta hai + `[unk]` **aakhri** (beech me test `words[-1]` par fail hota hai).
+- **`Trigger` ek hi instance hai** (`Session.__init__` me, `set_callbacks()` se
+  callbacks badalte hain). Har `start()` par naya banao to `worker.wakes()` ka
+  app-lifetime count reset ho jata hai — AGENTS ka "count reset nahi hota" niyam.
+- **Naye `start()` par cooldown saaf karo** (`Trigger.reset_cooldown()`), warna
+  restart ke baad pehla "Jarvis" 1.5 s tak pakda hi nahi jata — test bhi isi
+  wajah se chup-chaap fail hota hai.
+- **`stop()` me join timeout ke baad `_close()` mat karo.** Loop abhi bhi
+  `self._listener`/`self._mic` use kar raha hai; `_thread = None` karne se agla
+  `start()` **doosra** loop chala deta hai (ek Session, do loop). Zinda thread par
+  `return` + warning.
+- **Mic busy par retry, crash par nahi.** `Session._open_mic()` sirf
+  `MicUnavailable` par `MIC_OPEN_ATTEMPTS` (3) koshish; constructor/model ka
+  crash turant upar jaata hai (warna asli bug chup ho jayega). Naye env key
+  `.env` + `.env.example` + `config.py` export teenon me daalo.
+- **Vosk debug line hamesha band.** `PRABH_WAKE_DEBUG=0` — `.env` me chhod ke mat
+  bhoolna (`logs/prabh.log` me har 3 s ek line).
+- **Guard sirf route me mat rakho — library me bhi rakho.** 10 MB ki limit
+  sirf `server/voice_routes.py` par thi, is liye `test_voice.py` 11 MB ka blob
+  **asli Groq par upload** kar raha tha (suite 3+ min atki, quota bhi gaya).
+  Ab size guard `voice/stt.py` me hai — har caller (HTTP + wake path) ke liye.
+  **Test me provider API kabhi sach me call na ho:** agar test direct library
+  call karta hai to pehle guard check karo, warna suite chup-chaap hang ho jayega.
+
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
 
 - **Tray list me app ka naam nahi, EXE ka naam dikhta hai.** Venv ka `python.exe` sirf
@@ -947,3 +988,26 @@ green**, sab file `<200`.
   `test_desktop_sleep.py` + `test_wake_ack.py`, **47 suite green**. Docs:
   `CHANGELOG.md` + `VOICE.md` + `TOOLS.md` + `TESTS.md` + naya rules section
   **8.1.2**.
+- **Wake do-command + mic busy fix (5 Oct 2026)** - user ki do shikayat: "ek
+  command ke baad doosra command nahi leta" + app par `wake: nahi chala`.
+  **Asli bug:** `wake/gate.py` silence par sirf `listener.reset()` karta tha, jisse
+  Vosk ka pending partial **chhoot** jata tha (debug log: chunks aa rahe the,
+  `finals=0`; `sun liya: 'hello'` phir `'yo'` - trigger nahi). Fix: **teen raaste,
+  ek faisla** naye `wake/trigger.py` me - `final` (purana), `partial` (naya, tez),
+  `flush` (`FinalResult()` se pending text wapas). **Asli bug 2:** grammar me
+  poori phrase thi (`"hello jarvis"`) - Kaldi multi-word phrase map nahi karta;
+  ab `config_name.grammar_words()` har shabd alag + `[unk]` aakhri. **Asli bug 3:**
+  mic busy (`MME error 1`) par ek hi koshish - ab `_open_mic()` 3 koshish
+  (`PRABH_MIC_ATTEMPTS`/`PRABH_MIC_RETRY`). **Do bonus bug split me pakde:**
+  `stop()` ke baad **double loop** (zinda thread par `_close()` nahi), aur
+  `worker.wakes()` ka **reset** (`Trigger` ek hi instance). Split ka seam
+  `trigger.py` + `lifecycle.py` (`session.py` 235 -> 175). Naye suite
+  `test_wake_trigger.py` + `test_wake_phrases.py` (`test_name_jarvis.py` 200 cross
+  kar gaya tha), **51 suite green**. Naya rules section **8.1.3**.
+- **Suite hang fix + ek asli bug (5 Oct 2026)** - doosri poori run me `test_voice.py`
+  3+ min atka. Wajah: `voice/stt.py` me **size guard kahin nahi tha** (10 MB ki
+  limit sirf HTTP route par thi), to test ka 11 MB blob **asli Groq par upload** ho
+  raha tha. Guard ab library me hai (har caller ke liye, HTTP + wake path) -
+  `test_voice.py` ab **network-free** aur 2 s me pass; poori suite **63 s** me
+  green. Test ko live network par fail hone se bachane ka naya bullet section
+  **8.1.3** me.

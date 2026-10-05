@@ -86,6 +86,63 @@ def test_wake_reset():
     truthy("VAD bhi reset hua", gate.vad.speaking() in (True, False))
 
 
+def test_flush_on_silence():
+    """5-Oct ka asli bug: silence par text **flush** hona chahiye, pheko nahi."""
+    print("GATE: KHAMOSHI PAR FLUSH (text wapas)")
+    heard = []
+    listener = FakeListener(pending="hello jarvis")
+    gate = gate_mod.Gate(on_text=heard.append)
+    gate.push(listener, loud())
+    for _ in range(config.VAD_HANGOVER_BLOCKS + config.VAD_SILENCE_BLOCKS - 1):
+        gate.push(listener, quiet())
+    check("thoda pehle text nahi aaya", heard, [])
+    check("flush wala chunk Vosk ko nahi gaya",
+          gate.push(listener, quiet()), False)
+    check("text on_text ko gaya", heard, ["hello jarvis"])
+    check("flush count", gate.flushes, 1)
+    check("dobara flush khaali", gate.push(listener, quiet()), False)   # warm-up
+
+
+def test_flush_empty_keeps_reset():
+    """Text na mile to purana `reset()` wala raasta (koi trigger nahi)."""
+    print("GATE: FLUSH KHALI -> RESET")
+    heard = []
+    listener = FakeListener()
+    gate = gate_mod.Gate(on_text=heard.append)
+    gate.push(listener, loud())
+    before = gate.resets
+    for _ in range(config.VAD_HANGOVER_BLOCKS + config.VAD_SILENCE_BLOCKS):
+        gate.push(listener, quiet())
+    check("reset chala", gate.resets, before + 1)
+    check("koi text nahi gaya", heard, [])
+    check("flush par kuch nahi mila", gate.flushes, 0)
+
+
+def test_flush_crash_safe():
+    """Purana listener (flush method nahi) + crash karne wala flush."""
+    print("GATE: FLUSH CRASH-SAFE")
+
+    class NoFlush:
+        def __init__(self):
+            self.resets = 0
+
+        def reset(self):
+            self.resets += 1
+
+    class BoomFlush(NoFlush):
+        def flush(self):
+            raise RuntimeError("vosk mar gaya")
+
+    for fake in (NoFlush(), BoomFlush()):
+        gate = gate_mod.Gate(on_text=lambda text: None)
+        gate.push(fake, loud())
+        for _ in range(config.VAD_HANGOVER_BLOCKS + config.VAD_SILENCE_BLOCKS):
+            gate.push(fake, quiet())
+        check("%s: crash nahi, reset hua" % type(fake).__name__,
+              fake.resets > 0, True)
+        check("%s: koi flush count nahi" % type(fake).__name__, gate.flushes, 0)
+
+
 def test_config_knobs():
     print("GATE: CONFIG")
     truthy("gate default ON hai", config.WAKE_VOSK_GATE is True)
@@ -94,7 +151,9 @@ def test_config_knobs():
 
 
 for fn in (test_silence_not_fed, test_speech_fed, test_silence_blocks_reset,
-           test_gate_off_switch, test_wake_reset, test_config_knobs):
+           test_gate_off_switch, test_wake_reset, test_flush_on_silence,
+           test_flush_empty_keeps_reset, test_flush_crash_safe,
+           test_config_knobs):
     fn()
 
 finish("Saare wake gate test pass.")

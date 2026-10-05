@@ -6,6 +6,101 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Wake fix: do command me dusra nahi chalta + mic busy (5 Oct 2026)
+
+Do shikayatein thi: **"ek command ke baad doosra command nahi leta"** aur app
+start par `wake: nahi chala` (mic busy).
+
+### Asli bug 1 — Vosk ka pending text chhoot jata tha
+
+`wake/gate.py` khamoshi par sirf `listener.reset()` karta tha. Isi reset me Vosk ka
+**abhi tak poora nahi hua** text (`partial`) khatam ho jata tha. Wake debug
+(`PRABH_WAKE_DEBUG=1`) se yehi nikla: chunks aa rahe the, Vosk ko ja rahe the,
+par `finals=0`. Log me do alag lines the:
+
+```
+sun liya (final): 'hello'
+sun liya (final): 'yo'
+```
+
+Yaani "Hlo Jarvis" **do tukde** me toot raha tha aur dono pheke ja rahe the —
+koi bhi tukde me `jarvis` nahi tha, is liye trigger nahi. (Jab dono ek saath
+aa jaate — "hello jarvis" — trigger ho gaya tha.)
+
+Fix — **teen raaste, ek faisla** (naya `wake/trigger.py`):
+
+| Raasta | Kya kiya |
+|---|---|
+| **final** | purana raasta, waise hi |
+| **partial** | naya — Vosk abhi bol raha hai aur text me `jarvis` hai (sabse tez, khamoshi ka intezaar nahi) |
+| **flush** | naya — gate silence par `FinalResult()` se pending text **nikal** deta hai (`detect.Listener.flush()`), phir reset |
+
+Naye `start()` par cooldown bhi saaf hota hai (`Trigger.reset_cooldown()`) —
+warna restart ke baad pehla "Jarvis" 1.5 s tak pakda hi nahi jata tha.
+
+### Asli bug 2 — grammar me poori phrase, shabd nahi
+
+`config_name.wake_grammar()` poori list deta tha (`"hello jarvis"`, `"hlo jarvis"`).
+Vosk/Kaldi aise multi-word phrase ko apne lexicon se map **nahi** kar pata — isi
+liye upar wala split hua. Ab grammar me har **shabd** alag hai (`grammar_words()`),
+trigger ka faisla phir bhi `WAKE_WORDS` se. Chhota nuksan: `hlo`/`helo` model ke
+lexicon me nahi hain, is liye Vosk ek warning deta hai (`desktop.out` me ek line);
+text me wo rahte hain.
+
+### Asli bug 3 — mic busy par ek hi koshish
+
+Log: `PortAudioError ... [MME error 1]` → `wake start fail (#1)` → app chup.
+Asli wajah: mic kisi aur app (Chrome/Teams) ne pakda hua tha. Ab
+`Session._open_mic()` `MIC_OPEN_ATTEMPTS` (default **3**, beech me
+`MIC_OPEN_RETRY_SECONDS` = 1.2 s) tak sirf `MicUnavailable` par retry karta hai —
+constructor/model ka crash turant upar jaata hai. Mic ka error log ab batata hai
+ki **kaun** pakad raha hai.
+
+### Do aur asli galti jo split me pakdi
+
+1. **`stop()` par double loop** — join 3 s ke baad bhi thread zinda ho to
+   `_close()` karke `_thread = None` kar deta tha, aur agla `start()` **doosra**
+   loop chala deta tha (ek hi Session, do loop). Ab zinda thread par `_close()`
+   nahi hota.
+2. **`worker.wakes()` ka count reset** — `Trigger` har `start()` par naya banta
+   tha, to app-lifetime trigger count ghata deta tha. Ab `Trigger` ek hi
+   instance hai (`Session.__init__`), sirf callbacks `set_callbacks()` se badalte
+   hain.
+
+### Naye file + test
+
+| File | Kaam |
+|---|---|
+| `wake/trigger.py` | Trigger ka poora faisla: cooldown + `hit()` + `on_wake(phrase, mic, stop)` + `flush` |
+| `wake/lifecycle.py` | `Session` ka zindagi hissa (`_end`/`_fail`/`_close`/`_say`) |
+| `tests/test_wake_trigger.py` | **Naya** - teen raaste + mic retry (asli mic/Vosk kabhi nahi) |
+| `tests/test_wake_phrases.py` | **Naya** - `test_name_jarvis.py` 200 cross kar gaya tha, wake-phrase wala hissa yahan |
+
+`test_wake_gate.py` me 3 naye check (flush par text wapas, khaali flush → reset,
+flush crash-safe). `test_wake_loop.py` ka crash fake ab **teen** args leta hai
+(`on_wake(phrase, mic, stop)`) — ek-arg fake se TypeError hota tha. Sab file
+`<=200` lines, **51 suite green**.
+
+---
+
+## Test-hang fix: `stt.transcribe` me size guard nahi tha (5 Oct 2026)
+
+Doosri run me poori suite **3+ minute atki** — `test_voice.py` ka "badi audio"
+check. Asli wajah: `voice/stt.py` me **size guard kahin nahi tha**; 10 MB ki limit
+sirf `server/voice_routes.py` (HTTP) par thi. Test direct library call karta hai, to
+11 MB ka blob **asli Groq par upload** ho raha tha (aur quota bhi ja raha tha).
+
+Fix: `SttError` wale size check ko `voice/stt.py` me daala — ab ye guard
+har caller ke liye hai, sirf HTTP ke liye nahi. Wake path (`wake/listen.py`) bhi
+yahin se guzarta hai (16 kHz mono, 30 s max ≈ 1 MB), to asli use me guard kabhi nahi
+chalta — sirf bade blob par. Ab `test_voice.py` **network-free** hai aur 2 second me
+pass hota hai; poori suite **63 second** me green.
+
+**Niyam:** test me provider API kabhi sach me call nahi honi chahiye. Test ka
+`_stt_fails()` ab guard par fail hota hai, asli upload par nahi.
+
+---
+
 ## T-01 fix: tray icon ASLI wajah invisible tha (4 Oct 2026, sha 1929028)
 
 Upar wala T-01 pura **galat diagnosis** tha. Woh likha gaya tha ki icon `^` me chhupa

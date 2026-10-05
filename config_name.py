@@ -76,5 +76,32 @@ def wake_words() -> tuple:
 
 
 def wake_grammar() -> str:
-    """Vosk grammar JSON. Phrase + `[unk]`, isse zyada kuch nahi."""
-    return json.dumps(list(active_wake_phrases()) + [FILLER_WORD])
+    """Vosk grammar JSON. **Sirf shabd**, poori nahi.
+
+    5-Oct ka dusra asli bug: grammar me poori list thi (`"hello jarvis"`,
+    `"hlo jarvis"`, ...) par Vosk/Kaldi aise multi-word phrase ko apne
+    shabd-vyavasi (lexicon) se map nahi kar pata. Live log me padha:
+    `sun liya: 'hello'` phir `sun liya: 'yo'` - yaani "Jarvis" akela bolne par
+    usse 'yo' samajh aaya aur trigger hi nahi hua. Ab grammar me har shabd
+    alag hai (`hello`, `jarvis`, `[unk]`, ...), jise Vosk ek-ek karke pehchanta
+    hai; trigger ka faisla phir bhi `WAKE_WORDS` se hota hai.
+
+    Chhota nuksan: `hlo`/`helo` model ke lexicon me nahi hain, is liye Vosk
+    unhe ignore karke ek warning deta hai (`Ignoring word missing in
+    vocabulary`). Text me rahte hain - warning sirf `desktop.out` me ek line hai.
+    """
+    return json.dumps(list(grammar_words()))
+
+
+def grammar_words() -> tuple:
+    """Grammar ke liye **shabd** (trigger wale + greeting), bina duplicate.
+
+    `[unk]` hamesha **aakhri** hota hai (test + Vosk ka filler) - is liye wo
+    alag se chipka rahe hain, beech me nahi."""
+    words = []
+    for phrase in active_wake_phrases():
+        for word in phrase.split():
+            if word not in words:
+                words.append(word)
+    words.append(FILLER_WORD)
+    return tuple(words)

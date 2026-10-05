@@ -65,9 +65,16 @@ VAD_HANGOVER_BLOCKS = 30     # ~0.9 s — VAD ke dauraan awaaz mat kaato
 WAKE_VOSK_GATE = os.getenv("PRABH_VOSK_GATE", "1").strip() not in ("0", "false", "no")
 
 # Ek hi "jarvis" me do trigger na ho. Wake hit ke baad itni der queue khaali
-# karte hue aawaaz fenk-te hain (recognition nahi) — taaki TTS/bijli ka shor
+# karte hue aawaaz fenk-te hain (recognition nahi) - taaki TTS/bijli ka shor
 # ya apna hi naam dobara na pakde.
 WAKE_COOLDOWN_SECONDS = 1.5
+
+# ---- mic kholne ki koshish (5-Oct) -----------------------------------------
+# Ek koshish me app hamesha "wake: nahi chala" ho jati thi, jabki MicUnavailable
+# (PortAudio `MME error 1`) ka matlab hota hai device **busy** hai - Chrome/Teams
+# ka mic tab. Ab 3 koshish, beech me chhota intezaar. `.env` se badal sakte ho.
+MIC_OPEN_ATTEMPTS = int(os.getenv("PRABH_MIC_ATTEMPTS", "3"))
+MIC_OPEN_RETRY_SECONDS = float(os.getenv("PRABH_MIC_RETRY", "1.2"))
 
 # ---- command window ----
 # Chuppi pehle 2.0 s -> 1.2 s -> ab **0.9 s** (4-Oct). Wake ka total 18.5 s tha,
@@ -88,6 +95,14 @@ COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-t
 # Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye — is liye
 # "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
 PLAYBACK_MUTE_MIC = True
+
+# ---- wake debug (4-Oct, doosra command nahi sunta tha) ----------------------
+# `PRABH_WAKE_DEBUG=1` se har 3 second ek line: kitne chunk aaye, kitne Vosk
+# ko gaye, kitne chhode, RMS kya tha. Isi se pata chala ki command ke baad
+# chunk **aate hi nahi** (mic/pump), ya aate hain par VAD "khamoshi" bolta hai.
+# Hamesha band — sirf bug pakadne ke liye.
+WAKE_DEBUG = os.getenv("PRABH_WAKE_DEBUG", "0") not in ("0", "", "no", "false")
+WAKE_DEBUG_SECONDS = 3.0
 
 # "Ji, boliye" bolne se **pehle** itni der suno (4-Oct). Agar user is dauraan
 # bol hi raha hai to ack chhod do — warna hamari awaaz uske upar chadh jaati

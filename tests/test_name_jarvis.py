@@ -2,20 +2,17 @@
 
 Ye test teen cheezein pakadta hai:
 
-1. **Wake phrase variants** — "hello jarvis", "hey jarvis", "jarvis" sab hit
-   karein; "sun" ya "jarvisly" nahi.
-2. **Purane "sunday" shabd alag list me, default band** — `LEGACY_WAKE_PHRASES`
-   me maujood hain par grammar me nahi. `PRABH_WAKE_LEGACY=1` par aa jaate hain.
-3. **UI text me "Sunday" na bache** — `ui/*.js` + `ui/*.html` grep. Do cheezein
+Wake phrase + grammar ka test ab `tests/test_wake_phrases.py` me hai (5-Oct
+split, 200-line niyam). Yahan bacha hai:
+
+1. **UI text me "Sunday" na bache** — `ui/*.js` + `ui/*.html` grep. Do cheezein
    jaan-boojh kar bachayi hain: `hud_clock.js` ka weekday `DAYS` array (wo
    calendar ka din hai, assistant ka naam nahi) aur `x-prabh-token` jaise
    **internal** ids (token/security ka hissa hai, naam nahi).
 
-Koi asli Vosk/mic/API nahi — `wake.phrase` pure functions hai.
+Koi asli Vosk/mic/API nahi.
 """
 
-import json
-import os
 import re
 import sys
 import unittest
@@ -26,10 +23,8 @@ if hasattr(sys.stdout, "reconfigure"):
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import config
-import config_name
 from core import modes
 from server import app as server_app
-from wake import phrase
 
 ROOT = Path(__file__).resolve().parent.parent
 UI_DIR = ROOT / "ui"
@@ -118,46 +113,6 @@ class TestName(unittest.TestCase):
         self.assertTrue(config.SUNDAY_ONLY)
         self.assertEqual(modes.detect_mode("Prabh, kya haal", "sunday")[0],
                          "sunday")
-
-
-class TestWakePhrases(unittest.TestCase):
-    """Vosk grammar + phrase matching."""
-
-    def test_variants_hit(self):
-        for text in ("jarvis", "hello jarvis", "hey jarvis", "Hello, Jarvis!",
-                     "jarvis kholo", "hey jarvis whatsapp kholo"):
-            self.assertTrue(phrase.hit(text), text)
-            self.assertTrue(phrase.phrase(text), text)
-
-    def test_near_misses_do_not_hit(self):
-        for text in ("sun", "sunday", "jarvisly", "jervis", "sunay"):
-            self.assertFalse(phrase.hit(text), text)
-
-    def test_grammar_has_phrases_and_unk(self):
-        words = json.loads(config.WAKE_GRAMMAR)
-        for want in ("hello jarvis", "hey jarvis", "jarvis"):
-            self.assertIn(want, words)
-        self.assertEqual(words[-1], "[unk]")
-
-    def test_legacy_off_by_default(self):
-        self.assertFalse(config_name.legacy_enabled())
-        self.assertTrue(config_name.LEGACY_WAKE_PHRASES)   # list me maujood
-        words = json.loads(config.WAKE_GRAMMAR)
-        self.assertNotIn("sunday", words)
-        self.assertFalse(phrase.hit("hey sunday"))          # trigger nahi
-        self.assertEqual(config.WAKE_WORDS, ("jarvis",))
-
-    def test_legacy_can_be_switched_on(self):
-        # `legacy_enabled()` env har call par padhta hai, is liye test me
-        # `os.environ` badal kar turant dekh sakte hain.
-        os.environ["PRABH_WAKE_LEGACY"] = "1"
-        try:
-            words = json.loads(config_name.wake_grammar())
-            self.assertIn("hey sunday", words)
-            self.assertIn("hello jarvis", words)
-            self.assertEqual(config_name.wake_words(), ("jarvis", "sunday"))
-        finally:
-            os.environ.pop("PRABH_WAKE_LEGACY", None)
 
 
 class TestUiHasNoSunday(unittest.TestCase):

@@ -133,7 +133,7 @@ Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
 |---|---|
 | Kaam | App shuru hote hi mic khulta hai. **"Jarvis"** (ya "hello/hey jarvis") bolte hi **HUD khul jaata hai**. |
 | Model | `models/vosk-model-small-en-us-0.15` — **Vosk**, 100% offline, awaaz bahar nahi jaati |
-| Grammar | Sirf ye shabd sunta hai: `hello jarvis`, `hey jarvis`, **`hlo jarvis`**, **`helo jarvis`**, **`hi jarvis`**, **`yo jarvis`**, `jarvis`, `[unk]` — trigger hamesha `jarvis` par hi hota hai, bas Hinglish bhi sahi shabd pe chun sake |
+| Grammar | **Shabd, poori phrase nahi** (5-Oct ka fix): `hello`, `hey`, `jarvis`, `hlo`, `helo`, `hi`, `yo`, `[unk]` — trigger hamesha `jarvis` par hi hota hai, bas Hinglish bhi sahi shabd pe chun sake |
 | Audio | 16 kHz mono, 30 ms chunk, energy VAD (threshold `.env` se `PRABH_VAD`, ab **0.010** — door se/dheere "Hlo Jarvis" par trigger aata hai) |
 | Battery | Vosk **sirf awaaz par** chalta hai (`wake/gate.py`) — khamoshi me chunk recognizer tak jaata hi nahi. Napi napa 4.8% → 0.9% core. Mic ka stream phir bhi khula rehta hai, is liye "Jarvis" har waqt sun sakta hai |
 | Gate band | `.env` me `PRABH_VOSK_GATE=0` — purana behaviour (har chunk Vosk ko), debug ke liye |
@@ -141,6 +141,27 @@ Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
 | Mute | Tray ka **Mic Mute** sunna rok deta hai (mic khula rehta hai, sunta nahi) |
 | Band karo | `.env` me `PRABH_WAKE=0` — phir startup me `wake: PRABH_WAKE=0 se band hai` dikhega |
 | Startup line | `wake: sun raha hai (jarvis)` — ya mic band/model missing ho to wajah |
+| Mic busy | Chrome/Teams mic pakde ho to app **3 koshish** karti hai (`PRABH_MIC_ATTEMPTS`, beech me `PRABH_MIC_RETRY` second), phir `wake: nahi chala`. Wajah log me: `MME error 1` = mic kisi aur app ne pakda hua hai |
+
+### Trigger ke **teen raaste** (5-Oct ka fix — "ek command ke baad doosra nahi")
+
+Pehle sirf ek raasta tha (Vosk ka `final`). Wahan se do command me bug tha: gate
+khamoshi par `listener.reset()` karta tha, jisse Vosk ka **pending** text chhoot
+jata tha. Log me ye dikhta tha — `sun liya: 'hello'`, phir `sun liya: 'yo'`:
+"Hlo Jarvis" do tukde me toot raha tha aur **trigger hi nahi** hota tha.
+
+Ab teeno ka faisla **ek** jagah hai (`wake/trigger.py`), koi bhi ek kaafi hai:
+
+| Raasta | Kab | Kyun |
+|---|---|---|
+| **final** | Vosk ne vaakya poora kiya | Purana raasta, abhi bhi |
+| **partial** | Vosk **abhi** bol raha hai aur text me `jarvis` hai | Sabse tez — khamoshi ka intezaar nahi |
+| **flush** | Gate ne khamoshi par `FinalResult()` se pending text nikaala | Wahi bug ka pakkaura |
+
+Naye `start()` par cooldown saaf hota hai, warna restart ke baad pehla "Jarvis"
+1.5 second tak pakda hi nahi jata. Wake debug line (`PRABH_WAKE_DEBUG=1`) se
+chunk/Vosk ka hisaab dekha ja sakta hai — **hamesha 0** rakho, warna har 3 second
+ek line log me.
 
 ### Command sunna + bolna (Step 2c) — poora
 

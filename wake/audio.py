@@ -119,7 +119,9 @@ class MicSource:
             self._stream.start()
         except Exception as exc:
             self.error = f"{type(exc).__name__}: {exc}"
-            log.error("mic nahi khula: %s", self.error)
+            log.error("mic nahi khula: %s | PortAudio 'MME error 1' ya "
+                      "'device busy' = mic kisi aur app ne pakda hua hai "
+                      "(Chrome/Teams/OBS band karke dubara kholo)", self.error)
             raise MicUnavailable(self.error) from exc
         self._stop.clear()
         self.alive = True

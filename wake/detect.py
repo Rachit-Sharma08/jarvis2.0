@@ -4,7 +4,8 @@ Vosk thoda low-level hai: `AcceptWaveform()` tabhi `True` deta hai jab **final**
 result tayyar ho, aur jawab JSON aata hai. Ye file sirf wahi saaf karta hai:
 
   `feed(raw)`    -> final text, warna `''`
-  `partial()`    -> abhi bol rahe ka text (HUD/log ke liye)
+  `partial()`    -> abhi bol rahe ka text (trigger + HUD/log ke liye)
+  `flush()`      -> pending text **force** nikaal do (khamoshi par)
   `reset()`      -> purana bhool jao (wake hit ya lambi khamoshi par)
   `build()`      -> model + listener (worker ke liye ek hi raasta)
 
@@ -64,6 +65,24 @@ class Listener:
             log.warning("partial fail: %s: %s", type(exc).__name__, exc)
             return ""
         return _text(raw)
+
+    def flush(self) -> str:
+        """Pending text **force** nikaal do (`FinalResult`). -> text ya `''`.
+
+        Zaruri kyun: gate khamoshi me Vosk ko chunk **nahi** deta (battery), to
+        Vosk ko vo silence nahi milti jisse apna endpoint nikalta hai. Purana
+        hissa yahan sirf `reset()` karta tha - matlab text chup-chaap gayab.
+        Silence ke hisse par ye text wapas aata hai (`wake/gate.py` ke `_flush`
+        se trigger tak jaata hai)."""
+        try:
+            raw = self.recognizer.FinalResult()
+        except Exception as exc:
+            log.warning("finalresult fail: %s: %s", type(exc).__name__, exc)
+            return ""
+        text = _text(raw)
+        if text:
+            self.finals += 1
+        return text
 
     def reset(self) -> None:
         """Pichla text bhool jao. Wake hit ke baad aur lambi khamoshi par."""

@@ -1,12 +1,16 @@
-"""Wake worker ka asal kaam — mic + Vosk + trigger, ek thread me.
+"""Wake worker ka asal kaam - mic + Vosk + loop, ek thread me.
 
 `wake/worker.py` sirf module-level raasta deta hai (poori app me ek hi worker).
-Is file me us ek worker ka **session** hai: mic, listener, callbacks aur state.
-Test me asli mic/model kabhi nahi chalta — `detect.build` aur `audio_mod.MicSource`
-patch hote hain.
+Is file me us ek worker ka **session** hai: mic, listener aur state.
+Test me asli mic/model kabhi nahi chalta - `detect.build` aur
+`audio_mod.MicSource` patch hote hain.
 
 Loop: chunk uthakar VAD se dekho bol rahe ho ya nahi -> **sirf tab** Vosk ko
-chunk (`WAKE_VOSK_GATE`) -> `phrase.hit()` -> `on_wake`.
+chunk (`WAKE_VOSK_GATE`) -> text trigger ko bhejo.
+
+Trigger ka faisla (`wake/trigger.py`) teeno raaste ek jagah karta hai - final,
+partial aur gate ka flush. Zindagi ka hissa (mic band karna, state, callbacks)
+`wake/lifecycle.py` me hai. 200-line ka seam yahi hai (AGENTS).
 """
 
 import queue
@@ -18,15 +22,15 @@ from log_setup import get_logger
 from wake import audio as audio_mod
 from wake import detect
 from wake import gate as gate_mod
-from wake import model as model_mod
-from wake import phrase as phrase_mod
+from wake import lifecycle as life_mod
+from wake import trigger as trigger_mod
 
 log = get_logger("wake_session")
 
-STATES = ("off", "listening", "heard", "error")
+STATES = life_mod.STATES
 
 
-class Session:
+class Session(life_mod.Lifecycle):
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._stop = threading.Event()
@@ -35,15 +39,13 @@ class Session:
         self._mic = None
         self._listener = None
         self._gate = None
-        self._on_wake = None
-        self._on_state = None
         self._state = "off"
-        self._wakes = 0
         self._failures = 0
+        self._trig = trigger_mod.Trigger()   # ek hi instance - `wakes` reset nahi hota
 
     # ---- padhna ----
     def state(self) -> str:
-        """Abhi ka haalat — wahi shabd jo `desktop/state.py` likhta hai."""
+        """Abhi ka haalat - wahi shabd jo `desktop/state.py` likhta hai."""
         return self._state
 
     def listening(self) -> bool:
@@ -51,11 +53,12 @@ class Session:
         return self._state in ("listening", "heard")
 
     def wakes(self) -> int:
-        """Ab tak kitne trigger — test + `--wake-info` ke liye."""
-        return self._wakes
+        """Ab tak kitne trigger? Poore app ka count - restart par reset nahi."""
+        return self._trig.wakes
 
     def describe(self) -> str:
-        return "%s | state=%s wakes=%d" % (config.describe(), self._state, self._wakes)
+        return "%s | state=%s wakes=%d" % (config.describe(), self._state,
+                                           self.wakes())
 
     def set_paused(self, on: bool) -> None:
         """Tray ka MUTE yahan aata hai. Pause me mic khula rehta hai, sunta nahi."""
@@ -64,10 +67,14 @@ class Session:
             log.info("wake pause (mute)")
         else:
             self._paused.clear()
+            # Pichla partial text command ke pichle hisse ka hai - use **pheko**,
+            # warna agli command me leak hoga. Vosk ka ek hi owner ye loop hai,
+            # is liye flag set karke loop se karwaate hain (tray thread se nahi).
+            self._trig.mark_unpaused()
             log.info("wake chalu (unmute)")
 
     def paused(self) -> bool:
-        """Abhi sunna band hai? (tray ka MUTE ya command ka hold — dono)"""
+        """Abhi sunna band hai? (tray ka MUTE ya command ka hold - dono)"""
         return self._paused.is_set()
 
     # ---- zindagi ----
@@ -76,17 +83,18 @@ class Session:
         with self._lock:
             if self._thread is not None and self._thread.is_alive():
                 return True
+            self._on_state = on_state      # `Lifecycle._end/_fail` yahi padhte hain
             ok, reason = config.wake_available()
             if not ok:
                 log.info("wake chalu nahi: %s", reason)
                 self._say(on_state, "off")
                 return False
-            self._on_wake, self._on_state = on_wake, on_state
+            self._trig.set_callbacks(on_wake=on_wake, on_state=self.say)
+            self._trig.reset_cooldown()    # pichle session ka wait naya rokega
             try:
                 self._listener = detect.build()
-                self._mic = audio_mod.MicSource()
-                self._mic.start()
-            except Exception as exc:      # model missing, mic band, ya koi surprise
+                self._mic = self._open_mic()
+            except Exception as exc:      # model missing, mic busy, ya surprise
                 self._fail(exc)
                 return False
             self._stop.clear()
@@ -102,13 +110,44 @@ class Session:
         thread = self._thread
         if thread is not None:
             thread.join(timeout=3.0)
+            if thread.is_alive():
+                # Loop abhi bhi `self._listener` / `self._mic` use kar raha hai -
+                # `_close()` karna crash karega, aur `_thread = None` karne se
+                # `start()` **doosra** loop chala dega (ek hi Session, do loop).
+                log.warning("wake thread 3s me band nahi hua - chhod raha hai")
+                return
         self._close()
         self._thread = None
 
+    # ---- mic (retry) ----
+    def _open_mic(self):
+        """Mic kholo - koshish karke. `MicUnavailable` (device busy/permission)
+        par `MIC_OPEN_ATTEMPTS` tak retry.
+
+        5-Oct: ek koshish me app hamesha `wake: nahi chala` ho jati thi, jabki
+        asli wajah sirf ye thi ki mic kisi aur app (Chrome/Teams) ne pakda hua
+        tha. Sirf `MicUnavailable` retry hota hai - constructor ya model ka
+        crash turant upar jaata hai (warna asli bug chup ho jayega)."""
+        last = None
+        for attempt in range(1, max(1, config.MIC_OPEN_ATTEMPTS) + 1):
+            try:
+                mic = audio_mod.MicSource()
+                mic.start()
+                if attempt > 1:
+                    log.info("mic %d. koshish me khul gaya", attempt)
+                return mic
+            except audio_mod.MicUnavailable as exc:
+                last = exc
+                log.warning("mic kholne me galti (#%d/%d): %s", attempt,
+                            config.MIC_OPEN_ATTEMPTS, exc)
+                if attempt < config.MIC_OPEN_ATTEMPTS:
+                    time.sleep(config.MIC_OPEN_RETRY_SECONDS)
+        raise last
+
     # ---- andar (thread) ----
     def _loop(self) -> None:
-        gate = self._gate = gate_mod.Gate()
-        cool_until = 0.0
+        gate = self._gate = gate_mod.Gate(on_text=self._trig.on_flush)
+        self._trig.bind(self._listener, self._mic, self._stop, gate)
         while not self._stop.is_set():
             try:
                 raw = self._mic.chunks.get(timeout=0.5)
@@ -118,82 +157,19 @@ class Session:
                 continue
             if not self._mic.alive:
                 break
-            if self._paused.is_set() or time.monotonic() < cool_until:
+            if self._paused.is_set() or self._trig.cooling():
                 continue                             # chunk phenko, suno nahi
+            if self._trig.take_fresh():
+                self._trig.drop_pending(self._listener)
             if not gate.push(self._listener, raw):  # khamoshi: Vosk mat chalao
                 continue
             text = self._listener.feed(raw)
+            how = "final"
+            if not text:
+                text = self._listener.partial()     # abhi bol raha hai
+                how = "partial"
             if not text:
                 continue
-            log.info("sun liya: %r", text[:60])
-            if not phrase_mod.hit(text):
-                continue
-            cool_until = time.monotonic() + config.WAKE_COOLDOWN_SECONDS
-            self._fire(text)
+            log.info("sun liya (%s): %r", how, text[:60])
+            self._trig.maybe(text)
         self._end()
-
-    def _fire(self, text: str) -> None:
-        self._wakes += 1
-        heard = phrase_mod.phrase(text)
-        log.info("WAKE HIT #%d: %r (poora: %r)", self._wakes, heard, text[:60])
-        self._say(self._on_state, "heard")
-        if self._on_wake is not None:
-            try:
-                # Mic aur stop event yahin se jaate hain — inke alawa command
-                # ko koi raasta nahi chahiye. `on_wake` **synchronous** hai (is
-                # thread par), to command poora chal jaane tak sunna ruka rehta
-                # hai aur dobara wake trigger nahi hota.
-                self._on_wake(heard, self._mic, self._stop)
-            except Exception as exc:
-                log.error("on_wake crash: %s: %s", type(exc).__name__, exc)
-        self._listener.reset()
-        if self._gate is not None:
-            self._gate.reset()
-
-    def _end(self) -> None:
-        """Loop khatam — `off` ya `error`. Sirf `mic.error` kaafi nahi (unplug par
-        wo khaali hota hai), is liye faisla `_stop` se."""
-        mic = self._mic
-        reason = mic.error if mic is not None else ""
-        dead = mic is not None and not mic.alive
-        self._close()
-        self._thread = None
-        if self._stop.is_set():
-            log.info("wake band")
-            value = "off"
-        elif reason or dead:
-            log.error("wake mic chala gaya: %s", reason or "device band (wajah nahi mili)")
-            value = "error"
-        else:
-            log.info("wake band")
-            value = "off"
-        self._say(self._on_state, value)
-
-    def _fail(self, exc: Exception) -> None:
-        self._failures += 1
-        log.error("wake start fail (#%d): %s: %s",
-                  self._failures, type(exc).__name__, exc)
-        self._close()
-        self._say(self._on_state, "error")
-
-    def _close(self) -> None:
-        """Model chhodna + mic band. Crash nahi karta, baar baar safe hai.
-
-        `_lock` yahan jaan-boojh kar nahi liya — `start()` usko pakde hue
-        failure par ye call karta hai, aur dobara pakadna deadlock de deta."""
-        mic, self._mic = self._mic, None
-        if mic is not None:
-            mic.stop()
-        self._listener = None
-        self._gate = None
-        model_mod.clear()
-
-    def _say(self, callback, value: str) -> None:
-        """`on_state` ko haalat bhejo — uska crash hamara crash nahi hai."""
-        self._state = value if value in STATES else "off"
-        if callback is None:
-            return
-        try:
-            callback(self._state)
-        except Exception as exc:
-            log.warning("on_state crash: %s: %s", type(exc).__name__, exc)

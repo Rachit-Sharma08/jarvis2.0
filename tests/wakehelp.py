@@ -70,12 +70,14 @@ def quiet(blocks: int = 1) -> bytes:
 class FakeRecognizer:
     """Vosk `KaldiRecognizer` ka nakli — script se text deta hai."""
 
-    def __init__(self, texts=None, partial: str = "", raw_text=None):
+    def __init__(self, texts=None, partial: str = "", raw_text=None, pending: str = ""):
         self.queue = list(texts or [])
         self.partial_text = partial
+        self.pending = pending          # `FinalResult()` ka text (flush ke liye)
         self.raw_text = raw_text          # ajeeb JSON ke liye
         self.bytes_fed = 0
         self.resets = 0
+        self.finalized = 0
 
     def AcceptWaveform(self, raw):
         self.bytes_fed += len(raw)
@@ -89,19 +91,26 @@ class FakeRecognizer:
     def PartialResult(self):
         return json.dumps({"partial": self.partial_text})
 
+    def FinalResult(self):
+        """Vosk ka force-final: pending text de deta hai (`flush()` ka raasta)."""
+        self.finalized += 1
+        text, self.pending = self.pending, ""
+        return json.dumps({"text": text})
+
     def Reset(self):
         self.resets += 1
         self.queue = []
         self.partial_text = ""
+        self.pending = ""
 
 
-def make_listener(texts=None, partial: str = "", raw_text=None):
+def make_listener(texts=None, partial: str = "", raw_text=None, pending: str = ""):
     """`detect.Listener` + uska fake — `vosk.KaldiRecognizer` ko badal kar."""
     from wake import detect
 
     import vosk
 
-    fake = FakeRecognizer(texts, partial, raw_text)
+    fake = FakeRecognizer(texts, partial, raw_text, pending)
     original = vosk.KaldiRecognizer
     vosk.KaldiRecognizer = lambda *a, **k: fake
     try:
@@ -113,10 +122,13 @@ def make_listener(texts=None, partial: str = "", raw_text=None):
 class FakeListener:
     """`detect.Listener` jaisa, lekin text ki list se. Worker test ke liye."""
 
-    def __init__(self, texts=None):
+    def __init__(self, texts=None, pending: str = "", partial: str = ""):
         self.queue = list(texts or [])
+        self.pending = pending          # flush par ye milega
+        self.partial_text = partial      # partial() ka jawab (trigger ka raasta)
         self.finals = 0
         self.resets = 0
+        self.flushes = 0
 
     def feed(self, raw):
         if not self.queue:
@@ -125,10 +137,16 @@ class FakeListener:
         return self.queue.pop(0)
 
     def partial(self):
-        return ""
+        return self.partial_text
+
+    def flush(self):
+        self.flushes += 1
+        text, self.pending = self.pending, ""
+        return text
 
     def reset(self):
         self.resets += 1
+        self.pending = ""
 
 
 class FakeMic:

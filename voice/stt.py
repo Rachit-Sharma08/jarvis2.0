@@ -33,6 +33,11 @@ async def transcribe(audio: bytes, duration_ms=None) -> str:
         raise SttError("GROQ_API_KEY missing hai. .env check karo.")
     if not audio:
         raise SttError("Recording khaali aayi.")
+    # Size guard YAHAN hai, sirf route me nahi. Wake path (`wake/listen.py`)
+    # bhi yahin se guzarta hai, aur 11 MB ka blob provider tak bhejne ki zaroorat
+    # nahi — quota bachega aur test bhi asli network par nahi jaayega.
+    if len(audio) > config.AUDIO_MAX_BYTES:
+        raise SttError("Recording bahut badi hai.")
 
     # Chhoti recording (600ms se kam) me insaan ki awaaz nahi hoti — call
     # jyada kharch karega aur text ghalt aayega.

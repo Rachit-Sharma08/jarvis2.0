@@ -87,7 +87,9 @@ def test_crash_safe():
         worker.stop()
         before = worker.wakes()          # count poore app ka hai, is suite ka nahi
 
-        def boom(_phrase):
+        def boom(_phrase, _mic=None, _stop=None):
+            """**teen** args - `on_wake(phrase, mic, stop)`. Ek-arg fake se
+            TypeError hota aur trigger chup-chaap fail ho jata (AGENTS)."""
             raise RuntimeError("HUD fail")
 
         def bad_state(_value):
