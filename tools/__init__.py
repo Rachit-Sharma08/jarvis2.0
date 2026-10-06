@@ -4,7 +4,7 @@
 bhi isi ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import apps, command, files, system
+from tools import apps, command, files, system, reminders
 
 TOOLS = {
     "get_time_date": system.get_time_date,
@@ -17,6 +17,9 @@ TOOLS = {
     "open_website": apps.open_website,
     "close_app": apps.close_app,
     "delete_to_trash": files.delete_to_trash,
+    "add_reminder": reminders.add_reminder,
+    "list_reminders": reminders.list_reminders,
+    "clear_reminder": reminders.clear_reminder,
 }
 
 TOOL_ARGS = {
@@ -30,6 +33,9 @@ TOOL_ARGS = {
     "open_website": ("url",),
     "close_app": ("name",),
     "delete_to_trash": ("path",),
+    "add_reminder": ("text", "at", "in_minutes"),
+    "list_reminders": (),
+    "clear_reminder": ("id",),
 }
 
 TOOL_SUMMARY = {
@@ -43,6 +49,9 @@ TOOL_SUMMARY = {
     "open_website": "website browser me kholo",
     "close_app": "app band karo",
     "delete_to_trash": "file/folder Recycle Bin me bhejo",
+    "add_reminder": "reminder set karo (at jaise '5 PM' ya in_minutes number)",
+    "list_reminders": "pending reminders dikhao",
+    "clear_reminder": "reminder clear karo (id number)",
 }
 
 
