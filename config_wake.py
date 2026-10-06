@@ -1,16 +1,16 @@
-"""Wake word + voice command ke constants. `import config` hi sab jagah chalta hai.
+﻿"""Wake word + voice command ke constants. `import config` hi sab jagah chalta hai.
 
 Ye Step 1 ka hissa hai. Do alag STT jaan-boojh kar:
 
-1. **Wake word ("Jarvis")** — local Vosk, `models/vosk-model-small-en-us-0.15`.
+1. **Wake word ("Jarvis")** â€” local Vosk, `models/vosk-model-small-en-us-0.15`.
    English model hi sahi hai kyunki "Jarvis" ek English shabd hai. Awaaz kabhi
-   bahar nahi jaati, 100% offline. Shabd `config_name.py` se aate hain —
+   bahar nahi jaati, 100% offline. Shabd `config_name.py` se aate hain â€”
    purane "sunday" shabd wahan alag list me, default band.
 
-2. **Command ("whatsapp kholo", "Ramesh ko phone karo")** — `voice/stt.py` ka
+2. **Command ("whatsapp kholo", "Ramesh ko phone karo")** â€” `voice/stt.py` ka
    Groq Whisper (`whisper-large-v3-turbo`). Ye Hinglish ka asli expert hai.
 
-Is liye Hinglish ke liye koi 470 MB model download karne ki zarurat nahi —
+Is liye Hinglish ke liye koi 470 MB model download karne ki zarurat nahi â€”
 dono cheezein pehle se maujood hain.
 
 Rule: is file me koi API key nahi. Wake ka model path `BASE_DIR/models` me hai.
@@ -28,14 +28,14 @@ MODEL_DIR = BASE_DIR / "models"
 
 # ---- kholna / band karna ----
 # Default ON. Mic band karne ka ek hi raasta hai `desktop/micperm.py` +
-# tray ka MUTE — `.env` se alag koi davaa nahi.
+# tray ka MUTE â€” `.env` se alag koi davaa nahi.
 WAKE_ENABLED = os.getenv("PRABH_WAKE", "1").strip() not in ("0", "false", "no")
 
 # ---- model ----
 WAKE_MODEL_DIR = str(MODEL_DIR / "vosk-model-small-en-us-0.15")
 WAKE_MODEL_ALT_DIR = str(MODEL_DIR / "vosk-model-small-hi-0.22")
 
-# Vosk ke saath grammar: sirf ye shabd hi pehchanega. Isse do fayde —
+# Vosk ke saath grammar: sirf ye shabd hi pehchanega. Isse do fayde â€”
 # galat trigger kam, aur CPU halka. Asli list `config_name.py` me hai
 # (Step 1: "jarvis"; purane "sunday" shabd `LEGACY_WAKE_PHRASES` me, band).
 WAKE_WORDS = wake_words()
@@ -43,7 +43,7 @@ WAKE_GRAMMAR = wake_grammar()
 
 # ---- audio ----
 SAMPLE_RATE = 16000          # Vosk isko hi maangta hai (16 kHz mono)
-BLOCK_MS = 30                # 30 ms ka chunk — Vosk ke liye ideal
+BLOCK_MS = 30                # 30 ms ka chunk â€” Vosk ke liye ideal
 CHANNELS = 1
 INPUT_DEVICE = os.getenv("PRABH_WAKE_MIC", "").strip() or None
 # 5-Oct ka sabse bada bug: **MME** ka mic kachra deta tha (peak -19..-52 dB, Vosk
@@ -54,19 +54,19 @@ INPUT_HOSTAPI = os.getenv("PRABH_WAKE_MIC_HOSTAPI", "WASAPI").strip().upper()
 
 # Energy VAD. **5-Oct ka doosra asli bug yahin tha**: mic WASAPI se theek khul
 # raha tha, lekin door/dheere bolne par chunk ka RMS sirf **0.0055** hota tha,
-# jabki threshold 0.010 tha — 90 s me 3003 chunk me se sirf **31** chunk Vosk
+# jabki threshold 0.010 tha â€” 90 s me 3003 chunk me se sirf **31** chunk Vosk
 # tak pahuncha aur `finals=0` raha. Mic ki khamoshi 0.0000-0.0026 hai (fan/hawa),
-# aur paas bolne par RMS 0.023 (peak 0.81) — wahi audio Vosk ne "hello jarvis"
+# aur paas bolne par RMS 0.023 (peak 0.81) â€” wahi audio Vosk ne "hello jarvis"
 # pehchan liya. Is liye threshold beech me: **0.004**.
 # Fan ka shor 0.0026 se upar nahi jaata, to VAD band nahi hota.
 # 4-Oct: 0.012 -> 0.010 -> 5-Oct: **0.004**. `.env` ke `PRABH_VAD` se badalte ho.
 VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.006"))
 VAD_SILENCE_BLOCKS = 12      # ~0.36 s khamoshi = VAD ke baad band
-VAD_HANGOVER_BLOCKS = 30     # ~0.9 s — VAD ke dauraan awaaz mat kaato
+VAD_HANGOVER_BLOCKS = 30     # ~0.9 s â€” VAD ke dauraan awaaz mat kaato
 
 # ---- digital gain (5-Oct ka teesra bug) --------------------------------------
 # Level par 100x ka farak tha: door/dheere bolne par RMS **0.0014**, paas-zor
-# bolne par **0.16** (peak 0.99). Wahi audio gain se theek hua — 8x par `hello`
+# bolne par **0.16** (peak 0.99). Wahi audio gain se theek hua â€” 8x par `hello`
 # + `jarvis` dono finals me aa gaye. Ye `wake/pcm.py` ka `AutoGain` hai jo
 # sirf **awaaz** par lagta hai, khamoshi par nahi (warna VAD hamesha "bol raha
 # hai" bolta aur battery jaati).
@@ -77,7 +77,7 @@ INPUT_GAIN_MAX = float(os.getenv("PRABH_WAKE_GAIN_MAX", "12"))
 
 # ---- battery ka pakkaura ----
 # Vosk ko **har** chunk dena = 3.9% CPU chalu, chahe koi na bol (battery jaati
-# hai). Is liye chunk tabhi dena jab VAD bol raha ho — `wake/session.py` ka gate.
+# hai). Is liye chunk tabhi dena jab VAD bol raha ho â€” `wake/session.py` ka gate.
 # Mic ka stream khula rehta hai (band nahi hota, crash ka raasta bhi nahi);
 # sirf sunna band hota hai. `.env` ke `PRABH_VOSK_GATE=0` se gate band.
 WAKE_VOSK_GATE = os.getenv("PRABH_VOSK_GATE", "1").strip() not in ("0", "false", "no")
@@ -110,7 +110,7 @@ COMMAND_PRE_ROLL_SECONDS = 0.6
 COMMAND_WAIT_SECONDS = 5.0         # pehla shabd aaya hi nahi -> "sun nahi aaya"
 COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-ta hai
 
-# Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye — is liye
+# Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye â€” is liye
 # "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
 PLAYBACK_MUTE_MIC = True
 
@@ -118,27 +118,27 @@ PLAYBACK_MUTE_MIC = True
 # `PRABH_WAKE_DEBUG=1` se har 3 second ek line: kitne chunk aaye, kitne Vosk
 # ko gaye, kitne chhode, RMS kya tha. Isi se pata chala ki command ke baad
 # chunk **aate hi nahi** (mic/pump), ya aate hain par VAD "khamoshi" bolta hai.
-# Hamesha band — sirf bug pakadne ke liye.
+# Hamesha band â€” sirf bug pakadne ke liye.
 WAKE_DEBUG = os.getenv("PRABH_WAKE_DEBUG", "0") not in ("0", "", "no", "false")
 WAKE_DEBUG_SECONDS = 3.0
 
 # "Ji, boliye" bolne se **pehle** itni der suno (4-Oct). Agar user is dauraan
-# bol hi raha hai to ack chhod do — warna hamari awaaz uske upar chadh jaati
+# bol hi raha hai to ack chhod do â€” warna hamari awaaz uske upar chadh jaati
 # hai, command ka pehla shabd kat-ta hai aur use lagta hai "sun nahi pa raha".
 # Isi 0.18 s ka kaam hai: mic settle + bolne ki pehli awaaz pakadna. Nahi mila
 # to normal raasta (ack + 1 s warm-up). `.env` ke `PRABH_ACK_PEEK` se.
 COMMAND_ACK_PEEK_SECONDS = float(os.getenv("PRABH_ACK_PEEK", "0.18"))
 
 # ---- wake ke jawab ----
-# Ye chaaron line sirf `wake/command.py` bolti hai. UI me text nahi — awaaz.
-ACK_ON_WAKE = "Ji, boliye."
+# Ye chaaron line sirf `wake/command.py` bolti hai. UI me text nahi â€” awaaz.
+ACK_ON_WAKE = ("Ji, boliye.", "On it.", "Got it.", "Right away.", "Working on it.")
 NOT_HEARD = "Kuch sun nahi aaya. Dobara boliye."
 # Awaaz saaf nahi aayi: kuch bola hi nahi, bahut chhota bola, ya STT guard ne
 # ("Thank you." jaisa) reject kar diya. TEENO ka jawab ek hi line.
 NOT_UNDERSTOOD = "Samajh nahi aaya, dobara boliye."
-# Brain ya net fail. Chhota rakha hai — asli wajah log me hai.
+# Brain ya net fail. Chhota rakha hai â€” asli wajah log me hai.
 BRAIN_FAILED = "Abhi jawab nahi mil pa raha."
-# ASK wala tool: card screen par aayega. **Awaaz se Allow kabhi nahi** — sirf
+# ASK wala tool: card screen par aayega. **Awaaz se Allow kabhi nahi** â€” sirf
 # screen ka button. Ye line sirf itni batati hai ki screen dekh lo.
 CONFIRM_VOICE = "Screen par confirm kijiye."
 STOP_WORD = ("ruk jao", "band karo", "shukriya", "thanks", "stop")
@@ -146,15 +146,15 @@ STOP_WORD = ("ruk jao", "band karo", "shukriya", "thanks", "stop")
 # ---- "so jao" (battery) ----
 # Mic sunna **kabhi band nahi** hota (warna "Jarvis" sunai hi nahi dega). Is liye
 # battery ka asal nuksan hataane ke liye bhaari sab (HUD, stats pump, browser)
-# band karna padta hai — sirf mic + gate chalta reheta hai. Puri tarah band karna
+# band karna padta hai â€” sirf mic + gate chalta reheta hai. Puri tarah band karna
 # tray ke Quit se (CPU 0, phir "Jarvis" kaam nahi karega).
 SLEEP_WORDS = ("so jao", "so jaiye", "sone jao", "soye raho", "soye rahiye",
                "so jaa", "band ho jao", "soye jao")
-SLEEP_ACK = "So gaya. Jarvis boliye."      # chhota — TTS + playback = waqt
+SLEEP_ACK = "So gaya. Jarvis boliye."      # chhota â€” TTS + playback = waqt
 SLEEP_FROM_TRAY = "SO JAAO"                # tray ka item
 
 # ---- WhatsApp call (Step 2, Option A) ----------------------------------------
-# Ye char constant ab `config_tools.py` me hain (WhatsApp Web ek tool hai) —
+# Ye char constant ab `config_tools.py` me hain (WhatsApp Web ek tool hai) â€”
 # `config.py` waise bhi re-export karta hai. 5-Oct: file 200 cross thi.
 
 
@@ -197,6 +197,6 @@ def describe() -> str:
 
 
 def config_stt_name() -> str:
-    """Command ke liye kaunsa STT — yahan `config_brain` se utha rahe hain taaki
+    """Command ke liye kaunsa STT â€” yahan `config_brain` se utha rahe hain taaki
     cycle na bane (`config.py` yahan se import karta hai, wahan se nahi)."""
     return os.getenv("PRABH_STT_MODEL", "groq-whisper")
