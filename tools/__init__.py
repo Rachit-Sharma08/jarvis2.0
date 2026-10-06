@@ -1,10 +1,10 @@
-"""Tools ka registry. Yehi ek jagah se tool chalta hai.
+﻿"""Tools ka registry. Yehi ek jagah se tool chalta hai.
 
 `TOOL_ARGS` strict hai: har tool ke sirf ye args, aur sab string. LLM ka JSON
-bhi isi ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
+bhi isi ke hisaab se validate hota hai â€” koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import apps, command, files, system, reminders, todo, quick, search as search_mod, kb
+from tools import apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, rss, notes, pomodoro, webhook
 
 TOOLS = {
     "get_time_date": system.get_time_date,
@@ -31,6 +31,7 @@ TOOLS = {
     "focus_app": quick.focus_app,
     "kb_add": kb.kb_add,
     "kb_search": kb.kb_search,
+    "daily_brief": brief.daily_brief,
 }
 
 TOOL_ARGS = {
@@ -58,6 +59,7 @@ TOOL_ARGS = {
     "focus_app": ("name",),
     "kb_add": ("text", "filename"),
     "kb_search": ("query",),
+    "daily_brief": (),
 }
 
 TOOL_SUMMARY = {
@@ -85,6 +87,7 @@ TOOL_SUMMARY = {
     "focus_app": "ek app par focus do",
     "kb_add": "knowledge base me text save karo",
     "kb_search": "knowledge base me search karo",
+    "daily_brief": "daily brief dikhao (reminders+todos)",
 }
 
 
@@ -98,7 +101,7 @@ def spec() -> str:
 
 
 def execute(name: str, args: dict) -> str:
-    """Tool chalao. Galti ho to text return karo — crash kabhi nahi."""
+    """Tool chalao. Galti ho to text return karo â€” crash kabhi nahi."""
     func = TOOLS.get(name)
     if func is None:
         return f"'{name}' naam ka koi tool nahi hai."
@@ -112,3 +115,5 @@ def execute(name: str, args: dict) -> str:
         return str(func(**args))
     except Exception as exc:
         return f"error: {type(exc).__name__}: {exc}"
+
+
