@@ -34,12 +34,24 @@ command se hoga, to seedha bata do ki tools band hain. Tool JSON mat likho.]
 """
 
 
+from core import memory
+
+
 def build(persona: str, tools_on: bool = True) -> str:
-    """Tools OFF par lamba tool-prompt LLM ko bhejte hi nahi — sirf persona."""
+    """Tools OFF par lamba tool-prompt LLM ko bhejte hi nahi - sirf persona."""
     if not tools_on:
-        return persona + TOOLS_OFF_NOTE
+        parts = [persona]
+        ctx = memory.MEM.context(max_turns=6)
+        if ctx:
+            parts.append(ctx)
+        return "\n\n".join(parts) + TOOLS_OFF_NOTE
     spec = "\n".join(f"- {name}({', '.join(TOOL_ARGS[name])}): {TOOL_SUMMARY[name]}" for name in TOOL_SUMMARY)
-    return persona + RULES.format(spec=spec, steps=config.TOOL_MAX_STEPS)
+    ctx = memory.MEM.context(max_turns=10)
+    parts = [persona]
+    if ctx:
+        parts.append(ctx)
+    parts.append(RULES.format(spec=spec, steps=config.TOOL_MAX_STEPS))
+    return "\n\n".join(parts)
 
 
 def _unfence(text: str) -> str:

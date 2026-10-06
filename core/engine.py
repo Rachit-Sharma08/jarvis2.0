@@ -3,6 +3,7 @@ import time
 import config
 from brain import prompt, router
 from core import events, modes
+from core import memory
 from gatekeeper import keeper
 from gatekeeper.audit import mask
 from log_setup import get_logger
@@ -98,6 +99,7 @@ class Engine:
             )
 
         self.history.append({"role": "user", "content": clean_text})
+        memory.MEM.add("user", clean_text)
         yield events.message("user", clean_text)
         self._trim()
 
@@ -114,6 +116,7 @@ class Engine:
             kind, payload = prompt.parse_action(answer)
             if kind == "none":
                 self.history.append({"role": "assistant", "content": answer})
+                memory.MEM.add("assistant", answer)
                 self._trim()
                 yield events.log(f"jawab {brain_name} se aya", data={"brain": brain_name})
                 yield events.message("assistant", answer, modes.label(self.mode))
