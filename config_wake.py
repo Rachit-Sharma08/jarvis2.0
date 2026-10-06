@@ -60,7 +60,7 @@ INPUT_HOSTAPI = os.getenv("PRABH_WAKE_MIC_HOSTAPI", "WASAPI").strip().upper()
 # pehchan liya. Is liye threshold beech me: **0.004**.
 # Fan ka shor 0.0026 se upar nahi jaata, to VAD band nahi hota.
 # 4-Oct: 0.012 -> 0.010 -> 5-Oct: **0.004**. `.env` ke `PRABH_VAD` se badalte ho.
-VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.006"))
+VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.0075"))
 VAD_SILENCE_BLOCKS = 12      # ~0.36 s khamoshi = VAD ke baad band
 VAD_HANGOVER_BLOCKS = 30     # ~0.9 s â€” VAD ke dauraan awaaz mat kaato
 
@@ -72,7 +72,7 @@ VAD_HANGOVER_BLOCKS = 30     # ~0.9 s â€” VAD ke dauraan awaaz mat kaato
 # hai" bolta aur battery jaati).
 # `.env`: `PRABH_WAKE_GAIN=auto` (default) | koi number (fixed gain) | `0`/`off`
 INPUT_GAIN = os.getenv("PRABH_WAKE_GAIN", "auto").strip().lower()
-INPUT_GAIN_TARGET = float(os.getenv("PRABH_WAKE_GAIN_TARGET", "0.10"))
+INPUT_GAIN_TARGET = float(os.getenv("PRABH_WAKE_GAIN_TARGET", "0.12"))
 INPUT_GAIN_MAX = float(os.getenv("PRABH_WAKE_GAIN_MAX", "12"))
 
 # ---- battery ka pakkaura ----
@@ -200,5 +200,8 @@ def config_stt_name() -> str:
     """Command ke liye kaunsa STT â€” yahan `config_brain` se utha rahe hain taaki
     cycle na bane (`config.py` yahan se import karta hai, wahan se nahi)."""
     return os.getenv("PRABH_STT_MODEL", "groq-whisper")
+
+
+
 
 
