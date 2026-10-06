@@ -4,7 +4,7 @@
 bhi isi ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import apps, command, files, system, reminders, todo
+from tools import apps, command, files, system, reminders, todo, quick, search as search_mod
 
 TOOLS = {
     "get_time_date": system.get_time_date,
@@ -24,6 +24,11 @@ TOOLS = {
     "list_todos": todo.list_todos,
     "done_todo": todo.done_todo,
     "clear_todos": todo.clear_todos,
+    "web_search": search_mod.web_search,
+    "copy_text": quick.copy_text,
+    "get_clipboard": quick.get_clipboard,
+    "open_url": quick.open_url,
+    "focus_app": quick.focus_app,
 }
 
 TOOL_ARGS = {
@@ -44,6 +49,11 @@ TOOL_ARGS = {
     "list_todos": (),
     "done_todo": ("id",),
     "clear_todos": (),
+    "web_search": ("query", "num"),
+    "copy_text": ("text",),
+    "get_clipboard": (),
+    "open_url": ("url",),
+    "focus_app": ("name",),
 }
 
 TOOL_SUMMARY = {
@@ -64,6 +74,11 @@ TOOL_SUMMARY = {
     "list_todos": "todos dikhao",
     "done_todo": "todo mark done karo (id number)",
     "clear_todos": "saare todos clear karo",
+    "web_search": "internet par search karo (SerpAPI)",
+    "copy_text": "text clipboard me copy karo",
+    "get_clipboard": "clipboard ka text padho",
+    "open_url": "URL browser me kholo",
+    "focus_app": "ek app par focus do",
 }
 
 

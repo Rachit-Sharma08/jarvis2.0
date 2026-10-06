@@ -1,4 +1,4 @@
-﻿"""Short-term conversation memory (local JSON). MCU JARVIS-like context."""
+﻿"""Short-term conversation memory (local JSON)."""
 import json
 import os
 from datetime import datetime
@@ -8,6 +8,7 @@ import config
 
 DATA_DIR = Path(config.BASE_DIR) / 'data'
 MEM_FILE = DATA_DIR / 'memory.json'
+SUM_FILE = DATA_DIR / 'memory_summary.txt'
 
 
 class Memory:
@@ -37,11 +38,7 @@ class Memory:
     def add(self, role: str, text: str):
         if not text:
             return
-        self._items.append({
-            'role': role,
-            'text': str(text)[:1000],
-            'ts': datetime.now().isoformat(timespec='seconds'),
-        })
+        self._items.append({'role': role, 'text': str(text)[:1000], 'ts': datetime.now().isoformat(timespec='seconds')})
         if len(self._items) > self.max_turns * 3:
             self._items = self._items[-self.max_turns * 2:]
         self._save()
@@ -49,13 +46,22 @@ class Memory:
     def context(self, max_turns: int | None = None) -> str:
         n = max_turns or self.max_turns
         items = self._items[-n:]
-        if not items:
-            return ''
-        lines = ['[CONTEXT RECENT]']
-        for it in items:
-            lines.append(f"{it['role']}: {it['text']}")
-        lines.append('[END CONTEXT]')
-        return '\n'.join(lines)
+        parts = []
+        try:
+            if SUM_FILE.exists():
+                with open(SUM_FILE, 'r', encoding='utf-8') as f:
+                    s = f.read().strip()
+                if s:
+                    parts.append('[CONTEXT SUMMARY]\n' + s + '\n[END SUMMARY]')
+        except Exception:
+            pass
+        if items:
+            lines = ['[CONTEXT RECENT]']
+            for it in items:
+                lines.append(f"{it['role']}: {it['text']}")
+            lines.append('[END CONTEXT]')
+            parts.append('\n'.join(lines))
+        return '\n\n'.join(parts) if parts else ''
 
     def clear(self):
         self._items = []
