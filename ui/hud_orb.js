@@ -54,6 +54,11 @@
     // CSS sirf idle/listening/thinking/speaking par animations rakhta hai
     const cssName = key === "transcribing" ? "listening" : key;
     wrap.classList.add(cssName);
+    const orb = document.getElementById("orb");
+    if (orb) {
+      orb.className.baseVal = (orb.className.baseVal || "").replace(/\b(idle|listening|transcribing|thinking|speaking)\b/g, "");
+      orb.classList.add(cssName);
+    }
     stateEl.textContent = STATE_TEXT[key] || STATE_TEXT.idle;
   }
 

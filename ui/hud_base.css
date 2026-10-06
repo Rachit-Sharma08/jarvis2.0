@@ -122,3 +122,16 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+#orb { transition: filter 250ms ease, transform 250ms ease; }
+#orb.listening { filter: drop-shadow(0 0 30px rgba(46,168,255,.75)); transform: scale(1.02); }
+#orb.thinking  { filter: drop-shadow(0 0 40px rgba(138,43,226,.70)); animation: orbPulse 800ms ease-in-out infinite alternate; }
+#orb.speaking  { filter: drop-shadow(0 0 36px rgba(0,255,180,.70)); transform: scale(1.03); }
+#orb.listening #core,
+#orb.thinking  #core,
+#orb.speaking  #core { opacity: .98; }
+
+@keyframes orbPulse {
+  from { transform: scale(1.00); }
+  to   { transform: scale(1.04); }
+}
