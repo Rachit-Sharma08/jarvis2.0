@@ -4,7 +4,7 @@
 bhi isi ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import apps, command, files, system, reminders, todo, quick, search as search_mod
+from tools import apps, command, files, system, reminders, todo, quick, search as search_mod, kb
 
 TOOLS = {
     "get_time_date": system.get_time_date,
@@ -29,6 +29,8 @@ TOOLS = {
     "get_clipboard": quick.get_clipboard,
     "open_url": quick.open_url,
     "focus_app": quick.focus_app,
+    "kb_add": kb.kb_add,
+    "kb_search": kb.kb_search,
 }
 
 TOOL_ARGS = {
@@ -54,6 +56,8 @@ TOOL_ARGS = {
     "get_clipboard": (),
     "open_url": ("url",),
     "focus_app": ("name",),
+    "kb_add": ("text", "filename"),
+    "kb_search": ("query",),
 }
 
 TOOL_SUMMARY = {
@@ -79,6 +83,8 @@ TOOL_SUMMARY = {
     "get_clipboard": "clipboard ka text padho",
     "open_url": "URL browser me kholo",
     "focus_app": "ek app par focus do",
+    "kb_add": "knowledge base me text save karo",
+    "kb_search": "knowledge base me search karo",
 }
 
 
