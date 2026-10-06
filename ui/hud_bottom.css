@@ -174,3 +174,14 @@
   font-size: 12px;
   color: var(--amber);
 }
+
+.remind-pill {
+  position: absolute;
+  left: 20px;
+  bottom: 8px;
+  font: 10px/14px var(--font-mono);
+  color: var(--cyan-dim);
+  opacity: 0.7;
+  display: none;
+}
+.remind-pill.show { display: block; }

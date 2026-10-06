@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -27,12 +27,12 @@
   <header class="topbar">
     <div class="tb-left">
       <h1 class="brand" id="brand">__PRABH_DISPLAY_NAME__</h1>
-      <span class="pill st-idle" id="status">● IDLE</span>
+      <span class="pill st-idle" id="status">â— IDLE</span>
     </div>
     <div class="tb-mid" aria-hidden="true"><div class="ruler" id="ruler"></div></div>
     <div class="tb-right">
-      <span class="pill sys" id="sysstate">SYSTEM …</span>
-      <span class="pill desk off" id="deskstate">DESKTOP …</span>
+      <span class="pill sys" id="sysstate">SYSTEM â€¦</span>
+      <span class="pill desk off" id="deskstate">DESKTOP â€¦</span>
       <span class="prov" id="provider"></span>
       <button class="mini" id="mute" type="button">MUTE</button>
       <button class="mini" id="stop" type="button">STOP</button>
@@ -54,7 +54,7 @@
         </div>
         <div class="clocktext">
           <p class="bigtime" id="clockTime">--:--</p>
-          <p class="tiny" id="clockDate">…</p>
+          <p class="tiny" id="clockDate">â€¦</p>
         </div>
       </div>
     </section>
@@ -110,7 +110,7 @@
           <path class="t-fg" id="tempArc" d="M12 60 A48 48 0 0 1 108 60" />
         </svg>
         <div class="wxtext">
-          <p class="wxtemp" id="wxTemp">--°</p>
+          <p class="wxtemp" id="wxTemp">--Â°</p>
           <p class="wxcond" id="wxCond">No data</p>
           <p class="tiny" id="wxCity">Delhi</p>
         </div>
@@ -125,7 +125,7 @@
   </aside>
 
   <!-- ============ BOTTOM BAR ============ -->
-  <footer class="bottombar">
+  <footer class="bottombar"><div class="remind-pill" id="remindPill"></div>
     <div class="qgroup" id="qLeft"></div>
     <div class="composer">
       <button class="mic" id="mic" type="button" title="Mic on/off">

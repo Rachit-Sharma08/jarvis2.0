@@ -103,6 +103,18 @@ function handleEvent(ev) {
     if (window.PRABH_STATS) window.PRABH_STATS.render(ev.data);
   } else if (ev.type === "desktop") {
     if (window.PRABH_DESKTOP) window.PRABH_DESKTOP.render(ev.data);
+  } else if (ev.type === "reminders") {
+    const pill = document.getElementById('remindPill');
+    if (pill) {
+      const items = ev.data && ev.data.items ? ev.data.items : [];
+      if (items.length) {
+        pill.textContent = 'REMIND: ' + items.map(function(x){ return x.when + ' ' + x.text; }).join(' | ');
+        pill.classList.add('show');
+      } else {
+        pill.classList.remove('show');
+        pill.textContent = '';
+      }
+    }
   } else if (ev.type === "log") {
     if (ev.data && ev.data.mode) {
       // `currentMode` **mode id** hai (lowercase, jaise "sunday") - TTS isi ko

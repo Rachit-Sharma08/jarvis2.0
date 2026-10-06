@@ -27,6 +27,7 @@ from desktop.state import STATE
 from desktop.tray import Tray
 from gatekeeper import keeper
 from log_setup import get_logger
+from server import hud_reminders
 from server.hub import HUB
 from wake import ask as wake_ask, worker as wake_worker
 
@@ -157,10 +158,17 @@ class SundayApp:   # naam Step 1 me user-facing hua, class id wahi rakha
 
     def _wait(self) -> None:
         last = STATE.version()
+        ticks = 0
         while not self._stop.wait(0.5):
-            if STATE.version() != last:      # state badli → tray icon refresh
+            ticks += 1
+            if STATE.version() != last:      # state badli + tray icon refresh
                 last = STATE.version()
                 self.tray.refresh()
+            if ticks % 10 == 0:  # ~5s
+                try:
+                    hud_reminders.broadcast()
+                except Exception:
+                    pass
 
     def _shutdown(self) -> None:
         log.info("band ho raha hai (code=%s)", self._code)
