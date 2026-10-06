@@ -92,3 +92,14 @@ TOOL_OUTPUT_LIMIT = 2000
 TOOL_ARG_LIMIT = 2000
 COMMAND_TIMEOUT_SECONDS = 30
 READ_FILE_MAX_BYTES = 20 * 1024
+
+# ---- WhatsApp call (browser CDP) ---------------------------------------------
+# 5-Oct: ye char constant `config_wake.py` me theek se nahi thhe (file 200 cross
+# kar gayi thi) — aur wake se inka koi lena-dena nahi. WhatsApp Web ek **tool**
+# hai, is liye ghar yahi hai. `config.py` inhe waise bhi re-export karta hai,
+# is liye `config.CDP_PORT` jaisa references badalte nahi hue chalega.
+# Edge/Chrome is port par remote debug mode me chalta hai; pehli baar QR scan.
+WHATSAPP_WEB = "https://web.whatsapp.com"
+CDP_PORT = 9222
+CDP_HOST = "127.0.0.1"
+CALL_ASK_FIRST = True         # call se pehle confirm card (gatekeeper ka ASK)

@@ -1,18 +1,19 @@
 """Mic ka ek hi owner — `sounddevice` se 16 kHz mono, energy VAD ke saath.
 
-Do chizein yahan hain, aur sirf yahan:
-
 1. `MicSource` — hamesha chalti hai (duty cycle nahi, AGENTS.md ka niyam).
-   Har 30 ms ka chunk `queue.Queue` me daalti hai.
-2. `Utterance` — VAD se pata lagata hai ki user bol raha hai ya chup. Wake worker
-   isse se audio *uthata* hai, is liye recording ka control worker ka hai.
+   Queue me **16 kHz int16 PCM** ke 30 ms blocks jaate hain.
+2. `Vad` / `chunk_to_rms()` — VAD ka faisla (pure, test inhi se).
 
-VAD ka logic bilkul saada: har chunk ka RMS nikalo. Agar threshold se upar hai
-to "bol raha hai", warna "chup". `HANGOVER` is liye hai ki beech me ek chhota
-ruk na ho to recording kat na jaaye.
+**5-Oct ka sabse bada bug: MME ka mic kachra deta hai.** MME par peak sirf
+-19..-52 dB aata tha aur Vosk `"hey"`/`"huh"` sunta tha — 0 jarvis-hit. **WASAPI
++ callback API** par peak **-7.6 dB** aur wahi grammar `"hello jarvis"` pakad
+leti thi. Is liye ab mic WASAPI se khulta hai (`pick_input_device`), capture
+**native rate** par hota hai (48 kHz - 16 kHz par PortAudio `Invalid sample
+rate` deta hai), aur `wake/resample.py` se 16 kHz par aata hai.
 
-Is file me kuch bhi `if __name__` nahi — test me `chunk_to_rms()` aur
-`Vad.should_stop()` pure functions se test hote hain.
+Is file me kuch bhi `if __name__` nahi — test me `chunk_to_rms()`, `encode()`,
+`Vad`, `pick_input_device()` aur `wake/resample.py` pure functions se test hote
+hain (`tests/test_wake_resample.py`).
 """
 
 import queue
@@ -22,6 +23,9 @@ import numpy as np
 
 import config
 from log_setup import get_logger
+from wake import resample
+from wake.pcm import (AutoGain, FixedGain, RmsGain, Vad, chunk_to_rms,
+                      encode)   # noqa: F401 (re-export)
 
 log = get_logger("wake_audio")
 
@@ -34,76 +38,33 @@ class MicUnavailable(Exception):
     """Mic nahi khul paya (permission/device/device busy). Reason user ko dikhana hai."""
 
 
-def chunk_to_rms(chunk: bytes) -> float:
-    """Raw 16-bit little-endian PCM -> RMS (0..1). Pure function, test me yahi."""
-    if not chunk:
-        return 0.0
-    samples = np.frombuffer(chunk, dtype="<i2")
-    if samples.size == 0:
-        return 0.0
-    magnitude = np.sqrt(np.mean(np.square(samples.astype(np.float32))))
-    return float(magnitude / 32768.0)
-
-
-def encode(samples: np.ndarray) -> bytes:
-    """float32 (-1..1) -> 16-bit little-endian PCM. Pure function."""
-    clipped = np.clip(samples, -1.0, 1.0)
-    return (clipped * 32767.0).astype("<i2").tobytes()
-
-
-class Vad:
-    """Energy VAD. `push()` har chunk ke saath: ab bol rahe ho ya nahi.
-
-    - `voice` = True  → user bol raha hai
-    - `voice` = False → khamoshi
-    - `hangover` blocks tak pehle ki awaaz pehle maani jaati hai
-    """
-
-    def __init__(self, threshold: float = None, hangover_blocks: int = None):
-        self.threshold = config.VAD_THRESHOLD if threshold is None else float(threshold)
-        self.hangover = (config.VAD_HANGOVER_BLOCKS
-                         if hangover_blocks is None else int(hangover_blocks))
-        self._hot = 0
-
-    def loud(self, rms: float) -> bool:
-        return rms >= self.threshold
-
-    def push(self, rms: float) -> bool:
-        """Chunk ka RMS do. -> ab bol rahe ho?"""
-        if self.loud(rms):
-            self._hot = self.hangover
-            return True
-        if self._hot > 0:
-            self._hot -= 1
-            return True
-        return False
-
-    def speaking(self) -> bool:
-        return self._hot > 0
-
-    def reset(self) -> None:
-        self._hot = 0
-
-
 class MicSource:
-    """`sounddevice.InputStream` ka wrapper. Ek thread, ek hi owner.
+    """`sounddevice.InputStream` ka wrapper, **callback** API par (5-Oct).
 
-    `start()` mic kholta hai aur background thread me chunks queue me daalta hai.
-    `stop()` band karta hai. Daalna kabhi crash nahi karta — mic band ho to
-    sirf `self.alive = False`.
+    Do kaam yahin hote hain:
+    1. mic WASAPI se kholna (`pick_input_device`) - MME se sirf kachra aata hai
+    2. device ke native rate (48 kHz) ko `config.SAMPLE_RATE` (16 kHz) par
+       laana - `wake/resample.py`, phir 30 ms ke blocks
+
+    PortAudio apne thread se `self._on_audio` ko bulata hai; wo sirf array
+    todta hai (kaam nahi karta). `start()` mic kholta hai, `stop()` band karta
+    hai. Band karte waqt koi galti aaye to chup-chaap daba dete hain.
     """
 
     def __init__(self, device=None, rate: int = None, blocksize: int = None):
         self.rate = config.SAMPLE_RATE if rate is None else int(rate)
         self.blocksize = int(self.rate * BLOCK_SECONDS) if blocksize is None else int(blocksize)
         self.device = config.INPUT_DEVICE if device is None else device
+        self.input_rate = self.rate
         self.chunks: queue.Queue = queue.Queue(maxsize=MAX_QUEUE_BLOCKS)
         self.alive = False
         self.error = ""
         self.dropped = 0
         self._stream = None
-        self._thread = None
         self._stop = threading.Event()
+        self._decimator = resample.Decimator(1)
+        self._blocker = resample.Blocker(self.blocksize)
+        self._gain = _make_gain()
 
     # ---- zindagi ----
     def start(self) -> bool:
@@ -111,10 +72,16 @@ class MicSource:
 
         if self.alive:
             return True
+        device = pick_input_device(sd, self.device)
         try:
+            self.input_rate = _native_rate(sd, device)
+            self._decimator = resample.Decimator(
+                resample.ratio_for(self.input_rate, self.rate))
+            self._blocker = resample.Blocker(self.blocksize)
             self._stream = sd.InputStream(
-                samplerate=self.rate, blocksize=self.blocksize, device=self.device,
-                dtype="int16", channels=config.CHANNELS,
+                samplerate=self.input_rate, blocksize=0, device=device,
+                dtype="float32", channels=config.CHANNELS,
+                callback=self._on_audio,
             )
             self._stream.start()
         except Exception as exc:
@@ -125,10 +92,10 @@ class MicSource:
             raise MicUnavailable(self.error) from exc
         self._stop.clear()
         self.alive = True
-        self._thread = threading.Thread(target=self._pump, name=VOICE, daemon=True)
-        self._thread.start()
-        log.info("mic khula: rate=%d block=%dms device=%s", self.rate,
-                 self.blocksize, self.device or "default")
+        log.info("mic khula: %s in=%d out=%d block=%dms device=%s",
+                 hostapi_name(sd, device), self.input_rate, self.rate,
+                 int(self.blocksize * 1000 / self.rate), device if device is not None
+                 else "default")
         return True
 
     def stop(self) -> None:
@@ -142,38 +109,89 @@ class MicSource:
             except Exception as exc:      # band karte waqt galti ko daba do
                 log.warning("mic band karte waqt: %s: %s", type(exc).__name__, exc)
         self.alive = False
-        if self._thread is not None:
-            self._thread.join(timeout=2.0)
-            self._thread = None
         log.info("mic band")
 
-    # ---- andar ----
-    def _pump(self) -> None:
-        """Stream se chunk uthakar queue me daalo. Thread marte bhi mic band.
+    # ---- PortAudio callback ----
+    def _on_audio(self, indata, frames, time_info, status) -> None:
+        """Sirf array todna hai - yahan koi kaam nahi, warna PortAudio ka thread
+        atak jaata hai. PortAudio float32 deta hai, queue ko int16 chahiye."""
+        if status:
+            log.debug("mic status: %s", status)
+        try:
+            samples = indata[:, 0]
+            if self._gain is not None:
+                samples = self._gain.apply(samples)
+            samples = self._decimator.feed(samples)
+            for block in self._blocker.feed(samples):
+                self._push(encode(block))
+        except Exception as exc:
+            self.error = f"{type(exc).__name__}: {exc}"
+            log.error("mic callback fail: %s", self.error)
+            self.alive = False
 
-        `read()` **blocking** hai — pura chunk aane tak ruk jaata hai. Is liye
-        uske baad koi `sleep()` nahi: pehle yahan `sd.sleep(30ms)` tha, jo
-        chunk ko ~43 ms me la raha tha (30 + 30). Do nuksan — CPU dobara
-        jaagna, aur `utterance.capture()` chunk *ginti* par chalti hai, to
-        chuppi ki "0.9 s" window asli me 1.4 s ho jaati thi (jawab late).
-        """
-        while not self._stop.is_set():
+    def _push(self, raw: bytes) -> None:
+        try:
+            self.chunks.put_nowait(raw)
+        except queue.Full:
+            # Consumer (Vosk) peeche reh gaya. Naya chunk sabse important
+            # hai — purana hatao taaki live raha rahe (lag na paye).
             try:
-                data, _overflow = self._stream.read(self.blocksize)
-            except Exception as exc:
-                self.error = f"{type(exc).__name__}: {exc}"
-                log.error("mic read fail: %s", self.error)
-                self.alive = False
-                return
-            raw = data.tobytes()
-            try:
+                self.chunks.get_nowait()
                 self.chunks.put_nowait(raw)
-            except queue.Full:
-                # Consumer (Vosk) peeche reh gaya. Naya chunk sabse important
-                # hai — purana hatao taaki live raha rahe (lag na paye).
-                try:
-                    self.chunks.get_nowait()
-                    self.chunks.put_nowait(raw)
-                    self.dropped += 1
-                except queue.Empty:
-                    pass
+                self.dropped += 1
+            except queue.Empty:
+                pass
+
+
+def _make_gain():
+    """`PRABH_WAKE_GAIN` se gain: `auto` (default) | number | `off`.
+
+    `auto` = `wake/pcm.py` ka `AutoGain` (khamoshi nahi chhedta). Number = fixed
+    gain. `off` = `None` — mic jaisa hai waisa jaata hai. Baaki hisse
+    (`config_wake.INPUT_GAIN`) me se aata hai, yahan koi magic number nahi."""
+    mode = config.INPUT_GAIN
+    if mode in ("off", "0", "none", "false", ""):
+        return None
+    try:
+        fixed = float(mode)
+    except ValueError:
+        return RmsGain(target_rms=config.INPUT_GAIN_TARGET, max_gain=config.INPUT_GAIN_MAX)
+    return FixedGain(fixed)
+
+
+def pick_input_device(sd, wanted=None):
+    """WASAPI ka mic chuno — MME se sirf kachra aata hai (5-Oct ka pehla bug).
+
+    `wanted` (`PRABH_WAKE_MIC`) diya ho to use-as-is (user ka faisla). warna
+    WASAPI host API ka default capture device. Kuch na mile to `None` (PortAudio
+    apna default lega) — crash nahi karenge.
+    """
+    if wanted not in (None, ""):
+        return wanted
+    try:
+        for api in sd.query_hostapis():
+            if config.INPUT_HOSTAPI in str(api["name"]).upper():
+                index = api["default_input_device"]
+                if index is not None and int(index) >= 0:
+                    return int(index)
+    except Exception as exc:       # enumerate na hua to default par ghisna hai
+        log.warning("host api nahi mila: %s: %s", type(exc).__name__, exc)
+    return None
+
+
+def hostapi_name(sd, device) -> str:
+    """Log ke liye: device kis host API ka hai (`MME`/`WASAPI`/...)."""
+    try:
+        return str(sd.query_devices(device, kind="input")["hostapi"])
+    except Exception:
+        return "?"
+
+
+def _native_rate(sd, device) -> int:
+    """Device ka apna capture rate. WASAPI 48 kHz maangta hai — 16 kHz par
+    PortAudio `Invalid sample rate` deta hai (5-Oct)."""
+    try:
+        info = sd.query_devices(device, kind="input")
+        return int(info["default_samplerate"]) or config.SAMPLE_RATE
+    except Exception:
+        return config.SAMPLE_RATE

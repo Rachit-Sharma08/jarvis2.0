@@ -46,16 +46,34 @@ SAMPLE_RATE = 16000          # Vosk isko hi maangta hai (16 kHz mono)
 BLOCK_MS = 30                # 30 ms ka chunk — Vosk ke liye ideal
 CHANNELS = 1
 INPUT_DEVICE = os.getenv("PRABH_WAKE_MIC", "").strip() or None
+# 5-Oct ka sabse bada bug: **MME** ka mic kachra deta tha (peak -19..-52 dB, Vosk
+# `"hey"`/`"huh"` sunta tha, 0 jarvis-hit). **WASAPI** par peak -7.6 dB aur wahi
+# grammar `"hello jarvis"` pakad leti thi. Is liye mic WASAPI se khulta hai.
+# Device number `PRABH_WAKE_MIC` se diya ho to wo pehle (user ka faisla).
+INPUT_HOSTAPI = os.getenv("PRABH_WAKE_MIC_HOSTAPI", "WASAPI").strip().upper()
 
-# Energy VAD. Mic ki khamoshi ka level ~0.002-0.01 hota hai, insaan ki awaaz
-# 0.02 se upar. Beech ka number: thodi door se awaaz bhi uth jaaye, par
-# fan/hawa ka shor na pakde.
-# 4-Oct: 0.012 -> **0.010**. Door se ya dheere bola "Hlo Jarvis" par trigger
-# nahi ho raha tha (gate VAD par hi tika hai). 0.010 par fan ka shor nahi aata,
-# kyunki wo aam taur par 0.005 se neeche rehta hai.
-VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.010"))
+# Energy VAD. **5-Oct ka doosra asli bug yahin tha**: mic WASAPI se theek khul
+# raha tha, lekin door/dheere bolne par chunk ka RMS sirf **0.0055** hota tha,
+# jabki threshold 0.010 tha — 90 s me 3003 chunk me se sirf **31** chunk Vosk
+# tak pahuncha aur `finals=0` raha. Mic ki khamoshi 0.0000-0.0026 hai (fan/hawa),
+# aur paas bolne par RMS 0.023 (peak 0.81) — wahi audio Vosk ne "hello jarvis"
+# pehchan liya. Is liye threshold beech me: **0.004**.
+# Fan ka shor 0.0026 se upar nahi jaata, to VAD band nahi hota.
+# 4-Oct: 0.012 -> 0.010 -> 5-Oct: **0.004**. `.env` ke `PRABH_VAD` se badalte ho.
+VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.004"))
 VAD_SILENCE_BLOCKS = 12      # ~0.36 s khamoshi = VAD ke baad band
 VAD_HANGOVER_BLOCKS = 30     # ~0.9 s — VAD ke dauraan awaaz mat kaato
+
+# ---- digital gain (5-Oct ka teesra bug) --------------------------------------
+# Level par 100x ka farak tha: door/dheere bolne par RMS **0.0014**, paas-zor
+# bolne par **0.16** (peak 0.99). Wahi audio gain se theek hua — 8x par `hello`
+# + `jarvis` dono finals me aa gaye. Ye `wake/pcm.py` ka `AutoGain` hai jo
+# sirf **awaaz** par lagta hai, khamoshi par nahi (warna VAD hamesha "bol raha
+# hai" bolta aur battery jaati).
+# `.env`: `PRABH_WAKE_GAIN=auto` (default) | koi number (fixed gain) | `0`/`off`
+INPUT_GAIN = os.getenv("PRABH_WAKE_GAIN", "auto").strip().lower()
+INPUT_GAIN_TARGET = float(os.getenv("PRABH_WAKE_GAIN_TARGET", "0.10"))
+INPUT_GAIN_MAX = float(os.getenv("PRABH_WAKE_GAIN_MAX", "20"))
 
 # ---- battery ka pakkaura ----
 # Vosk ko **har** chunk dena = 3.9% CPU chalu, chahe koi na bol (battery jaati
@@ -135,13 +153,9 @@ SLEEP_WORDS = ("so jao", "so jaiye", "sone jao", "soye raho", "soye rahiye",
 SLEEP_ACK = "So gaya. Jarvis boliye."      # chhota — TTS + playback = waqt
 SLEEP_FROM_TRAY = "SO JAAO"                # tray ka item
 
-# ---- WhatsApp call (Step 2, Option A) ----
-WHATSAPP_WEB = "https://web.whatsapp.com"
-# CDP port. Edge/Chrome is par remote debug mode me chalta hai. Pehli baar
-# WhatsApp Web QR scan karna padega (browser me khud khulta hai).
-CDP_PORT = 9222
-CDP_HOST = "127.0.0.1"
-CALL_ASK_FIRST = True         # call se pehle confirm card (gatekeeper ka ASK)
+# ---- WhatsApp call (Step 2, Option A) ----------------------------------------
+# Ye char constant ab `config_tools.py` me hain (WhatsApp Web ek tool hai) —
+# `config.py` waise bhi re-export karta hai. 5-Oct: file 200 cross thi.
 
 
 def model_path() -> str:
