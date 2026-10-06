@@ -4,7 +4,7 @@
 bhi isi ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import apps, command, files, system, reminders
+from tools import apps, command, files, system, reminders, todo
 
 TOOLS = {
     "get_time_date": system.get_time_date,
@@ -20,6 +20,10 @@ TOOLS = {
     "add_reminder": reminders.add_reminder,
     "list_reminders": reminders.list_reminders,
     "clear_reminder": reminders.clear_reminder,
+    "add_todo": todo.add_todo,
+    "list_todos": todo.list_todos,
+    "done_todo": todo.done_todo,
+    "clear_todos": todo.clear_todos,
 }
 
 TOOL_ARGS = {
@@ -36,6 +40,10 @@ TOOL_ARGS = {
     "add_reminder": ("text", "at", "in_minutes"),
     "list_reminders": (),
     "clear_reminder": ("id",),
+    "add_todo": ("text",),
+    "list_todos": (),
+    "done_todo": ("id",),
+    "clear_todos": (),
 }
 
 TOOL_SUMMARY = {
@@ -52,6 +60,10 @@ TOOL_SUMMARY = {
     "add_reminder": "reminder set karo (at jaise '5 PM' ya in_minutes number)",
     "list_reminders": "pending reminders dikhao",
     "clear_reminder": "reminder clear karo (id number)",
+    "add_todo": "todo add karo",
+    "list_todos": "todos dikhao",
+    "done_todo": "todo mark done karo (id number)",
+    "clear_todos": "saare todos clear karo",
 }
 
 
