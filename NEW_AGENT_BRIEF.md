@@ -67,7 +67,7 @@ band). Mode id `"sunday"` **jaan-boojh kar mat badalna** — env keys usi se ban
 | `desktop/` | `launcher`(supervisor), `app`, `state`, `callbacks`, `actions`, `tray`, `trayicon`, `hud_window`, `hotkey`, `open_hud`, `shortcut`, `autostart`, `single`, `sleep`, `micperm`, `lockwatch`, `playback`(+`_cli`), `startup` |
 | `personas/` | `jarvis.txt`, `prabh.txt` |
 | `ui/` | `index.html` + CSS 6 (`hud_*`) + JS (`hud_*`, `app`, `voice_ui`, `recorder`, `speaker`, `tools`) + local fonts |
-| `tests/` | **47 suite** + 4 helper (`poolhelp`, `desktophelp`, `wakehelp`, `wakecmdhelp`) |
+| `tests/` | **52 suite** + 8 helper (`poolhelp`, `desktophelp`, `wakehelp`, `wakecmdhelp`, `hud_common`, `hud_check_ui`, `hud_check_get`, `hud_check_api`) |
 
 ## 5. Flow (teen raaste)
 
@@ -145,7 +145,7 @@ Browser GET par `Origin` nahi bhejta → same-origin GET me `security.verify_req
 (Referer ya `Sec-Fetch-Site`) use karo, warna 403. Privacy: file text brain ke through
 **free provider** tak jaata hai — personal file tool se mat pucho.
 
-## 12. Tests (47 suite, ~3–5 min)
+## 12. Tests (52 suite, ~3–5 min)
 
 ```powershell
 cd D:\prabh
@@ -179,7 +179,7 @@ roadmap-vs-reality: S1 scoreboard, S5 15 asli bugs + guards G-1..G-15, S6 tray k
 order, S7 free-only stack, S8 task order D-1..T-18, S11 progress log) · `README.md`
 (install/chalana/test) ·
 `BRAIN.md` (providers) · `VOICE.md` (mic/wake/STT/TTS/sleep) · `TOOLS.md` (tools +
-privacy) · `TESTS.md` (47 suite) · `CHANGELOG.md` (pura record) · `PLAN.md`,
+privacy) · `TESTS.md` (52 suite) · `CHANGELOG.md` (pura record) · `PLAN.md`,
 `ROUND2.md`, `PLAN-TRUST.md` (purane plan) · `NEW_AGENT_BRIEF.md` (ye file).
 
 ## 15. Tak kaun kaun hua hai
@@ -193,7 +193,7 @@ sleep + `wake/ask.py` split) · **Steps 3–5** (TOOLS hamesha ON + auto-off hat
 "Hlo/Helo/Hi/Yo Jarvis" + VAD 0.010 + pre-roll 0.6 s, tez jawab: ack peek 0.18 s +
 chuppi 0.9 s + awaaz 220 char).
 
-Aaj ki state: **47 suite green**, working tree clean, app live (`GET / = 200`).
+Aaj ki state: **52 suite** — 8 pehle se red (working-tree me WIP code; is docs kaam se nahi).
 
 ## 16. Abhi kya bacha hai (2 cheezein)
 

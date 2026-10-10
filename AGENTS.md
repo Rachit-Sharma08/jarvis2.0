@@ -120,7 +120,7 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (48 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
+  tests/ (52 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
   docs/ROADMAP_STATUS.md  → OWNER ka roadmap-vs-reality + free-only plan (S1..S11). Roadmap
                             planning se pehle iska relevant section padho; naya task bhi wahin likho.
@@ -313,7 +313,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-- 44 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
+- 52 suite ki poori list, har suite ka detail aur naya test likhne ke niyam → **`TESTS.md`**.
 - Exit code **0** hi asli "pass" hai. Kuch suite `print("FAIL:", FAILED if FAILED else "koi nahi")` likhte hain — `koi nahi` matlab **sab pass**.
 - Poori suite **3–5 minute** leti hai. Terminal timeout na ho isliye `TESTS.md` me
   diye background wale tarike se chalao (Start-Job + result file).
@@ -685,6 +685,16 @@ endpoint mat likho.
   Test: `tests/test_desktop_login.py` launcher ko System32 par load karke prove karta hai.
   Value `pythonw desktop/launcher.py` hai (black console nahi); crash `logs/desktop.out`
   me bachta hai, is liye "crash chup mat ho" wala niyam bhaala jaata hai.
+
+---
+
+## 9. NAMING (sirf Jarvis)
+
+- User ko dikhta/sunai naam **Jarvis** hai (`config_name.ASSISTANT_NAME`); UI me hard-code nahi, placeholder se aata hai.
+- Andar ka mode id `"sunday"` **legacy** hai — `DEFAULT_MODE`, `MODE_ALIASES`, `PERSONA_FILES`, voice keys (`*_VOICE_SUNDAY`) aur `data/` lock isi se bandhe. **Rename mat karo.**
+- `PRABH_*` sirf app ka prefix hai (env keys / JS globals / HTML ids) — mode nahi.
+- `hud_clock.js` ka `"Sunday"` calendar ka din hai, assistant ka naam nahi.
+- Prabh mode dormant hai (`PRABH_SUNDAY_ONLY=1`), jaldi hatega.
 
 ---
 

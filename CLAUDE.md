@@ -18,7 +18,7 @@ kaam kar sakta hai.
 ## 2. Ab ka haal (3 Oct 2026)
 
 - Git **clean**, commit `07161c0` (GitHub par push ho chuka hai).
-- **44 test suite green** (`SUITE GREEN`). Sab standalone, koi real API call nahi.
+- **52 test suite** (8 pehle se red — WIP code, docs se nahi). Sab standalone, koi real API call nahi.
 - App chalta hai: `GET http://127.0.0.1:8000/` = 200, tray + HUD live.
 - Phase 5 **Step 1 (Vosk wake word)**, **Step 2a** (command capture + WAV),
   **Step 2b** (speaker `desktop/playback.py`) aur **Step 2c** (poora command:
@@ -52,7 +52,7 @@ if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
 - Exit code **0** hi asli pass hai. `print("FAIL: koi nahi")` matlab **sab pass**.
-- 3–5 min leti hai (44 suite) — `Start-Job` + result file wala tarika `TESTS.md` me
+- 3–5 min leti hai (52 suite) — `Start-Job` + result file wala tarika `TESTS.md` me
   hai. Har naye shell me `Start-Job` mar jaata hai, is liye **detached** process chalao
   (`Start-Process powershell -File <script> -WindowStyle Hidden`).
 
@@ -183,7 +183,7 @@ desktop/           launcher, app, tray, state, hud_window, hotkey, open_hud,
 wake/              worker (module-level ek hi worker) + session, audio, model,
                    detect, phrase (Step 1) + utterance, wav (Step 2a)
 ui/                index.html + hud_*.js + hud_*.css
-tests/             44 suite + poolhelp.py / desktophelp.py / wakehelp.py / hud_*.py
+tests/             52 suite + poolhelp.py / desktophelp.py / wakehelp.py / hud_*.py
 ```
 
 ## 11. Privacy warning

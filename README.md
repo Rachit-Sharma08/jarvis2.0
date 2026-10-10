@@ -1,12 +1,11 @@
-# Prabh
+# Jarvis
 
 > **Ye ek local personal app hai, sirf is PC par chalta hai.** Ye web app nahi hai —
 > doosre PC, phone ya internet se koi ise khol nahi sakta.
 
-Do naam wala AI assistant:
-
-- **Jarvis** (default mode) — halka professional, chhote aur saaf jawab.
-- **Prabh** (private mode) — pyaar se, dostana, khula Hinglish.
+Ye ek hi AI assistant hai — **Jarvis** (halka professional, chhote aur saaf jawab).
+Ek doosra mode **Prabh** (pyaar se, dostana, khula Hinglish) code me maujood hai par
+**dormant** hai — `.env` ke `PRABH_SUNDAY_ONLY=1` se band, aur jaldi hatega.
 
 Browser me chalta hai, Windows 10/11 par, sab kuch free tools se. Mic se baat kar sakta
 hai aur PC ke kaam bhi kar sakta hai (file, folder, app, command) — har kaam ke pehle
@@ -59,9 +58,7 @@ OPENROUTER_API_KEY=apni_openrouter_key
 ELEVENLABS_API_KEY=
 CARTESIA_API_KEY=
 ELEVENLABS_VOICE_SUNDAY=
-ELEVENLABS_VOICE_PRABH=
 CARTESIA_VOICE_SUNDAY=
-CARTESIA_VOICE_PRABH=
 ```
 
 Sirf `GROQ_API_KEY` zaruri hai (chat + mic dono). Baaki sab optional hain — jitni
@@ -194,7 +191,7 @@ Band karne ke liye terminal me `Ctrl + C`.
 
 ## 3. Test
 
-Saare 28 suites ek loop me:
+Saare 52 suites ek loop me:
 
 ```powershell
 cd D:\prabh
@@ -253,11 +250,8 @@ Invoke-RestMethod http://localhost:8000/chat -Method Post `
 
 Command box me likho aur **SEND** dabao (ya Enter).
 
-- Mode badalne ke liye message ke **shuru me** naam likho:
-  - `Jarvis, ek hafta ka plan bana` → Jarvis mode
-  - `Prabh, aaj mood kharab hai` → Prabh mode
-- Jaise hi ek naam likhoge, mode badal jayega aur wahi rehta rahega jab tak doosra naam na likho.
-- Default mode **Jarvis** hai.
+Assistant ek hi hai — **Jarvis**. Mode badalne ke liye kuch likhna nahi padta
+(Prabh mode dormant hai aur jaldi hatega — upar padho).
 
 Beeche me gol orb aur uske neeche status dikhta hai: `IDLE` -> `THINKING` -> `SPEAKING` -> `IDLE`.
 Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hisaab.
