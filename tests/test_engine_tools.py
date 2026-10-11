@@ -44,8 +44,12 @@ class LoopTest(unittest.TestCase):
         self.calls = []
         self._saved_limiter = keeper.LIMITER
         keeper.LIMITER = Limiter(enabled=True, per_minute=config.TOOL_MAX_CALLS_PER_MINUTE)
+        # Card wale purane raaste ka test - ASK jaan-boojh kar chalu.
+        self._nocards = mock.patch.object(config, "NO_CARDS", False)
+        self._nocards.start()
 
     def tearDown(self):
+        self._nocards.stop()
         keeper.LIMITER = self._saved_limiter
         keeper.set_tools(True)
 

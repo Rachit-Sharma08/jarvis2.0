@@ -99,6 +99,11 @@ TOOLS_ENABLED_DEFAULT = os.getenv("PRABH_TOOLS_ON", "1") == "1"
 # kiya TOOLS hamesha ON rahega jab tak khud OFF na kare — pehle 30 min tha.
 # `.env` me PRABH_TOOLS_AUTOOFF=30 daal kar wapas timer laaya ja sakta hai.
 TOOLS_AUTO_OFF_MINUTES = int(os.getenv("PRABH_TOOLS_AUTOOFF", "0") or 0)
+# ALLOW/DENY card ki jagah code ka faisla (`gatekeeper/nocards.py`).
+# 1 (default) = card band: ASK par bhi screen par kuch nahi aata — workspace ke
+# andar ka safe kaam chupchaap chalta hai, baaki chupchaap DENY + ek line wajah.
+# 0 = purana raasta (screen par card + ALLOW/DENY button, 60 second timeout).
+NO_CARDS = os.getenv("PRABH_NO_CARDS", "1") == "1"
 TOOL_MAX_STEPS = 5
 TOOL_MAX_CALLS_PER_MINUTE = 20
 TOOL_CONFIRM_TIMEOUT = 60

@@ -1,4 +1,4 @@
-﻿"""Wake word + voice command ke constants. `import config` hi sab jagah chalta hai.
+"""Wake word + voice command ke constants. `import config` hi sab jagah chalta hai.
 
 Ye Step 1 ka hissa hai. Do alag STT jaan-boojh kar:
 
@@ -183,15 +183,23 @@ def wake_available() -> bool:
     return True, ""
 
 
+def _no_cards() -> bool:
+    """config_tools.NO_CARDS - config.py yahan se import karta hai, is liye lazy."""
+    from config_tools import NO_CARDS
+
+    return NO_CARDS
+
+
 def describe() -> str:
     """Log + `--wake-info` ke liye ek line."""
     folder = model_path()
-    return "wake=%s word=%s%s model=%s stt=%s gate=%s" % (
+    return "wake=%s word=%s%s model=%s stt=%s cards=%s gate=%s" % (
         "ON" if WAKE_ENABLED else "OFF",
         "/".join(WAKE_WORDS),
         "+legacy" if legacy_enabled() else "",
         Path(folder).name if folder else "MISSING",
         config_stt_name(),
+        "off" if _no_cards() else "on",
         "on" if WAKE_VOSK_GATE else "off",
     )
 

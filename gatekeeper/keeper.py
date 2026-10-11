@@ -4,7 +4,7 @@ Rasta: kill switch -> rate limit -> rules -> (ASK par UI ka Allow/Deny) -> audit
 Sunday aur Prabh dono ke liye bilkul same — `mode` sirf log me likha jaata hai.
 """
 
-from gatekeeper import audit, rules
+from gatekeeper import audit, nocards, rules
 from gatekeeper.approvals import Registry
 from gatekeeper.limiter import Limiter
 
@@ -47,6 +47,13 @@ def review(tool: str, args: dict, mode: str) -> tuple:
         return DENY, reason
 
     if risk == config.ASK:
+        if config.NO_CARDS:
+            verdict, reason = nocards.resolve_ask(tool, args)
+            if verdict == nocards.ALLOW:
+                audit.log_action(mode, tool, args, ALLOW, "no-cards: auto allow")
+                return ALLOW, None
+            audit.log_action(mode, tool, args, DENY, f"no-cards: {reason}")
+            return DENY, reason
         if APPROVALS.busy():
             message = "pehle wala Allow/Deny card abhi pending hai"
             audit.log_action(mode, tool, args, DENY, message)
