@@ -138,9 +138,35 @@ class ToolsTest(unittest.TestCase):
         self.assertTrue("chal nahi raha" in result or "band nahi hua" in result)
 
     def test_registry_spec(self):
-        self.assertEqual(10, len(tools.TOOLS))
         self.assertIn("run_command", tools.spec())
         self.assertEqual(("path", "content"), tools.TOOL_ARGS["write_file"])
+
+    def test_registry_risk_parity(self):
+        blocked_on_purpose = {"get_clipboard"}
+        missing = sorted(set(tools.TOOLS) - blocked_on_purpose - set(config.TOOL_BASE_RISK))
+        self.assertEqual([], missing, f"TOOL_BASE_RISK me entry nahi: {missing}")
+
+    def test_open_url_only_http_https(self):
+        from tools import quick
+
+        opened = []
+
+        def fake_open(url, *args, **kwargs):
+            opened.append(url)
+            return True
+
+        blocked = ["file:///C:/x", "javascript:alert(1)", "ms-settings:display",
+                   "ftp://x.com", "//host/path", "", "https://", "https://a.com\nb"]
+        with mock.patch.object(quick, "webbrowser") as fake_wb:
+            fake_wb.open = fake_open
+            for url in blocked:
+                result = quick.open_url(url)
+                self.assertNotIn("browser me khul gaya", result,
+                                 f"{url!r} block hona chahiye tha")
+            self.assertEqual([], opened, "blocked URL browser ko ja hi nahi sakta")
+            quick.open_url("https://example.com")
+            quick.open_url("http://example.com")
+        self.assertEqual(["https://example.com", "http://example.com"], opened)
 
     def test_execute_guards(self):
         self.assertIn("koi tool nahi", tools.execute("hack", {}))

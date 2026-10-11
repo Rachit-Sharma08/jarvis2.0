@@ -1,6 +1,8 @@
-﻿"""Quick clipboard/window helpers via PowerShell (local, safe)."""
+"""Quick clipboard/window helpers via PowerShell (local, safe)."""
 import os
 import subprocess
+import webbrowser
+from urllib.parse import urlparse
 
 
 def _ps(cmd: str, timeout: int = 8) -> str:
@@ -32,11 +34,37 @@ def get_clipboard() -> str:
     return _ps('Get-Clipboard')
 
 
+def _web_url(url: str) -> str:
+    """Wajah lautao ('' = theek hai). http/https + host; koi space/newline/control nahi.
+
+    Ye check tools/apps.py (open_website) aur gatekeeper/rules.py
+    (_open_website) me bhi hai — baad me ek hi jagah karenge.
+    """
+    text = str(url or "").strip()
+    if not text:
+        return "URL kya hai? (example: https://example.com)"
+    if any(ch in text for ch in (" ", "\n", "\r", "\t")) or any(
+        ord(ch) < 32 for ch in text
+    ):
+        return "URL me space/newline nahi chahiye"
+    parsed = urlparse(text)
+    if parsed.scheme not in ("http", "https") or not parsed.netloc:
+        return "sirf http/https link khulte hain"
+    return ""
+
+
 def open_url(url: str = '') -> str:
-    if not url or not str(url).strip():
-        return 'URL kya hai? (example: https://example.com)'
-    u = str(url).strip().replace("'", "''")
-    return _ps(f'Start-Process \"{u}\"')
+    bad = _web_url(url)
+    if bad:
+        return bad
+    u = str(url).strip()
+    try:
+        opened = webbrowser.open(u)
+    except Exception as exc:
+        return f"err: {type(exc).__name__}"
+    if opened:
+        return f"browser me khul gaya: {u}"
+    return "browser nahi khula"
 
 
 def focus_app(name: str = '') -> str:
