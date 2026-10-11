@@ -10,7 +10,7 @@ from datasafe import isolated_data
 
 FAILED = []
 BASE = 3256  # P-2b-2b se pehle naapa gaya prompt (tools ON, khaali memory)
-MAX_GROW = 410  # E-1: +106 chars ki "tool dobara mat bulao" line (base+288 ke upar)
+MAX_GROW = 460  # P-2b-2b + E-1 (+106) + E-2 (+50: "tool nahi bulaya" line)
 
 
 def check(name, got, want):

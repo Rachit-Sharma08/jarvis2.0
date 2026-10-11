@@ -69,11 +69,12 @@ class LoopTest(DataSafeCase):
         return "tool output"
 
     def test_safe_tool_runs_then_answers(self):
+        # list_dir = DIRECT_TOOLS me nahi, is liye purana raasta (LLM ka jawab).
         events, ex = self._run(
-            [json.dumps({"action": "get_time_date", "args": {}}), "ab 5 baj rahi hai"]
+            [json.dumps({"action": "list_dir", "args": {"path": "folder"}}), "ab 5 baj rahi hai"]
         )
         self.assertEqual(1, ex.call_count)
-        self.assertEqual(("get_time_date", {}), self.calls[0])
+        self.assertEqual(("list_dir", {"path": "folder"}), self.calls[0])
         activity = [e for e in events if e["type"] == "activity"]
         self.assertEqual("allow", activity[0]["decision"])
         last = [e for e in events if e["type"] == "message" and e["role"] == "assistant"][-1]
@@ -143,7 +144,10 @@ class LoopTest(DataSafeCase):
         self.assertEqual(1, len(self.calls), "Allow ke baad tool chalana chahiye tha")
 
     def test_max_five_steps(self):
-        actions = [json.dumps({"action": "add_todo", "args": {"text": f"t{i}"}}) for i in range(9)]
+        # list_dir = DIRECT_TOOLS me nahi (E-2 seedha jawab is par nahi lagta),
+        # is liye 5-step cap yahin test hota hai.
+        actions = [json.dumps({"action": "list_dir", "args": {"path": f"folder{i}"}})
+                   for i in range(9)]
         events, ex = self._run(actions)
         self.assertEqual(config.TOOL_MAX_STEPS, ex.call_count)
         last = [e for e in events if e["type"] == "message" and e["role"] == "assistant"][-1]

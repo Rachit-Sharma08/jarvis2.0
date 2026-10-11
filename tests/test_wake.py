@@ -34,9 +34,10 @@ def test_config():
     check("block 30ms", audio.BLOCK_SECONDS, 0.03)
     truthy("cooldown", config.WAKE_COOLDOWN_SECONDS > 0)
     describe = config.describe()
-    check("describe me 6 hisse", len(describe.split()), 6)
+    check("describe me 7 hisse", len(describe.split()), 7)
     show(describe)
     truthy("describe me cards", "cards=off" in describe)
+    truthy("describe me direct", "direct=on" in describe)
     check("worker READY", worker.READY, True)
     check("startup line stub nahi", config.STARTUP_WAKE, "wake")
 

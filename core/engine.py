@@ -2,6 +2,7 @@ import time
 
 import config
 from brain import prompt, router
+from core import directreply
 from core import events, modes
 from core import memory
 from core import turnguard
@@ -151,6 +152,17 @@ class Engine:
             result = yield from self.run_tool(name, args)
             verdict = "deny" if result.startswith(turnguard.DENY_PREFIX) else "allow"
             guard.record(name, args, verdict, result)
+            # E-2: pehla tool call + single-step kaam -> jawab seedha, LLM bachao.
+            if step == 0 and config.DIRECT_REPLY and directreply.looks_single_step(text):
+                direct = directreply.reply_for(name, args, verdict, result)
+                if direct is not None:
+                    log.info("seedha jawab: %s (%s) - LLM dobara nahi bulaya", name, verdict)
+                    self.history.append({"role": "assistant", "content": direct})
+                    memory.MEM.add("assistant", direct)
+                    self._trim()
+                    yield events.message("assistant", direct, modes.label(self.mode))
+                    yield events.status("idle")
+                    return
             self.history.append(
                 {"role": "user", "content": f"{DATA_NOTE}\ntool={name}\n{result}"}
             )

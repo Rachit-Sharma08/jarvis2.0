@@ -107,6 +107,10 @@ NO_CARDS = os.getenv("PRABH_NO_CARDS", "1") == "1"
 TOOL_MAX_STEPS = 5
 TOOL_MAX_CALLS_PER_MINUTE = 20
 TOOL_CONFIRM_TIMEOUT = 60
+# Simple tool ka jawab seedha (E-2): pehla tool call + single-step command ->
+# tool-result hi final jawab, LLM dobara nahi bulaya (~2s bachta hai, aur LLM
+# ka jhooth bhi nahi bolta). 0 = purana raasta (har tool ke baad LLM call).
+DIRECT_REPLY = os.getenv("PRABH_DIRECT_REPLY", "1") == "1"
 TOOL_OUTPUT_LIMIT = 2000
 TOOL_ARG_LIMIT = 2000
 COMMAND_TIMEOUT_SECONDS = 30

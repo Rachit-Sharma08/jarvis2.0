@@ -28,7 +28,7 @@ def collect(gen):
             return out
 
 
-def run(replies):
+def run(replies, text="kuch karo"):
     calls, reviews = [], []
     engine = Engine()
     saved = keeper.LIMITER
@@ -50,7 +50,7 @@ def run(replies):
             side_effect=lambda *a: (replies.pop(0) if replies else "theek", "groq")
         ), mock.patch.object(engine_mod, "execute", side_effect=fake), \
                 mock.patch.object(keeper, "review", spy):
-            events = collect(engine.handle("kuch karo"))
+            events = collect(engine.handle(text))
     finally:
         keeper.LIMITER = saved
     return events, calls, reviews, engine
@@ -65,7 +65,8 @@ def last_answer(events):
 
 
 def test_same_action_runs_once():
-    events, calls, reviews, engine = run([action("get_time_date")] * 5)
+    # "aur" = multi-step -> purana raasta (E-2 seedha jawab is par nahi lagta).
+    events, calls, reviews, engine = run([action("get_time_date")] * 5, "kuch karo aur phir dekho")
     assert len(calls) == 1, f"tool {len(calls)} baar chala"
     assert len(reviews) == 1, f"review {len(reviews)} baar hua"
     assert "tool output" in last_answer(events)
@@ -85,13 +86,13 @@ def test_deny_runs_once():
 
 def test_different_args_both_run():
     replies = [action("add_todo", text="doodh"), action("add_todo", text="ande"), "dono ho gaye"]
-    events, calls, reviews, engine = run(replies)
+    events, calls, reviews, engine = run(replies, "kuch karo aur phir dekho")
     assert len(calls) == 2, f"dono add_todo chale: {calls}"
 
 
 def test_cap_message_is_last_result():
     replies = [action("add_todo", text=f"t{i}") for i in range(9)]
-    events, calls, reviews, engine = run(replies)
+    events, calls, reviews, engine = run(replies, "kuch karo aur phir dekho")
     assert len(calls) == config.TOOL_MAX_STEPS, f"cap {len(calls)} tha"
     answer = last_answer(events)
     assert "5 tool step" not in answer

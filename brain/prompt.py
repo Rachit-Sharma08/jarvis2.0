@@ -27,6 +27,7 @@ Rules:
   Jarvis ke workspace me banti hai. Naya folder ya absolute path nahi.
 - Tool se jawab aane ke baad user ko saaf Hinglish me batao.
 - Tool ka jawab aane ka matlab kaam ho gaya - user ko seedha ek line me batao; wahi tool dobara mat bulao.
+- Agar tumne tool nahi bulaya to kabhi mat bolo ki kaam ho gaya.
 """
 
 

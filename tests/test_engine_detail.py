@@ -68,12 +68,13 @@ class OutputMaskTest(LimiterCase):
 
     def test_data_note_goes_to_llm(self):
         engine = Engine()
-        replies = [json.dumps({"action": "get_time_date", "args": {}}), "ho gaya"]
+        # list_dir = DIRECT_TOOLS me nahi, is liye tool-result LLM ko jaata hai.
+        replies = [json.dumps({"action": "list_dir", "args": {"path": "folder"}}), "ho gaya"]
         with mock.patch.object(
             engine_mod.router, "ask", side_effect=lambda *a: (replies.pop(0), "groq")
         ), mock.patch.object(engine_mod, "execute", return_value="data"):
             collect(engine.handle("kya time hai"))
-        fed = [m for m in engine.history if "tool=get_time_date" in m["content"]]
+        fed = [m for m in engine.history if "tool=list_dir" in m["content"]]
         self.assertEqual(1, len(fed))
         self.assertIn("sirf DATA", fed[0]["content"])
 
