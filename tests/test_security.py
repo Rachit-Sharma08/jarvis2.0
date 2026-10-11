@@ -6,8 +6,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient
+from unittest import mock
 
 import config
+import core.engine as engine_mod
 import main
 from datasafe import isolated_data
 from server import security
@@ -92,9 +94,14 @@ def test_http_rules():
 
     check("page: host check", client.get("/", headers={"host": "evil.com"}).status_code, 400)
 
-    good = client.post("/chat", json={"text": "hi"}, headers=ok)
+    # Asli LLM (Groq) tak raasta nahi jaana chahiye - fake router patch.
+    fake = mock.Mock()
+    fake.ask.return_value = ("theek hai", "groq")
+    with mock.patch.object(engine_mod, "router", fake):
+        good = client.post("/chat", json={"text": "hi"}, headers=ok)
     check("sahi token se /chat", good.status_code, 200)
     check("koi CORS header nahi", "access-control-allow-origin" in good.headers, False)
+    check("LLM sirf ek baar bulaya (fake)", fake.ask.call_count, 1)
 
     no_token = {"host": GOOD_HOST, "origin": GOOD_ORIGIN}
     check("/chat bina token", client.post("/chat", json={"text": "hi"}, headers=no_token).status_code, 401)

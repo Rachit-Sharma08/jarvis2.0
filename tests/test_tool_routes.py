@@ -10,8 +10,10 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from fastapi.testclient import TestClient
+from unittest import mock
 
 import config
+import core.engine as engine_mod
 from datasafe import isolated_data
 from gatekeeper import keeper
 from server import security
@@ -141,8 +143,13 @@ def test_csp_header(client):
     check("token meta tag me", 'name="prabh-token"' in page.text, True)
     check("token page me hai", token in page.text, True)
 
-    chat = client.post("/chat", json={"text": "hi"}, headers=headers(token))
+    # Asli LLM (Groq) tak raasta nahi jaana chahiye - fake router patch.
+    fake = mock.Mock()
+    fake.ask.return_value = ("theek hai", "groq")
+    with mock.patch.object(engine_mod, "router", fake):
+        chat = client.post("/chat", json={"text": "hi"}, headers=headers(token))
     check("chat par bhi CSP", "default-src 'self'" in chat.headers.get("content-security-policy", ""), True)
+    check("LLM sirf ek baar bulaya (fake)", fake.ask.call_count, 1)
 
 
 def test_ui_uses_textcontent():
