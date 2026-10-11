@@ -698,6 +698,57 @@ endpoint mat likho.
 
 ---
 
+## 11. SESSION PARK — 11 Oct 2026 (P-2b-2 beech me ruka hua, yahin se shuru karo)
+
+**Abhi ka haal (commit `bc55b0f` ke baad, main me kuch merge NAHI hua):**
+
+| Branch | Commit | Haal |
+|---|---|---|
+| `main` | `790dbe6` | open_url http/https + registry risk parity (T-2a-2) |
+| `fix/tool-risk-table` | `790dbe6` | merge ho chuka (ff) |
+| `fix/command-syntax` | `4b4cf8e` | merge ho chuka (ff) |
+| `feat/no-cards` | `bc55b0f` (2 commit: `203949a` + `bc55b0f`) | **park, merge PENDING** |
+| `docs/agents-md-pending` | `03a711f` | ALAG docs review ke liye park |
+
+**`feat/no-cards` me kya bana (owner ka "koi card nahi chahiye"):**
+`PRABH_NO_CARDS=1` (default) — card ki jagah code faisla karta hai
+(`gatekeeper/nocards.py`, keeper.review() ka chhota hook, rules.py NAHI chheda).
+Workspace ke andar write/delete chupchaap ALLOW; run_command/close_app(force kill)
+hamesha DENY; path hardening (trailing dot/space, NTFS ADS, junction, naye exec
+suffix). `PRABH_NO_CARDS=0` par purana card wala raasta wapas.
+
+**!!! MERGE ROKA HUA — asli wajah (P-2b-2 Step 1):**
+Poora suite branch par chala: **54 total, 47 pass, 7 fail**. 6 purane
+(test_wake_command, test_wake_ack, test_desktop_sleep, test_desktop,
+test_desktop_shortcut, test_wake_resample) + **ek NAYA: `test_engine_detail`**.
+Asli error: `test_ask_card_detail_masked_end_to_end` (test_engine_detail.py:92-100)
+`IndexError` — write_file ka `confirm` event expect karta hai, par NO_CARDS=1 par
+card banta hi nahi (resolve "c.txt" workspace ke andar = auto ALLOW). Ye
+`203949a` ne toda; M-1 run me ye test PASS tha. **Merge command NAHI chali.**
+
+**OWNER KA PENDING SAWAAL (yahin se shuru):** test_engine_detail ka naya fail kaun sa
+fix karun? (meri recommendation pehla):
+1. **Setup me flag 0** — card wale purane raaste ka test; sirf us class ke setup me
+   `mock.patch.object(config, "NO_CARDS", False)` (test_engine_tools wala hi
+   tareeka). Assertion ko na chhedo. **(recommended)**
+2. **Card-wala test hata do** — card ka kaam hi khatam; masking ka asli kaam baaki
+   3 test + `test_nocards_paths` ke reason-sanitize test kar rahe hain.
+3. **Test ko naye behaviour pe likh do** — prove kare ke card ke bina write_file
+   workspace me chalta hai.
+
+**Resume order (owner ka "haan" milne ke baad):** (1) upar wala fix chuno →
+`test_engine_detail` chalao → (2) poori suite dobara (54 total, 48 pass,
+6 fail hona chahiye) → (3) `git switch main; git merge --ff-only feat/no-cards`
+(ff-only fail ho to RUK, merge commit/rebase nahi) → (4) TASK P-2b-2 ka STEP 3-7:
+`git switch -c fix/persona-nocards` → persona/prompt se confirm-card ki baatein
+hatao + write_file/delete_to_trash me relative path = workspace wali line +
+`PRABH_NO_CARDS=0` ke liye alag text NAHI daalo → suites: test_name_jarvis,
+test_basic, test_voice, test_engine_tools, test_nocards, test_gatekeeper →
+commit "fix: persona/prompt - no cards, relative workspace paths".
+
+---
+
+
 ## ABHI KYA BAAKI HAI
 
 - Round 2 poora ho gaya (1-2 Oct 2026). Plan/record `ROUND2.md` me padh sakte ho.
