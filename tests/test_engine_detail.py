@@ -76,6 +76,16 @@ class OutputMaskTest(LimiterCase):
 
 
 class CardDetailTest(LimiterCase):
+    def setUp(self):
+        super().setUp()
+        # Card wale purane raaste ka test - ASK jaan-boojh kar chalu.
+        self._nocards = mock.patch.object(config, "NO_CARDS", False)
+        self._nocards.start()
+
+    def tearDown(self):
+        self._nocards.stop()
+        super().tearDown()
+
     def test_command_detail_keeps_command_hides_key(self):
         detail = _detail("run_command", {"command": f"echo hi {FAKE_KEY}"})
         self.assertIn("echo hi", detail, "command poori dikhni chahiye")
