@@ -1,4 +1,4 @@
-﻿"""Wake ke baad ka poora command â€” "Ji, boliye" se le kar jawab ki awaaz tak.
+"""Wake ke baad ka poora command â€” "Ji, boliye" se le kar jawab ki awaaz tak.
 
 Ye Phase 5 **Step 2c** hai. Step 2a (`wake/utterance.py`) ne mic se audio
 uthaya, Step 2b (`desktop/playback.py`) ne awaaz banayi â€” is file me dono ko
@@ -33,7 +33,8 @@ aur brain/speaker ka kaam `wake/ask.py` me hai â€” yahan sirf **flow** hai,
 do files me se kabhi brain ka raasta dobara mat likhna.
 """
 
-import time\nimport random
+import time
+import random
 
 import config
 from core.timing import Stopwatch
