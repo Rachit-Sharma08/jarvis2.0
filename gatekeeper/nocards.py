@@ -19,11 +19,19 @@ import config
 ALLOW, DENY = "ALLOW", "DENY"
 
 EXEC_SUFFIXES = (".exe", ".dll", ".bat", ".cmd", ".ps1", ".vbs",
-                 ".msi", ".lnk", ".scr", ".reg")
+                 ".msi", ".lnk", ".scr", ".reg", ".js", ".jse", ".wsf",
+                 ".hta", ".com", ".pif", ".cpl", ".py", ".pyw", ".jar",
+                 ".url", ".inf", ".psm1", ".appref-ms")
 
 SECRET_SUFFIXES = (".pem", ".key")
 
 PROTECTED_APPS = ("explorer", "winlogon", "csrss", "services", "lsass", "system")
+
+
+def _short(text: str) -> str:
+    """LLM ka diya naam/path: control characters hate, 40 char tak."""
+    clean = "".join(ch for ch in str(text) if ord(ch) >= 32)
+    return clean[:40]
 
 
 def _secret_name(name: str) -> bool:
@@ -33,17 +41,25 @@ def _secret_name(name: str) -> bool:
 
 
 def _raw_path_bad(raw: str) -> str:
-    """Raw arg pe hi pakad: khaali, UNC, '..', NTFS stream."""
-    text = str(raw or "").strip()
-    if not text:
+    """Raw arg pe hi pakad: khaali, UNC, '..', aakhri dot/space, NTFS stream.
+
+    Leading whitespace/quote hataate hain par **trailing nahi** - aakhri space
+    ya dot khud hi trick hai (Windows use store karte hi nahi, is liye pakadna
+    hai), aur `paths.resolve()` usse chupa deta hai.
+    """
+    text = str(raw or "").lstrip().strip('"').strip('"')
+    if not text.strip():
         return "path khaali hai"
     if text.startswith("\\\\"):
         return "UNC path se kaam nahi hota"
     parts = [part for part in text.replace("/", "\\").split("\\") if part]
     if ".." in parts:
         return "'..' se path bahar nahi jaa sakti"
+    for part in parts:
+        if part not in (".", "..") and part != part.rstrip(". "):
+            return "path ke naam me aakhri dot/space allowed nahi"
     drive, rest = os.path.splitdrive(text)
-    if drive and ":" in rest:
+    if ":" in (rest if drive else text):
         return "NTFS stream path allowed nahi hai"
     return ""
 
@@ -62,9 +78,9 @@ def _extra_path_bad(path: Path) -> str:
     """Resolved path pe extra niyam: .git, secret, executable."""
     if ".git" in [part.lower() for part in path.parts]:
         return ".git ke andar ka path allowed nahi"
-    if _secret_name(path.name):
+    if _secret_name(path.name.rstrip(". ")):
         return "secret file (.env/key) ka path allowed nahi"
-    if path.suffix.lower() in EXEC_SUFFIXES:
+    if path.name.rstrip(". ").lower().endswith(EXEC_SUFFIXES):
         return f"{path.suffix} file allowed nahi (executable/script)"
     return ""
 
@@ -85,7 +101,7 @@ def _delete_to_trash(args: dict) -> tuple:
     if bad:
         return DENY, bad
     path = paths.resolve(raw)
-    if path == Path(os.path.normpath(str(config.WORKSPACE))):
+    if path == paths.resolve(str(config.WORKSPACE)):
         return DENY, "workspace root delete nahi ho sakti"
     bad = _extra_path_bad(path)
     if bad:
@@ -105,7 +121,7 @@ def _readish(args: dict) -> tuple:
 
 
 def _close_app(args: dict) -> tuple:
-    name = str(args.get("name", "")).strip().lower()
+    name = _short(args.get("name", "")).strip().lower()
     if not name:
         return DENY, "app ka naam do"
     if name in PROTECTED_APPS:
@@ -127,6 +143,6 @@ def resolve_ask(tool: str, args: dict) -> tuple:
     if tool in ("list_dir", "read_file"):
         return _readish(args)
     if tool == "open_app":
-        name = str(args.get("name", "")).strip()
+        name = _short(args.get("name", ""))
         return DENY, f"'{name}' allowed apps ki list me nahi hai"
     return DENY, "ye abhi allowed nahi"
