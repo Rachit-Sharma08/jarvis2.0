@@ -137,6 +137,15 @@ me aage-pahe compare kar rahe ho to pehle `before = worker.wakes()` pakad lo.
 (`test_wake_command` / `test_wake_brain` / `test_wake_listen`) wahan se import
 karte hain: `patch()`, `Spy`, `FakeEngine` (`server.state.ENGINE` ki jagah),
 `hub_spy()`, `engine_say()`, aur poora `command.run` chalane wala `talk()`.
+
+### Data-safety (har suite ke liye) — `tests/datasafe.py`
+
+Test asli `data/` ko **kabhi** nahi chhoo sakta. `with isolated_data():`
+(plain test) ya `class X(DataSafeCase):` (unittest setUp/tearDown) — dono data
+folder + memory/audit/todos/reminders/kb/notes/rss/pomodoro path tmp par
+daalte hain, `MEM._items` khaali karte hain, tearDown par wapas. Guard: koi
+path asli `data/` me gir gaya to AssertionError. Jo test `engine.handle()`,
+asli `/chat`, `MEM.clear()` ya `config.DATA_DIR` chhue, usme ye **zaroori** hai.
 `gatekeeper_uses()` bhi wahin hai — `wake/command.py` me gatekeeper ka kya import
 hua, **AST** se (docstring me likhe text se dhoka nahi chalta). `COMMAND_WARMUP_SECONDS
 = 0` kiya jaata hai warna har test 1 second extra lega. Asli API, mic ya speaker

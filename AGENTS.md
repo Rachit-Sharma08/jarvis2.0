@@ -477,6 +477,18 @@ endpoint mat likho.
   `test_desktop_tray.py` / `test_desktop_shortcut.py` tooltip/shortcut naam check
   karte hain. Purana test chup-chaap fail ho sakta hai kyunki fake listener naye
   shabd par trigger hi nahi karta.
+- **Test asli `data/` ko kabhi nahi chhoo sakta (E-1b) — `tests/datasafe.py` ka
+  `isolated_data()` (plain test) ya `DataSafeCase` (unittest setUp/tearDown).**
+  Helper test ke dauran `config.DATA_DIR`, `config.ACTION_LOG`,
+  `core.memory` (DATA_DIR/MEM_FILE/SUM_FILE), `core.summarizer`, aur
+  `tools/` ke `todo/reminders/notes/rss/pomodoro/kb` path ek **tmp** folder par
+  daalta hai, `MEM._items` khaali karta hai (asli file ko chhue bina), aur tearDown
+  par sab wapas. Guard: koi path asli `data/` me gir gaya to **AssertionError**.
+  Naya test agar `engine.handle()` / asli `/chat` route / `MEM.clear()` /
+  `config.DATA_DIR` chhue to **pehle yehi helper lagega**. `grep` se dhoondhna
+  kaafi nahi — `test_security.py`/`test_tool_routes.py` asli `/chat` se memory
+  likhte the aur grep me nahi dikhe the; pakadne ka pakka tareeka: har test file
+  chalane se pehle/baad me `data\memory.json` ka SHA256 compare karo.
 
 ### 8.1.1 BATTERY AUR TIMING KE PAKKAUREY NIYAM (4 Oct 2026)
 
@@ -698,20 +710,23 @@ endpoint mat likho.
 
 ---
 
-## 11. ABHI KA SACH (11 Oct 2026 — P-2b-2 merge ke baad)
+## 11. ABHI KA SACH (11 Oct 2026 — E-1b merge ke baad)
 
-- **main**: `91cf398` — `feat/no-cards` ff merge **ho chuka** (P-2b-2 poora).
+- **main**: `60fcaac` — `fix/tool-loop` (E-1 per-turn tool dedup + E-1b test
+  isolation) ff merge **ho chuka**. `test/dryrun-harness` pehle hi main me tha.
+  Push **nahi** kiya gaya (main origin se 13 aage).
 - **`PRABH_NO_CARDS` default 1** (`config_tools.py`) — card nahi, code faisla karta
   hai; `PRABH_NO_CARDS=0` par purana card raasta. Card bhejna band, par card
   dikhane wala code (approvals/UI) maujood hai — sirf default band hai.
-- Suite: **54 total = 48 pass + 6 jaane-pehchane fail** (naya fail nahi):
+- Suite: **56 total = 50 pass + 6 jaane-pehchane fail** (naya fail nahi):
   test_wake_command / test_wake_ack / test_desktop_sleep (ack ka text),
   test_desktop + test_desktop_shortcut (`desktop/app.py` 207, `config_wake.py`
   215 — 200-line niyam), test_wake_resample (gain).
+- **Test ab asli `data/` ko nahi chhoo sakta** — `tests/datasafe.py` ka
+  `isolated_data()` / `DataSafeCase` (E-1b). Details section 8 me.
 - Parked branches — **merge MAT karo**: `wip/tools-pcm-2026-10-10`,
   `docs/agents-md-pending`.
-- Agla kaam: `fix/persona-nocards` par persona/prompt se purani confirm-card ki
-  baatein hataana + workspace file-naam ki line (P-2b-2b).
+- Agla kaam: owner se poochhna — P-2b-2b ka baaki hissa ya kuch naya.
 
 ---
 
@@ -1039,3 +1054,17 @@ green**, sab file `<200`.
   `test_voice.py` ab **network-free** aur 2 s me pass; poori suite **63 s** me
   green. Test ko live network par fail hone se bachane ka naya bullet section
   **8.1.3** me.
+- **E-1b: test isolation (11 Oct 2026)** - E-1 ki suite run me tests ne **asli
+  `data/memory.json` mita diya** (`test_persona_nocards.py` ka `MEM.clear()`) aur
+  usi me apni entries likhi. Naya `tests/datasafe.py` (59 lines): `isolated_data()`
+  context manager + `DataSafeCase` mixin — data-folder + memory/audit/todos/
+  reminders/kb/notes/rss/pomodoro ke path ek tmp folder par, tearDown par wapas,
+  guard: path asli `data/` me -> AssertionError. **10 test file** me sirf helper
+  lagaya (koi assertion nahi badla): test_persona_nocards, test_basic,
+  test_engine_dedup, test_engine_detail, test_engine_tools, test_fixes_r1_brain2,
+  test_fixes_r1_ui, test_desktop_single, **test_security + test_tool_routes**.
+  Aakhri do **grep me nahi dikhe the** — wo asli `/chat` (real engine + real
+  brain) maarte the: pakadne ke liye har test file ke around `data\memory.json`
+  ka SHA256 compare kiya. Suite: **56 = 50 pass + 6 purane fail**, aur
+  `data\*.json` **426/426 pehle jaisa**. `fix/tool-loop` (E-1 + E-1b) main me
+  **ff merge** (`60fcaac`), push nahi.
