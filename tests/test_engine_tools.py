@@ -140,11 +140,12 @@ class LoopTest(unittest.TestCase):
         self.assertEqual(1, len(self.calls), "Allow ke baad tool chalana chahiye tha")
 
     def test_max_five_steps(self):
-        action = json.dumps({"action": "get_time_date", "args": {}})
-        events, ex = self._run([action] * 9)
+        actions = [json.dumps({"action": "add_todo", "args": {"text": f"t{i}"}}) for i in range(9)]
+        events, ex = self._run(actions)
         self.assertEqual(config.TOOL_MAX_STEPS, ex.call_count)
         last = [e for e in events if e["type"] == "message" and e["role"] == "assistant"][-1]
-        self.assertIn("5 tool step", last["text"])
+        self.assertNotIn("5 tool step", last["text"])
+        self.assertIn("tool output", last["text"])
 
     def test_kill_switch_blocks_loop(self):
         keeper.set_tools(False)

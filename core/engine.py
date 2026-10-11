@@ -4,6 +4,7 @@ import config
 from brain import prompt, router
 from core import events, modes
 from core import memory
+from core import turnguard
 from gatekeeper import keeper
 from gatekeeper.audit import mask
 from log_setup import get_logger
@@ -103,6 +104,7 @@ class Engine:
         yield events.message("user", clean_text)
         self._trim()
 
+        guard = turnguard.TurnGuard()
         for step in range(config.TOOL_MAX_STEPS):
             yield events.status("thinking")
             try:
@@ -134,16 +136,27 @@ class Engine:
                 continue
 
             name, args = payload
+            prior = guard.seen(name, args)
+            if prior is not None:
+                if guard.again(name, args):
+                    yield events.message("assistant", guard.final(prior))
+                    yield events.status("idle")
+                    return
+                self.history.append(
+                    {"role": "user", "content": f"{guard.note(prior)}"}
+                )
+                self._trim()
+                continue
             yield events.log(f"tool step {step + 1}: {name}")
             result = yield from self.run_tool(name, args)
+            verdict = "deny" if result.startswith(turnguard.DENY_PREFIX) else "allow"
+            guard.record(name, args, verdict, result)
             self.history.append(
                 {"role": "user", "content": f"{DATA_NOTE}\ntool={name}\n{result}"}
             )
             self._trim()
 
-        yield events.message(
-            "assistant", "5 tool step poore ho gaye. Thoda saamne batao kya karna hai."
-        )
+        yield events.message("assistant", guard.cap_message())
         yield events.status("idle")
 
     def _trim(self):

@@ -9,7 +9,7 @@ from core import memory, modes
 
 FAILED = []
 BASE = 3256  # P-2b-2b se pehle naapa gaya prompt (tools ON, khaali memory)
-MAX_GROW = 300
+MAX_GROW = 410  # E-1: +106 chars ki "tool dobara mat bulao" line (base+288 ke upar)
 
 
 def check(name, got, want):
