@@ -31,6 +31,20 @@ TOOL_BASE_RISK = {
     "open_website": SAFE,
     "close_app": ASK,
     "delete_to_trash": ASK,
+    "add_reminder": SAFE,
+    "list_reminders": SAFE,
+    "clear_reminder": SAFE,
+    "add_todo": SAFE,
+    "list_todos": SAFE,
+    "done_todo": SAFE,
+    "clear_todos": SAFE,
+    "web_search": SAFE,
+    "copy_text": SAFE,
+    "open_url": SAFE,
+    "focus_app": SAFE,
+    "kb_add": SAFE,
+    "kb_search": SAFE,
+    "daily_brief": SAFE,
 }
 
 # open_app sirf inhi me SAFE hai. Baaki sab poochhega.
