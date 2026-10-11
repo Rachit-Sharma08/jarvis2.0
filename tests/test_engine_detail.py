@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import config
 from core import engine as engine_mod
 from core.engine import Engine, _detail
+from datasafe import DataSafeCase
 from gatekeeper import keeper
 from gatekeeper.limiter import Limiter
 
@@ -39,15 +40,17 @@ def value_of(gen):
             return stop.value
 
 
-class LimiterCase(unittest.TestCase):
+class LimiterCase(DataSafeCase):
     """Har test me tools ON chahiye; global limiter OFF default aata hai."""
 
     def setUp(self):
+        super().setUp()
         self._saved = keeper.LIMITER
         keeper.LIMITER = Limiter(enabled=True, per_minute=config.TOOL_MAX_CALLS_PER_MINUTE)
 
     def tearDown(self):
         keeper.LIMITER = self._saved
+        super().tearDown()
 
 
 class OutputMaskTest(LimiterCase):

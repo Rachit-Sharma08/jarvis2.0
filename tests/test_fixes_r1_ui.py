@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import config
 from brain import checkup, health
+from datasafe import isolated_data
 
 FAILED = []
 
@@ -125,8 +126,10 @@ def test_banner():
     reset()
 
 
-for fn in (test_rid_events, test_checkup_lists_only, test_checkup_good_and_bad, test_banner):
-    fn()
+# Engine test memory me likhta hai - asli data/memory.json se door.
+with isolated_data():
+    for fn in (test_rid_events, test_checkup_lists_only, test_checkup_good_and_bad, test_banner):
+        fn()
 
 print("FAIL:", FAILED if FAILED else "koi nahi")
 sys.exit(1 if FAILED else 0)

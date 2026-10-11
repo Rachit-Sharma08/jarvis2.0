@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from fastapi.testclient import TestClient
 
 import config
+from datasafe import isolated_data
 from gatekeeper import keeper
 from server import security
 
@@ -173,11 +174,13 @@ def test_no_dangerous_endpoints():
 
 
 client = TestClient(__import__("server.app", fromlist=["app"]).app)
-test_security_on_tool_endpoints(client)
-test_toggle(client)
-test_confirm_endpoint(client)
-test_cancel(client)
-test_csp_header(client)
+# /chat asli engine + brain chalta hai - memory/audit tmp par jaaye.
+with isolated_data():
+    test_security_on_tool_endpoints(client)
+    test_toggle(client)
+    test_confirm_endpoint(client)
+    test_cancel(client)
+    test_csp_header(client)
 test_ui_uses_textcontent()
 test_no_dangerous_endpoints()
 

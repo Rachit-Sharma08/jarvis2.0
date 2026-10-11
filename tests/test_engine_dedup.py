@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import config
 from core import engine as engine_mod
 from core.engine import Engine
+from datasafe import isolated_data
 from gatekeeper import keeper
 from gatekeeper.limiter import Limiter
 
@@ -98,8 +99,10 @@ def test_cap_message_is_last_result():
 
 
 if __name__ == "__main__":
-    test_same_action_runs_once()
-    test_deny_runs_once()
-    test_different_args_both_run()
-    test_cap_message_is_last_result()
+    # engine.handle() memory me likhta hai - asli data/memory.json se door.
+    with isolated_data():
+        test_same_action_runs_once()
+        test_deny_runs_once()
+        test_different_args_both_run()
+        test_cap_message_is_last_result()
     print("SUITE GREEN")

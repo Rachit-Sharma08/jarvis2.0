@@ -16,6 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import config
+from datasafe import isolated_data
 from desktophelp import FAILED, check, finish
 from desktop import single as single_mod
 from desktop.single import Single, http_alive, pid_alive
@@ -161,8 +162,10 @@ def test_stale_pid_self_heal():
     tmp.cleanup()
 
 
-for fn in (test_single_instance, test_probe_helpers, test_stale_lock_diagnose,
-           test_stale_pid_self_heal):
-    fn()
+# Lock file asli data/ me banti thi - ab temp folder me.
+with isolated_data():
+    for fn in (test_single_instance, test_probe_helpers, test_stale_lock_diagnose,
+               test_stale_pid_self_heal):
+        fn()
 
 finish("Saare single instance test pass.")

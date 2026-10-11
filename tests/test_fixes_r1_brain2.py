@@ -1,4 +1,4 @@
-﻿"""Fix round 1 — Gemini timeout cooldown, client wiring, brain crash safety."""
+"""Fix round 1 — Gemini timeout cooldown, client wiring, brain crash safety."""
 
 import sys
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8", errors="replace")
@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import config
 from brain import health
+from datasafe import isolated_data
 
 FAILED = []
 
@@ -158,8 +159,10 @@ def test_brain_crash_is_contained():
     check("history me crash nahi", isinstance(Engine().history, list), True)
 
 
-for fn in (test_gemini_timeout_cooldown, test_client_wiring, test_brain_crash_is_contained):
-    fn()
+# Engine test memory me likhta hai - asli data/memory.json se door.
+with isolated_data():
+    for fn in (test_gemini_timeout_cooldown, test_client_wiring, test_brain_crash_is_contained):
+        fn()
 
 print("FAIL:", FAILED if FAILED else "koi nahi")
 sys.exit(1 if FAILED else 0)

@@ -8,6 +8,7 @@ import config
 from brain import router
 from core import events, modes
 from core.engine import Engine
+from datasafe import isolated_data
 
 FAILED = []
 
@@ -133,10 +134,12 @@ def _raises(fn, arg):
     return False
 
 
-test_mode_switch()
-test_brain_fallback()
-test_engine_events()
-test_events_module()
+# Engine test ke dauran memory ko asli data/ me likhta hai - helper se tmp me.
+with isolated_data():
+    test_mode_switch()
+    test_brain_fallback()
+    test_engine_events()
+    test_events_module()
 
 print()
 if FAILED:

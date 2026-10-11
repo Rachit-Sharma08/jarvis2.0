@@ -9,6 +9,7 @@ from fastapi.testclient import TestClient
 
 import config
 import main
+from datasafe import isolated_data
 from server import security
 
 FAILED = []
@@ -130,8 +131,10 @@ test_bind_address()
 test_allowed_lists()
 test_token_is_fresh_each_start()
 test_verify_rules()
-http_client = test_http_rules()
-test_websocket_rules(http_client)
+# /chat asli engine + brain chalta hai - memory/audit tmp par jaaye.
+with isolated_data():
+    http_client = test_http_rules()
+    test_websocket_rules(http_client)
 
 print()
 if FAILED:

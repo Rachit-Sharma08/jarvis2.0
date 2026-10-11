@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import config
 from core import engine as engine_mod
 from core.engine import Engine
+from datasafe import DataSafeCase
 from gatekeeper import keeper
 from gatekeeper.limiter import Limiter
 
@@ -39,8 +40,9 @@ def asker(replies):
     return ask
 
 
-class LoopTest(unittest.TestCase):
+class LoopTest(DataSafeCase):
     def setUp(self):
+        super().setUp()
         self.calls = []
         self._saved_limiter = keeper.LIMITER
         keeper.LIMITER = Limiter(enabled=True, per_minute=config.TOOL_MAX_CALLS_PER_MINUTE)
@@ -52,6 +54,7 @@ class LoopTest(unittest.TestCase):
         self._nocards.stop()
         keeper.LIMITER = self._saved_limiter
         keeper.set_tools(True)
+        super().tearDown()
 
     def _run(self, replies):
         engine = Engine()

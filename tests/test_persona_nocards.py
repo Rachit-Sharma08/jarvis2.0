@@ -6,6 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from brain import prompt
 from core import memory, modes
+from datasafe import isolated_data
 
 FAILED = []
 BASE = 3256  # P-2b-2b se pehle naapa gaya prompt (tools ON, khaali memory)
@@ -41,4 +42,6 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # memory.MEM.clear() asli data/memory.json mita deta tha - ab tmp par.
+    with isolated_data():
+        main()
