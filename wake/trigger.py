@@ -1,60 +1,33 @@
-"""Wake trigger ka **faisla** — teen raaste, ek jagah (5-Oct ka fix).
+"""Wake trigger ka **faisla** — raaste + cooldown + guard, ek jagah (5-Oct ka fix).
 
 `wake/session.py` sirf sunta hai (mic + loop). "Ye text me wake shabd hai ya
-nahi?" ka jawab yahan hai, is liye teen raaste ek hi jagah hain:
+nahi?" ka jawab yahan hai. Teen raaste: **final** (`listener.feed()`),
+**partial** (Vosk abhi bol raha hai), **flush** (gate ne khamoshi par
+`FinalResult()` se pending text nikala). Poora record AGENTS.md 8.1.3 me hai.
 
-1. **final**   - `listener.feed()` se text aaya
-2. **partial** - Vosk abhi bol raha hai, wake shabd usi text me hai
-3. **flush**   - gate ne khamoshi par `FinalResult()` se pending text nikala
+13-Oct: do guard bhi yahin hain — **cooldown** (1.5 s) aur **tail guard**
+(0.4 s, apni hi TTS ke baad; dono milkar `suppressing()`). Follow-up window ka
+faisla `wake/followup.py` me hai (200-line niyam ki wajah se).
 
-5-Oct ka asli bug: gate silence par `listener.reset()` karta tha, jisse Vosk ka
-pending text (trigger ka hissa) **chhoot** jata tha - is liye "Hlo Jarvis" do
-tukde me toot kar trigger hi nahi hota tha, aur dusra command kabhi nahi chalta.
-
-Ye class **sirf** trigger ginti hai aur `on_wake` ko (phrase, mic, stop) deti hai.
-`on_wake` wake thread par **synchronous** chalta hai - command poora chal jaane
-tak sunna ruka rehta hai, is liye dobara trigger nahi hota.
+`on_wake(phrase, mic, stop)` wake thread par **synchronous** chalta hai -
+command poora chal jaane tak sunna ruka rehta hai, is liye dobara trigger nahi.
 """
-
 import time
 
 import config
 from log_setup import get_logger
-from voice import stt_guard
+from wake import followup as followup_mod
 from wake import phrase as phrase_mod
 
 log = get_logger("wake_trigger")
 
 
-def is_utterance(text: str) -> bool:
-    """Ye text **baat** hai (khamoshi/short filler nahi)?
-
-    Follow-up window me sirf sunte rehna hai — is liye "jarvis" shabd ki
-    zaroorat nahi, par "uh"/"hmm"/"Thank you." jaisa kuch bhi follow-up nahi
-    hai. Guard wahi jo STT ke liye hai (`voice/stt_guard.py`) — ek hi jagah,
-    do alag list nahi."""
-    body = str(text or "").strip()
-    if len(body) < 3 or len(body.split()) < 2:
-        return False
-    if stt_guard.is_silence_phrase(body):
-        return False
-    # Poore text ke shabd **saare** filler hue to bhi follow-up nahi — jaise
-    # "hmm uh". `is_silence_phrase()` poora text ek shabd pakadta hai, is liye
-    # yahan shabd-girdi ki. List wahi hai (duplicate nahi).
-    words = {w.strip(".,!?।'\"") for w in body.split()}
-    fillers = {p.strip(".") for p in stt_guard.SILENCE_PHRASES}
-    if words and words <= fillers:
-        return False
-    return True
-
-
 class Trigger:
-    """Cooldown + wake shabd ka pakora + `on_wake` ka call.
+    """Cooldown + tail guard + hot window + wake shabd ka pakora + `on_wake`.
 
-    **Ek hi instance** bana kar poori app me chalta hai (`Session.__init__`),
-    is liye `wakes` count restart par **reset nahi** hota - `worker.wakes()`
-    poore app ka count hai (test + `--wake-info` isi par bharosa karti hai).
-    Har `start()` sirf callbacks aur mic/listener/gate dobara set karta hai.
+    **Ek hi instance** poore app me (`Session.__init__`), is liye `wakes`
+    count restart par **reset nahi** hota - `worker.wakes()` isi par bharosa
+    karti hai. `start()` sirf callbacks aur mic/listener/gate set karta hai.
     """
 
     def __init__(self, on_wake=None, on_state=None):
@@ -119,13 +92,10 @@ class Trigger:
     def mark_hot(self, seconds=None) -> bool:
         """Follow-up window kholo — **"Jarvis" na bola** tab bhi trigger.
 
-        **DEFAULT OFF** (`config.HOT_WINDOW_ENABLED=0`): band par ye kuch
-        nahi karta aur `hot_active()` hamesha `False` rehta hai — yaani app
-        ka raasta bilkul purane jaisa.
-
-        Wapas `False` = feature band tha ya time nahi mila (log me likha gaya).
-        Follow-up par window **dobara** lagta hai, is liye chain ban sakta hai.
-        """
+        **DEFAULT OFF**: band par ye kuch nahi karta aur `hot_active()`
+        hamesha `False` — yaani app ka raasta purane jaisa. `False` wapas
+        = feature band ya time nahi mila. Follow-up par window **dobara** lagta
+        hai, is liye chain ban sakta hai."""
         if not config.HOT_WINDOW_ENABLED:
             log.info("hot window band hai (PRABH_HOT_WINDOW=1 karo)")
             return False
@@ -176,13 +146,11 @@ class Trigger:
             log.info("suppressed (cooldown/tail): %r", text[:60])
             return False
 
-        # Follow-up window: "Jarvis" bola hi nahi, phir bhi trigger — par sirf
-        # asli **baat** par. Tail/cooldown pehle check ho chuke hain, is liye
+        # Follow-up window ("Jarvis" na bola): faisla `wake/followup.py`
+        # deta hai — cooldown/tail wahan bhi pehle check hote hain, is liye
         # apni hi TTS is raaste se trigger nahi kar sakti.
-        if self.hot_active() and is_utterance(text):
-            log.info("FOLLOW-UP HIT (bina 'Jarvis'): %r", text[:60])
+        if followup_mod.decide(self, text) == "fire":
             self._cool_until = time.monotonic() + config.WAKE_COOLDOWN_SECONDS
-            self.mark_hot()                 # agla follow-up ka window dobara
             self.fire(text)
             return True
 

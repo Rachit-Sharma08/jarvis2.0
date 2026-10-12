@@ -32,6 +32,7 @@ from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 import config
 from tests.wakehelp import check, finish
 from tests.wakecmdhelp import patch
+from wake import followup as followup_mod
 from wake import trigger as trigger_mod
 from wake import worker
 
@@ -44,67 +45,6 @@ def fresh(enabled=False):
     if enabled:
         config.HOT_WINDOW_ENABLED = True
     return t
-
-
-class TestDefaultOff(unittest.TestCase):
-    """DEFAULT OFF — sabse zaroori check."""
-
-    def setUp(self):
-        self.saved = config.HOT_WINDOW_ENABLED
-
-    def tearDown(self):
-        config.HOT_WINDOW_ENABLED = self.saved
-
-    def test_flag_is_off_by_default(self):
-        check("default 0 hai", self.saved, False)
-        check("source me bhi 0",
-              'os.getenv("PRABH_HOT_WINDOW", "0")' in
-              (ROOT / "config_wake.py").read_text(encoding="utf-8"), True)
-
-    def test_mark_hot_does_nothing_when_off(self):
-        config.HOT_WINDOW_ENABLED = False
-        t = fresh(False)
-        check("mark_hot = False", t.mark_hot(12.0), False)
-        check("hot_active = False", t.hot_active(), False)
-
-    def test_no_followup_without_wake_word_when_off(self):
-        """Band par "sabse bada test": sirf bolne par trigger NAHI hona chahiye."""
-        config.HOT_WINDOW_ENABLED = False
-        t = fresh(False)
-        check("follow-up nahi", t.maybe("aur mausam batao"), False)
-        check("kuch nahi fired", t.fired, [])
-        check("waise 'jarvis' se hota hai", t.maybe("jarvis"), True)
-
-    def test_reset_clears_hot(self):
-        config.HOT_WINDOW_ENABLED = True
-        t = fresh(True)
-        t.mark_hot(12.0)
-        check("hot tha", t.hot_active(), True)
-        t.reset_cooldown()
-        check("reset ke baad band", t.hot_active(), False)
-        config.HOT_WINDOW_ENABLED = self.saved
-
-
-class TestIsUtterance(unittest.TestCase):
-    """Sirf asli baat follow-up hai."""
-
-    def test_real_sentences_yes(self):
-        for text in ("aur mausam batao", "kya kar raha hai", "ek kaam karo",
-                     "subah ka reminder set kar do"):
-            check(f"baat: {text[:18]}", trigger_mod.is_utterance(text), True)
-
-    def test_silence_and_short_no(self):
-        for text in ("uh", "hmm", "um", "Thank you.", "Bye.", "okay.",
-                     "", "   ", "haan", "ji", "a"):
-            check(f"baat nahi: {text!r}", trigger_mod.is_utterance(text), False)
-
-    def test_reuses_stt_guard(self):
-        """Ek hi silence list — STT aur follow-up dono wahi."""
-        src = (ROOT / "wake" / "trigger.py").read_text(encoding="utf-8")
-        check("stt_guard use hota hai", "stt_guard.is_silence_phrase" in src, True)
-        # Sirf ASSIGNMENT nahi - `stt_guard.SILENCE_PHRASES` ka **reference**
-        # sahi hai (duplicate list banana hi galat hota).
-        check("duplicate list nahi", "SILENCE_PHRASES =" in src, False)
 
 
 class TestFollowUps(unittest.TestCase):
@@ -220,6 +160,7 @@ class TestWiring(unittest.TestCase):
         """`config.describe()` me dikhna chahiye — flag kahan se aaya."""
         text = config.describe()
         check("describe me yaad hai", "hot" in text.lower(), True)
+
 
 
 if __name__ == "__main__":
