@@ -5,6 +5,7 @@ Categories (health.py in par cooldown lagati hai):
   quota   -> daily/monthly limit. Agle 00:00 tak.
   billing -> cloud credits khatam / payment required. Nayi key tak.
   busy    -> 429/503/timeout. Retry-After, warna 10 min.
+  auth    -> 401/403. Key galat — **is session me BAND** (nayi key tak).
   empty   -> khaali jawab. 45s.
   other   -> baaki sab. 10 min.
 
@@ -28,6 +29,13 @@ CREDIT_RE = re.compile(
 # Din/maah ki limit. 429 ke saath bhi yahi rule chalta hai.
 QUOTA_RE = re.compile(r"daily\s*quota|quota\s*exceeded|exceeded your\s*current quota"
                       r"|monthly\s*quota|quota_exceeded", re.IGNORECASE)
+# 401/403 = key galat ya permission nahi. **13-Oct tak ye category hi nahi
+# thi** — 401 `other` ban kar `classify_and_skip` se guzarta hi nahi tha (wo
+# sirf busy/billing/auth/empty par kuch karta hai), is liye ElevenLabs ka 401
+# **har jawab me dobara poora** poochha jaata tha (~0.7-1 s har message).
+# Ab `auth` -> `lock_auth()` -> is session me BAND, seedha Edge par jao.
+AUTH_RE = re.compile(r"\b(401|403)\b|unauthori[sz]ed|invalid[_ ]?api[_ ]?key"
+                     r"|forbidden", re.IGNORECASE)
 
 
 def classify(exc) -> str:
@@ -39,6 +47,10 @@ def classify(exc) -> str:
         return "quota"
     if CREDIT_RE.search(text) or BILLING_RE.search(text):
         return "billing"
+    # `busy` se pehle: 403 message me "rate limit" bhi aa sakta hai, par key
+    # galat hai — retry bekaar. `\b` ki wajah se voice id me "401" nahi pakda.
+    if AUTH_RE.search(text):
+        return "auth"
     if CODE_RE.search(text) or any(w in text for w in BUSY_WORDS):
         return "busy"
     if "khaali" in text or "empty" in text:

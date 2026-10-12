@@ -76,12 +76,13 @@ class TestWarmupDeadline(unittest.TestCase):
 
 
 class TestSilenceWindow(unittest.TestCase):
-    """Chuppi 0.9 s (pehle 2.0 -> 1.2 -> 0.9) — na bahut jaldi, na bahut der."""
+    """Chuppi 0.7 s (pehle 2.0 -> 1.2 -> 0.9 -> 0.7, 13-Oct) — na bahut jaldi,
+    na bahut der. Har 0.1 s seedha wake ke total me judta hai."""
 
     def test_silence_window(self):
-        check("chuppi 0.9 s", config.COMMAND_END_SILENCE_SECONDS, 0.9)
-        check("2.0 se kam (speed)", config.COMMAND_END_SILENCE_SECONDS < 2.0, True)
-        check("sentence gap se lamba", config.COMMAND_END_SILENCE_SECONDS > 0.8, True)
+        check("chuppi 0.7 s", config.COMMAND_END_SILENCE_SECONDS, 0.7)
+        check("purane 0.9 se tez", config.COMMAND_END_SILENCE_SECONDS < 0.9, True)
+        check("sentence gap se lamba", config.COMMAND_END_SILENCE_SECONDS > 0.6, True)
 
     def test_speech_limits_unchanged(self):
         """Sirf **end** ki chuppi badli — beech ka 0.4 s hangover aur 30 s max

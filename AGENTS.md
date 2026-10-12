@@ -653,6 +653,54 @@ endpoint mat likho.
   Fix se pehle 3 call = 4 window, fix ke baad = **1**. Running app ko chheda
   nahi — `open_hud` alag process hai.
 
+## 8.1.5 STT/TTS KE PAKKAUREY NIYAM (13 Oct 2026 — S-2)
+
+- **STT ka apna timeout, brain ka NAHI.** `voice/stt.py` pehle
+  `BRAIN_TIMEOUT_GROQ` (10 s) uthata tha + SDK 2 baar khud retry karta tha →
+  3.5 s ki audio par call **43 s** tak atka (S-1 audit). Ab
+  `config.STT_TIMEOUT_SECONDS` (6 s) + `STT_MAX_RETRIES` (1) + ceiling
+  `config.stt_deadline()` (16 s). **Naya knob bana kar usi file me use mat karo**
+  — `config_voice.py` me daal, `config.py` ke import list me bhi (warna
+  `AttributeError` test me hi pakda jaata hai).
+- **`asyncio.wait_for`/`to_thread` se "hang" pakka nahi hota.** `wake/listen.py`
+  ke `asyncio.run()` band hote waqt executor ka **join** wait karta hai
+  (`shutdown_default_executor`, 300 s) — SDK atka to caller bhi atkta, chahe
+  ceiling laga di ho. Sahi raasta: **daemon thread + `join(timeout)`**
+  (`voice/stt.py` ka `_run_bounded`), phir `to_thread` sirf event loop free
+  rakhne ke liye. Test me `time.sleep(3)` fake + chhota ceiling daal kar
+  **waqt hi measure** karo — warna test khud 3 s lega aur chup ho jaayega.
+- **`health.classify()` ka naya category mat bhoolo.** 401 ka pattern hi nahi
+  tha, is liye wo `"other"` banta tha; aur `classify_and_skip()` sirf
+  `busy/billing/auth/empty` par kuch karta hai — yaani **kuch nahi** hota tha.
+  Naya category jodte waqt teen jagah dekh: `classify()` (word/pattern),
+  `health.fail()` (cooldown ka rule), aur `classify_and_skip()` ki **allow-list**.
+  `auth` pehle se likha tha par **koi use hi nahi karta tha** — dead code.
+  Order bhi soch: `auth` ko `busy` se **pehle**, warna 403 + "rate limit"
+  wala message retry bekaar ban jayega.
+- **Key khaali hai to provider chhedna hi nahi hai.** Voice id
+  (`config.voice_for`) aur key (`config.has_elevenlabs`) **do alag** check hain;
+  pehle sirf voice id dekha jaata tha. `voice/tts.py` ka `missing_key()` ab
+  alag gate hai — `tts.PROVIDERS` fake se badal kar assert karo ki provider
+  **0 baar** bula (sirf "sahi provider mila" se ye prove nahi hota).
+- **Har command ka level log karo — sirf number.** `wake/pcm.py` ka
+  `quality()` → `(peak_rms, clip_pct)`, `wake/utterance.py` ki capture line me.
+  S-1 me pata chala tha ki asli nuksan yahi tha (RMS median 0.107, 7% cases
+  0.5+ = clipping). **Audio kabhi save/scribe mat karo** (privacy) — sirf do
+  float. Test me `logging.Handler` laga kar asli log line padho; source grep
+  se ye nahi pakda jaata.
+- **`test_wakehelp.loud()` ka RMS exactly 0.129 hai** (`sin()*6000` int16), aur
+  kuch fakes ka **0.5**. Ye `logs/prabh.log` me bhi likhte hain — matlab log ka
+  RMS analysis karte waqt **test ke entry hatao**, warna asli mic ka nateeja
+  galat nikalta hai. Maine pehle isi galti se "mic bahut tez hai" bola tha.
+- **`.env` wala value badalta waqt purana wapas rakh.** Test me
+  `os.environ.pop("ELEVENLABS_VOICE_SUNDAY")` ne `.env` ki **asli** value mita
+  di, aur bade test chup-chaap fail ho gaye. `saved = os.environ.get(...)` →
+  `finally` me wapas (ya `pop` sirf tab jab `saved is None` tha).
+- **Chuppi/timeout badalne par purana test bhi badalna padta hai.** Ek test
+  default **pakadta** hai (`test_speed_fix.py` me 0.9 s). Value badal ke us
+  test ko update karna **hisab me aata hai**, naya fail nahi — warna "6 purane
+  fail waise hi" wali baat galat ho jaati hai.
+
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
 
 - **Tray list me app ka naam nahi, EXE ka naam dikhta hai.** Venv ka `python.exe` sirf
@@ -759,6 +807,10 @@ endpoint mat likho.
   har "Jarvis" par nayi HUD window. Wajah mili — `_focus_existing()` ka return
   value lapiset tha. Nayi nateeja: suite **60 total = 54 pass + 6 jaane-pehchane
   fail** (wahi purane 6, naya fail nahi). Rules naye section **8.1.4** me.
+- **`fix/stt-speed` branch par S-2 commit hai (merge/push NAHI kiya).** STT/TTS
+  tez + pakka: apna timeout/retry + ceiling, 401 = session me ek baar,
+  chuppi 0.7 s, har command ka peak RMS + clip %. Suite **63 = 57 pass + 6
+  jaane-pehchane fail** (wahi purane 6). Rules section **8.1.5** me.
 - **`PRABH_NO_CARDS` default 1** (`config_tools.py`) — card nahi, code faisla karta
   hai; `PRABH_NO_CARDS=0` par purana card raasta. Card bhejna band, par card
   dikhane wala code (approvals/UI) maujood hai — sirf default band hai.
@@ -1133,3 +1185,24 @@ green**, sab file `<200`.
   window (pehle 3 → 4). Suite: **60 = 54 pass + 6 purane fail** (naya nahi).
   Branch `fix/hud-single` par commit — **push/merge nahi**. Naye rules section
   **8.1.4**.
+- **S-2: STT/TTS tez + pakka (13 Oct 2026)** — branch `fix/stt-speed` (S-1 audit
+  se). 4 badlav: (1) `voice/stt.py` brain wala 10 s + SDK 2 retry hata kar **STT
+  ka apna 6 s + `max_retries=1`** + ceiling `config.stt_deadline()` 16 s. Ceiling
+  ke liye **daemon thread + `join(timeout)`** — `asyncio.to_thread`/`wait_for`
+  se kaam nahi chalta, kyunki `wake/listen.py` ke `asyncio.run()` ka shutdown
+  executor ka join **wait** karta hai (pehle ka `wait_for` version test me hi
+  3 s lag raha tha, yani ceiling chhoot hi gayi thi). (2) **401/403 pattern hi
+  nahi tha** `brain/health_words.py` me — `classify()` `"other"` deta tha aur
+  `classify_and_skip()` sirf `busy/billing/auth/empty` par karta hai, yaani
+  ElevenLabs ka 401 **har jawab me dobara** poochha jaata tha. Ab `AUTH_RE` +
+  `auth` → `lock_auth()` → session me BAND → seedha Edge; saath me
+  `voice/tts.py` ka `missing_key()` (voice id check alag) taaki key khaali ho
+  to provider 0 baar chale. (3) `COMMAND_END_SILENCE_SECONDS` **0.9 → 0.7**
+  (`.env` ka `PRABH_CMD_SILENCE` raasta waisa). (4) naya `wake/pcm.py` ka
+  `quality()` → `(peak_rms, clip_pct)` + `wake/utterance.py` ki capture log line
+  me dono number (sirf number, audio save nahi). **Split:** `voice/tts.py` 202
+  par ja raha tha → naya `voice/tts_text.py` (clean/clip/clip_answer + regex),
+  `tts.py` se re-export taaki callers na toote. Naye test `test_stt_speed.py`,
+  `test_tts_auth.py`, `test_wake_levels.py`; `test_speed_fix.py` ka 0.9 ka pakkaura
+  update. Suite **63 = 57 pass + 6 purane fail** (naya nahi). **Live:** naye
+  path se 3/3 sahi transcription (1.4-3.0 s). Rules section **8.1.5**.

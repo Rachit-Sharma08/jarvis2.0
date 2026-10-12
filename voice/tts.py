@@ -1,4 +1,3 @@
-import re
 import time
 
 import config
@@ -6,6 +5,7 @@ from brain import health
 from core.timing import Stopwatch
 from log_setup import get_logger
 from voice import tts_cartesia, tts_edge, tts_elevenlabs, tts_female
+from voice.tts_text import clip, clip_answer, clean  # noqa: F401 (re-export)
 
 log = get_logger("tts")
 
@@ -15,12 +15,18 @@ PROVIDERS = {
     "edge": tts_edge,
 }
 
-URL_RE = re.compile(r"(?:https?://|www\.)\S+", re.IGNORECASE)
-EMOJI_RE = re.compile(
-    "[\U0001F000-\U0001FAFF\U0001F1E6-\U0001F1FF\u2190-\u21FF\u2600-\u27BF\u2B00-\u2BFF\uFE0F]"
-)
-MARKDOWN_RE = re.compile(r"[*#`>_]+")
-SPACES_RE = re.compile(r"[ \t]+")
+
+def missing_key(name: str) -> str:
+    """Is provider ki key lagi hai? `''` = haan. Nahi to chhodne ka karan.
+
+    Voice id check (`config.voice_for`) **alag** hai — id ho sakta hai par key
+    na ho. Pehle yahi check nahi tha, is liye key khaali hone par bhi har jawab
+    me network call jaata tha (aur phir fail hota tha). Pure function."""
+    if name == "elevenlabs" and not config.has_elevenlabs():
+        return "elevenlabs: key nahi hai"
+    if name == "cartesia" and not config.has_cartesia():
+        return "cartesia: key nahi hai"
+    return ""
 
 
 class TtsError(Exception):
@@ -73,51 +79,6 @@ def cache_clear() -> None:
     _CACHE.clear()
 
 
-def clean(text: str) -> str:
-    """Awaaz se pehle text saaf karta hai: link, emoji aur markdown hatao."""
-    text = URL_RE.sub(" ", text or "")
-    text = EMOJI_RE.sub(" ", text)
-    text = MARKDOWN_RE.sub(" ", text)
-    text = SPACES_RE.sub(" ", text)
-    text = re.sub(r"\n{2,}", "\n", text)
-    return text.strip()
-
-
-def clip(text: str, limit: int = None) -> str:
-    """Free quota bachaane ke liye sirf shuruaat boli jaati hai."""
-    limit = limit or config.TTS_MAX_CHARS
-    if len(text) <= limit:
-        return text
-    cut = text[:limit]
-    if " " in cut:
-        cut = cut[: cut.rfind(" ")]
-    return cut.strip()
-
-
-def clip_answer(text: str, limit: int = None) -> str:
-    """Bade jawab ki **awaaz** chhoti — vaakya ke end par, beech se nahi.
-
-    `clip()` kaat-ta hai, is liye usse sunne me ajeeb lagta hai. Yahan pehle
-    `limit` ke andar ka aakhri **poora vaakya** (`. ` / `? ` / `! ` / `। `)
-    dhoonda jaata hai. Sirf tab jab koi vaakya na mile (bahut lambe ek vaakya)
-    tab `clip()` par hafta — beech se katna behtar hai pura sunne se.
-
-    Sirf **awaaz** ke liye: HUD par brain ka poora jawab rehta hai
-    (`config.VOICE_ANSWER_MAX_CHARS`)."""
-    limit = limit or config.VOICE_ANSWER_MAX_CHARS
-    text = (text or "").strip()
-    if len(text) <= limit:
-        return text
-    head = text[:limit]
-    best = -1
-    for mark in (". ", "? ", "! ", "। "):
-        best = max(best, head.rfind(mark))
-    # Sirf ek teen shabd ka vaakya na rahe - warna jawab ka matlab hi nahi bacha.
-    if best > limit // 3:
-        return head[:best + 1].strip()
-    return clip(text, limit)
-
-
 async def speak(text: str, mode: str) -> tuple:
     """Elevenlabs -> Cartesia -> edge. Teeno fail ho to saaf error.
 
@@ -148,6 +109,13 @@ async def _speak_uncached(text: str, mode: str) -> tuple:
         if name in ("elevenlabs", "cartesia") and not voice:
             log.info("tts %s skip: %s ke liye voice id nahi hai", name, mode)
             problems.append(f"{name}: voice id nahi")
+            continue
+        # Key khaali hai to **bilkul try na ho** — network call aur fail dono
+        # bekaar. Voice id wala check upar hai; ye usse alag.
+        nokey = missing_key(name)
+        if nokey:
+            log.info("tts %s skip: %s", name, nokey.split(": ", 1)[-1])
+            problems.append(nokey)
             continue
         # Female allowlist. List me nahi to skip — male awaaz kabhi nahi bolega.
         male_guard = tts_female.check(name, voice)

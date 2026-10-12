@@ -36,6 +36,34 @@ def encode(samples: np.ndarray) -> bytes:
     return (clipped * 32767.0).astype("<i2").tobytes()
 
 
+# int16 ka full scale. 99.9% = "clip ho raha hai" (mic tez / AGC utha hua).
+CLIP_LEVEL = 32767 * 0.999
+
+
+def quality(chunks) -> tuple:
+    """Captured audio ka haal -> `(peak_rms, clip_pct)`.
+
+    Sirf **do number** — audio kahin save nahi hoti (privacy ka pakkaura).
+    Log me isi se pata chalta hai ki mic tez hai (clip %) ya bahut dheere
+    (peak RMS kam). S-1 audit me pata chala tha ki asli problem yahi thi:
+    RMS 0.5+ matlab clip, aur Whisper aise audio me koi bhasha bana deta hai.
+
+    Pure function — `None`/khaali list par `(0.0, 0.0)`, test me bina mic ke."""
+    peak, total, clipped = 0.0, 0, 0
+    for chunk in chunks or []:
+        if not chunk:
+            continue
+        peak = max(peak, chunk_to_rms(chunk))
+        samples = np.frombuffer(chunk, dtype="<i2")
+        if not samples.size:
+            continue
+        total += samples.size
+        clipped += int(np.count_nonzero(
+            np.abs(samples.astype(np.int32)) >= CLIP_LEVEL))
+    pct = round(100.0 * clipped / total, 2) if total else 0.0
+    return round(peak, 4), pct
+
+
 class RmsGain:
     """Simple RMS-based gain: quiet speech → gain up, loud → down. Khamoshi par
     bilkul touch nahi karta (battery)."""

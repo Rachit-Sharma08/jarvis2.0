@@ -25,7 +25,7 @@ import config
 from log_setup import get_logger
 from wake import resample
 from wake.pcm import (AutoGain, FixedGain, RmsGain, Vad, chunk_to_rms,
-                      encode)   # noqa: F401 (re-export)
+                      encode, quality)   # noqa: F401 (re-export)
 
 log = get_logger("wake_audio")
 

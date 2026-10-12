@@ -1,5 +1,6 @@
 import asyncio
 import io
+import threading
 import time
 
 from groq import Groq
@@ -15,16 +16,55 @@ class SttError(Exception):
     pass
 
 
+def _client() -> Groq:
+    """Groq client — STT ka **apna** chhota timeout + 1 retry.
+
+    Pehle `config.BRAIN_TIMEOUT_GROQ` (10 s) use hota tha aur SDK apne aap 2 baar
+    retry karta tha — 3.5 s ki audio par call **43 s** tak atak sakta tha (S-1
+    audit: `stt failed (43503ms)`). Brain ka timeout STT ke liye sahi number nahi."""
+    return Groq(api_key=config.GROQ_API_KEY,
+                timeout=config.STT_TIMEOUT_SECONDS,
+                max_retries=config.STT_MAX_RETRIES)
+
+
 def _transcribe(audio: bytes) -> str:
     # `language` jaan-boojh kar NAHI bhejte. Romanized Hinglish (English
     # akshar + Hindi shabd) `language="hi"` par bigaad jata tha — saboot
     # ROUND2.md me. Whisper khud dono script pehchanta hai.
-    client = Groq(api_key=config.GROQ_API_KEY, timeout=config.BRAIN_TIMEOUT_GROQ)
-    reply = client.audio.transcriptions.create(
+    reply = _client().audio.transcriptions.create(
         file=("mic.webm", io.BytesIO(audio)),
         model=config.GROQ_STT_MODEL,
     )
     return (reply.text or "").strip()
+
+
+def _run_bounded(fn, audio, deadline):
+    """`fn(audio)` ko ek **daemon** thread me chalao, `deadline` tak wait karo.
+
+    **`asyncio.to_thread` akela kaafi nahi.** `wake/listen.py` `asyncio.run()`
+    use karta hai, aur woh band hote waqt executor ka **join** wait karta hai
+    (`shutdown_default_executor`) — matlab SDK atka to caller bhi atkta, chahe
+    `asyncio.wait_for` ceiling laga di ho. Daemon thread + `join(timeout)` me
+    caller turant laut aata hai; bacha hua thread process band hote par mar
+    jata hai, koi nuksan nahi.
+
+    Timeout: `TimeoutError`. Baaki exception as-is (wahi SttError banega)."""
+    box = {}
+
+    def run():
+        try:
+            box["text"] = fn(audio)
+        except BaseException as exc:          # noqa: BLE001 - wapas bhejna hai
+            box["error"] = exc
+
+    thread = threading.Thread(target=run, daemon=True)
+    thread.start()
+    thread.join(deadline)
+    if thread.is_alive():
+        raise TimeoutError(f"deadline {deadline:.1f}s")
+    if "error" in box:
+        raise box["error"]
+    return box.get("text", "")
 
 
 async def transcribe(audio: bytes, duration_ms=None) -> str:
@@ -48,7 +88,15 @@ async def transcribe(audio: bytes, duration_ms=None) -> str:
 
     start = time.perf_counter()
     try:
-        text = await asyncio.to_thread(_transcribe, audio)
+        # Do parde: `_run_bounded` SDK ke budget ka ceiling rakhta hai, aur
+        # `to_thread` event loop ko free rakhta hai (HTTP route ke liye).
+        text = await asyncio.to_thread(
+            _run_bounded, _transcribe, audio, config.stt_deadline())
+    except TimeoutError as exc:
+        took = int((time.perf_counter() - start) * 1000)
+        log.error("stt atka (%dms) - ceiling %.1fs: %s", took,
+                  config.stt_deadline(), exc)
+        raise SttError("Sun nahi paya (awaaz bhejne me waqt laga). Dobara boliye.")
     except Exception as exc:
         log.error("stt failed (%dms): %s: %s", int((time.perf_counter() - start) * 1000),
                   type(exc).__name__, exc)

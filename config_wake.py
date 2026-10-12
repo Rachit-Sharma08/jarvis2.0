@@ -95,13 +95,13 @@ MIC_OPEN_ATTEMPTS = int(os.getenv("PRABH_MIC_ATTEMPTS", "3"))
 MIC_OPEN_RETRY_SECONDS = float(os.getenv("PRABH_MIC_RETRY", "1.2"))
 
 # ---- command window ----
-# Chuppi pehle 2.0 s -> 1.2 s -> ab **0.9 s** (4-Oct). Wake ka total 18.5 s tha,
-# jisme se 2.0 s sirf is ek intezaar me jaata tha (brain to 1.1 s me jawab de
-# raha tha). 0.9 s abhi bhi ek natural sentence-gap se thoda lamba hai, is liye
-# beech ka vaakya kat-ta nahi. `.env` ke `PRABH_CMD_SILENCE` se badalte ho.
+# Chuppi pehle 2.0 s -> 1.2 s -> 0.9 s -> ab **0.7 s** (13-Oct). Har 0.1 s yahan
+# seedha wake ke total me judta hai. 0.7 s ek normal sentence-gap se ab bhi
+# lamba hai, is liye beech ka vaakya kat-ta nahi. `.env` ke `PRABH_CMD_SILENCE`
+# se badalte ho — **wo raasta bilkul waisa hi hai.**
 COMMAND_MAX_SECONDS = 30           # wake ke baad itni der suno (safety limit)
 COMMAND_MIN_SECONDS = 0.6    # itni ASLI awaaz chahiye, khamoshi ginti nahi
-COMMAND_END_SILENCE_SECONDS = float(os.getenv("PRABH_CMD_SILENCE", "0.9"))
+COMMAND_END_SILENCE_SECONDS = float(os.getenv("PRABH_CMD_SILENCE", "0.7"))
 COMMAND_HANGOVER_SECONDS = 0.4     # beech ka chhota ruk na kaato (wake se chhota)
 # Pre-roll 0.4 -> **0.6** (4-Oct): "Hlo Jarvis, WhatsApp kholo" me pehle shabd
 # "WhatsApp" ka 'a' kat-ta tha, kyunki wake shabd ke aakhri chunk ke saath hi

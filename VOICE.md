@@ -181,15 +181,56 @@ bolega, aap apni baat bolo, aur jawab **awaaz me** aayega:
 
 | Kya | Default | `.env` |
 |---|---|---|
-| Chup ho jaane par band | **0.9 s** | `PRABH_CMD_SILENCE` |
+| Chup ho jaane par band | **0.7 s** | `PRABH_CMD_SILENCE` |
 | Ack se pehle sunna ("Ji, boliye" chhod do) | **0.18 s** | `PRABH_ACK_PEEK` |
 | Jawab ki **awaaz** ki limit | **220** char (HUD par poora jawab) | `PRABH_VOICE_MAX` |
 | Sabse lamba command | **30 s** | (constant) |
 | Turn ka max step | 5 | (constant) |
+| STT ka timeout | **6 s** | `PRABH_STT_TIMEOUT` |
+| STT ki retry | **1** | `PRABH_STT_RETRIES` |
 
-0.9 s: pehle 2.0 s tha, phir 1.2 s. Beech ka 0.4 s `HANGOVER` alag hai aur waise hi
-hai (warna beech ka vaakya kat jaata). Kam chuppi = tez jawab, par thoda kam pakka
-text — is liye badalna `.env` se easy hai.
+0.7 s: pehle 2.0 s tha, phir 1.2 s, phir 0.9 s. Beech ka 0.4 s `HANGOVER` alag hai
+aur waise hi hai (warna beech ka vaakya kat jaata). Kam chuppi = tez jawab, par
+thoda kam pakka text — is liye badalna `.env` se easy hai.
+
+#### STT tez + pakka (13-Oct)
+
+Pehle `voice/stt.py` brain wala **10 s** timeout uthata tha aur Groq SDK apne aap
+**2 baar retry** karta tha — 3.5 s ki audio par call **43 s** tak atak sakta tha.
+Ab:
+
+| Kya | Value | Kahan |
+|---|---|---|
+| Per-attempt timeout | `6 s` | `config.STT_TIMEOUT_SECONDS` |
+| SDK retry | `1` (matlab 2 koshish) | `config.STT_MAX_RETRIES` |
+| App ceiling | `16 s` (`6*2 + 4`) | `config.stt_deadline()` |
+
+Ceiling ke liye SDK call ek **daemon thread** me chalti hai (`join(timeout)`).
+`asyncio.to_thread` akela kaafi nahi tha — `wake/listen.py` ke `asyncio.run()`
+band hote waqt executor ka **join** wait karta hai, matlab hung thread par
+caller bhi atkta. Ab caller saaf `SttError` ke saath turant laut aata hai.
+
+Log me do naye number har command ke saath aate hain (`wake/utterance.py`):
+
+```
+command capture: 113 chunk = 3389ms | peak_rms=0.6210 clip=3.40%
+```
+
+- `peak_rms` — sabse loud 30 ms chunk ka RMS. Asli bol-chal ~0.02–0.2 hoti hai.
+- `clip` — kitne % sample full-scale par the (mic bahut tez / AGC utha hua).
+
+Sirf **number** log hote hain — audio kahin save nahi hoti. `clip` bada ya
+`peak_rms` bahut kam dikhe to STT ka bakwas text samajh me aata hai.
+
+#### ElevenLabs 401 (13-Oct)
+
+`brain/health_words.py` me 401/403 ka pattern nahi tha, is liye wo `"other"` ban
+kar `classify_and_skip()` se guzar jata tha (wo sirf `busy/billing/auth/empty`
+par kuch karta hai) — matlab **har jawab me** ElevenLabs dobara poochha jaata
+tha (`TIME tts: elevenlabs-fail 957ms`). Ab 401 → `auth` → `lock_auth()` →
+poore session me BAND, seedha Edge. Nayi key daalo to `health.reset_provider()`.
+Key khaali ho to provider bilkul try hi nahi hota (`voice/tts.py` ka
+`missing_key()`) — voice id wala check alag hai.
 
 #### Kya hota hai, ek line me
 

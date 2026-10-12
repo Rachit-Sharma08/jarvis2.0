@@ -93,10 +93,16 @@ def capture(mic, stop=None) -> list:
             break
 
     # Sirf **awaaz** ginti hai — aakhir ki khamoshi ko "0.6s bola" na samjho.
+    # `peak_rms`/`clip` sirf **number** hain (audio save nahi hoti) — inhi se
+    # pata chalta hai ki mic tez hai (clip) ya dheere, aur STT ne kyun bakwas
+    # diya (S-1 audit).
+    peak, clip_pct = audio_mod.quality(collected)
     if collected is None or spoken < min_n:
-        log.info("command capture: chhota (%d chunk awaaz = %dms)", spoken, spoken * 30)
+        log.info("command capture: chhota (%d chunk awaaz = %dms) | peak_rms=%.4f clip=%.2f%%",
+                 spoken, spoken * 30, peak, clip_pct)
         return None
-    log.info("command capture: %d chunk = %dms", len(collected), duration_ms(collected))
+    log.info("command capture: %d chunk = %dms | peak_rms=%.4f clip=%.2f%%",
+             len(collected), duration_ms(collected), peak, clip_pct)
     return collected
 
 
