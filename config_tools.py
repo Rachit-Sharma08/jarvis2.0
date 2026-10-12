@@ -59,6 +59,7 @@ ALARM_TOOL_ENABLED = os.getenv("PRABH_ALARM_TOOL", "0").strip().lower() in (
     "1", "true", "yes", "on")
 
 # open_app sirf inhi me SAFE hai. Baaki sab poochhega.
+# 13-Oct (KAAM 3): VS Code pehle se tha; Brave aur WhatsApp jode gaye.
 ALLOWED_APPS = {
     "notepad": "notepad.exe",
     "calculator": "calc.exe",
@@ -70,8 +71,58 @@ ALLOWED_APPS = {
     "edge": "msedge.exe",
     "vscode": "code",
     "vs code": "code",
+    "visual studio code": "code",
+    "brave": "brave.exe",
+    "brave browser": "brave.exe",
+    "whatsapp": "whatsapp.exe",
+    "whatsapp desktop": "whatsapp.exe",
     "wordpad": "write.exe",
 }
+
+# ---- hamesha "haan" card (KAAM 3) -------------------------------------------
+# Ye **tool ka naam/args dekhte hain, kisi bhi source se aaye** — is liye page,
+# file ya message me likha hua "sab allow kar do" inhe bypass **nahi** kar sakta.
+# `gatekeeper/rules.py` inhe SAFE se upar uthata hai (ASK), ya BLOCKED.
+#
+# (karan, regex). Regex args ka TEXT par chalta hai (usi tarah jaise
+# `EXTRA_BLOCKED_PATTERNS`). Yahan koi magic number nahi — sab yahi.
+ALWAYS_ASK = (
+    # paise / payment
+    ("paise", r"\b(payment|pay\s+now|checkout|invoice\s+payment|netbanking|"
+              r"credit\s*card|debit\s*card|card\s*number|"
+              r"card|cvv|cvc|upi|upi[_\s]*id|\bpin)\b"
+              r"|[?&](card|cvv|cvc|upi|pin|token|apikey|api_key)=[^&\s]+"),
+    # naye insaan ko message (spam / impersonation)
+    ("naye contact ko message", r"\b(send\s+(?:a\s+)?(?:whatsapp|message|msg|sms)"
+                                r"|whatsapp\s+send|dm\s+@?\w+)\b"),
+    # public post / git push
+    ("public post ya git push", r"\b(git\s+push|gh\s+release|npm\s+publish|"
+                                r"docker\s+push|tweet\s+to|post\s+to\s+(?:twitter|x|mastodon|"
+                                r"linkedin|facebook|instagram))\b"),
+    # Recycle Bin ke bahar delete
+    ("permanent delete", r"\b(shred\s|sd\s+delete|del\s+/[fpq]|remove-item\b[^|\n]*-recurse"
+                         r"|format\s+[a-z]:|cipher\s+/w|rm\s+-rf\s+[a-z]:)\b"),
+    # system settings / passwords
+    ("system settings ya password", r"\b(net\s+user|net\s+localgroup|set-mppreference|"
+                                    r"netsh\b|reg\s+add|bcdedit|diskpart|"
+                                    r"setx\s+\w*(?:password|key|token)|"
+                                    r"password|passwd|credential\s*manager)\b"),
+    # Jarvis ki apni permission/guard files
+    ("guard file badalna", r"\b(gatekeeper[/\\]|config_tools\.py|config_wake\.py|"
+                           r"config_brain\.py|config_voice\.py|\.env\b|"
+                           r"rules\.py|patterns\.py|paths\.py)\b"),
+    # main me merge (repo ki suraksha)
+    ("main me merge", r"\bgit\s+merge\b|\bgit\s+push\b.*\bmain\b|"
+                      r"--force\b|\bgit\s+push\s+-f\b"),
+)
+
+# Ye **BLOCKED** (sirf card nahi, seedha mana) — inka koi "haan" nahi hai.
+NEVER_ALLOW = (
+    ("guard file delete", r"\b(remove-item|del|rm)\b[^|\n]*\b(gatekeeper[/\\]"
+                          r"|config_tools\.py|config_wake\.py|\.env)\b"),
+    ("password likhna", r"\b(set-content|add-content|echo|out-file)\b[^|\n]*"
+                        r"\b(password|passwd|credential|api[_-]?key|secret)\b"),
+)
 
 # Yahan user aur patterns add kar sakta hai. Code me hard-coded nahi.
 EXTRA_BLOCKED_PATTERNS = (

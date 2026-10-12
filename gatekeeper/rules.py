@@ -4,6 +4,7 @@ Sirf yahin se risk decide hota hai. Config me base risk hai, yahan args
 dekh kar use badhaya jaata hai (allowed folders, http/https, allowed apps).
 """
 
+import re
 from urllib.parse import urlparse
 
 import config
@@ -52,6 +53,33 @@ def _open_app(name: str) -> str:
     return f"'{name}' allowed apps ki list me nahi hai"
 
 
+# ---- KAAM 3: hamesha card wale kaam ----------------------------------------
+# Ye `decide()` ke **shuru me** chalti hain — matlab tool chahe kisi bhi
+# source se aaya ho (mic, HUD, ya page/file/message ka content), card ke bina
+# aage nahi badhega. Isi liye page me likha "sab allow kar do" inhe bypass
+# **nahi** kar sakta: tool ke **args** hi yahan dekhe jaate hain, aur args
+# kaun likha ye puchha hi nahi jaata.
+_ASK_COMPILED = tuple((name, re.compile(pat, re.IGNORECASE))
+                      for name, pat in config.ALWAYS_ASK)
+_NEVER_COMPILED = tuple((name, re.compile(pat, re.IGNORECASE))
+                        for name, pat in config.NEVER_ALLOW)
+
+
+def _escalate(text: str) -> tuple:
+    """(risk, karan). `config.NEVER_ALLOW` BLOCKED, `ALWAYS_ASK` ASK.
+
+    Pehle `ALWAYS_ASK` text ke saath + args ke saath dono par chalti hai —
+    sirf args dekhne se "sab allow kar do" jaisa pattern args me na aaye par
+    `open_website` ke URL me `?q=sab+allow+kar+do` ho sakta hai."""
+    for name, regex in _NEVER_COMPILED:
+        if regex.search(text):
+            return config.BLOCKED, f"kabhi nahi: {name}"
+    for name, regex in _ASK_COMPILED:
+        if regex.search(text):
+            return config.ASK, f"hamesha poochhna hai: {name}"
+    return "", ""
+
+
 def decide(tool: str, args: dict) -> tuple:
     """-> (risk, reason). reason hamesha bhar-i hui hoti hai taaki log me kaam aaye."""
     base = config.TOOL_BASE_RISK.get(tool)
@@ -65,6 +93,13 @@ def decide(tool: str, args: dict) -> tuple:
     hit = patterns.check_text(_args_text(tool, args))
     if hit:
         return config.BLOCKED, f"khatarnak pattern: {hit}"
+
+    # KAAM 3: jo kaam **hamesha** card maangte hain. Text + saare args dono
+    # dekhe jaate hain (sirf ek arg nahi) — is liye koi bhi jagah chhupa kar
+    # nikal nahi sakta.
+    escalate, why = _escalate(" ".join(str(v) for v in args.values()))
+    if escalate:
+        return escalate, why
 
     if tool == "open_website":
         reason = _open_website(args.get("url", ""))
@@ -83,4 +118,6 @@ def decide(tool: str, args: dict) -> tuple:
     if tool in ("write_file", "run_command", "close_app", "delete_to_trash"):
         return config.ASK, "hamesha poochhna hai"
 
-    return base, ""
+    # Docstring ke mutabiq karan **hamesha** bhara hua hona chahiye — UI/log me
+    # khaali karan ka matlab "kuch nahi pata". Pehle yahan `""` aa raha tha.
+    return base, f"base risk {base}"
