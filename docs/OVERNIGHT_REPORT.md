@@ -19,6 +19,45 @@ port 8000 par kuch nahi; asli mic/speaker se awaaz nahi; koi naya package nahi.
 |---|---|---|---|---|---|
 | 0 | Test log `logs/prabh.log` se alag | **ho gaya** | `fix/stt-speed` | `695e5c5` | 58/64 (6 purane) |
 | 1 | Subah 7 baje alarm | **ho gaya** | `feat/wake-alarm` | `84842a0` | 61/67 (6 purane) |
+| 2 | Self-hearing — apni awaaz se wake | **ho gaya** | `fix/self-hearing` | `5bb76cc` | 63/69 (6 purane) |
+
+## KAAM 2 — apni hi awaaz se WAKE HIT (done)
+
+**`PLAYBACK_MUTE_MIC` ka audit (sawaal tha):** wo flag **kahin use nahi
+hota** — sirf `config_wake.py:115` me define hai aur `config.py:84` se
+re-export. Production me koi file ise nahi padhti. Asli rok ka raasta
+`wake/worker.py` ka `hold_for_command()` / `release_from_command()` hai
+(command poore chalte tak sunna band). Saboot: `tests/test_hearing_audit.py`.
+
+**Asli self-hearing ki wajah (verified, code padh kar):**
+
+| # | Kya | Number |
+|---|---|---|
+| 1 | `command.py` ke `finally` me drain + release ka order | **sahi hai** |
+| 2 | `drain()` ki hadd `MAX_QUEUE_BLOCKS` | **400 chunk ≈ 12 s** |
+| 3 | Jawab ka TTS | **18.5 s** (`speak 18530ms` log) |
+| 4 | To queue me apni awaaz bachi | **~6 s** |
+| 5 | Purana `take_fresh()` | sirf **1 chunk** bachata tha |
+| 6 | `cooling()` | sirf **1.5 s** — is liye koi faida nahi |
+
+**Fix:** `PLAYBACK_TAIL_GUARD_SECONDS = 0.4` (`.env`: `PRABH_TAIL_GUARD`) —
+hold chhodte hi itni der **koi** chunk trigger nahi kar sakta.
+`Session._loop` ab `Trigger.suppressing()` check karta hai (cooldown **ya** tail).
+
+**Ek aur asli path bug-injection me pakda:** `gate.on_flush()` gate **thread**
+se `maybe()` bulata hai, aur wahan `_loop` ka check nahi lagta — matlab tail
+guard flush se **bypass** ho sakta tha. Ab `maybe()` khud `suppressing()`
+check karta hai (aakhri zid). Test me guard hata kar dekha: 2 check fail.
+
+**Fake wake-up ke raaste (sab test me):**
+1. `gate.on_flush()` — gate thread, `_loop` bypass ← **fix hua**
+2. drain ke baad bache chunk ← tail guard
+3. hold ke dauraan (paused) — pehle se theek
+4. TTS ke dauraan ack beep — pehle se theek
+5. restart ke turant baad stale tail — `reset_cooldown()` tail bhi saaf karta
+6. cooldown khatam par apni awaaz — pehle trigger ho jaata tha (test me prove)
+
+---
 
 ---
 
