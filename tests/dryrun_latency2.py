@@ -18,7 +18,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from dryrun_llm import MODELS, lane, stats    # ye .env load karta hai
+from dryrun_llm import MODELS, ascii_only, estimate, lane, stats   # ye .env load karta hai
 
 import config                                  # noqa: E402
 from brain import prompt                        # noqa: E402
@@ -35,7 +35,6 @@ TTS_TEXTS = {
         "search bhi kar diya, aur kal doodh lana hai ye note bhi kar liya gaya",
 }
 TEMP = Path(os.environ.get("TEMP", "."))
-ESTIMATE_MODELS = ("llama-3.1-8b-instant", "openai/gpt-oss-120b")
 
 
 async def make_clip():
@@ -128,26 +127,6 @@ def wait_config():
 def ascii_only(text):
     """Console cp1252 hai - Devanagari/emoji se crash na ho. File UTF-8 me asli."""
     return text.encode("cp1252", "replace").decode("cp1252")
-
-
-def estimate(w, stt_med, llm_med, tts_first, out):
-    """(e) bolna khatam -> pehli awaaz. Pure hai (sirf jod + print).
-
-    Kisi model ka median na mile (sab 404/error) to `stats()` ne `"-"` diya hota
-    hai - wo number nahi hai. Table me `-` dikhta hai, jod me uska hissa 0.
-    """
-    out("e) andaza: bolna khatam -> pehli awaaz (wait + STT + LLM + TTS pehla chunk)")
-    out(f"  {'model':24} {'wait':>8} {'stt':>8} {'llm':>8} {'tts30':>8} {'total':>9}")
-    stt = stt_med if isinstance(stt_med, int) else 0
-    tts = tts_first.get(30)
-    tts = tts if isinstance(tts, int) else 0
-    for model in ESTIMATE_MODELS:
-        raw = llm_med.get(model)
-        llm = raw if isinstance(raw, int) else 0
-        cell = f"{raw:6}ms" if isinstance(raw, int) else f"{'-':>7}"
-        out(f"  {model:24} {w['ms']:6}ms {stt:6}ms {cell}"
-            f" {tts:6}ms {w['ms'] + stt + llm + tts:7}ms")
-    out("  (playback ka pehla PCM chunk + HUD events isme shaamil nahi)")
 
 
 def main():

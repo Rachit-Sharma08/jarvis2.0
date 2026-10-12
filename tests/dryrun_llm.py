@@ -32,8 +32,14 @@ import config                                   # noqa: E402
 
 REPS, GAP = 5, 2.0
 MODELS = ("llama-3.1-8b-instant", "openai/gpt-oss-20b", "openai/gpt-oss-120b")
+ESTIMATE_MODELS = ("llama-3.1-8b-instant", "openai/gpt-oss-120b")
 QUESTIONS = ["time kya hai", "chrome kholo", "notes me likho kal doodh lana hai",
              "aaj mausam kaisa rahega", "gana chala do"]
+
+
+def ascii_only(text):
+    """Console cp1252 hai - Devanagari/emoji se crash na ho. File UTF-8 me asli."""
+    return text.encode("cp1252", "replace").decode("cp1252")
 
 
 def error_kind(text):
@@ -96,3 +102,98 @@ def lane(model, persona, out):
     out(f"  {model:24} n={n} median={med} p90={p90} min={mn} max={mx} ms"
         f" | gine: {sum(bad.values())}" + (f" {dict(bad)}" if bad else ""))
     return med, sum(bad.values())
+
+
+def estimate(w, stt_med, llm_med, tts_first, out):
+    """(e) bolna khatam -> pehli awaaz. Pure hai (sirf jod + print).
+
+    Kisi model ka median na mile (sab 404/error) to `stats()` ne `"-"` diya hota
+    hai - wo number nahi hai. Table me `-` dikhta hai, jod me uska hissa 0.
+    """
+    out("e) andaza: bolna khatam -> pehli awaaz (wait + STT + LLM + TTS pehla chunk)")
+    out(f"  {'model':24} {'wait':>8} {'stt':>8} {'llm':>8} {'tts30':>8} {'total':>9}")
+    stt = stt_med if isinstance(stt_med, int) else 0
+    tts = tts_first.get(30)
+    tts = tts if isinstance(tts, int) else 0
+    for model in ESTIMATE_MODELS:
+        raw = llm_med.get(model)
+        llm = raw if isinstance(raw, int) else 0
+        cell = f"{raw:6}ms" if isinstance(raw, int) else f"{'-':>7}"
+        out(f"  {model:24} {w['ms']:6}ms {stt:6}ms {cell}"
+            f" {tts:6}ms {w['ms'] + stt + llm + tts:7}ms")
+    out("  (playback ka pehla PCM chunk + HUD events isme shaamil nahi)")
+
+
+# ---- audit flags: --models | --show-error (sirf is script me, read-only) ----
+
+CHAT_EXCLUDE = ("whisper", "tts", "guard", "safeguard", "orpheus")
+
+
+def audit_models():
+    """Config/pool ke model IDs vs live /models list. List ke liye app ka apna
+    `brain/checkup.py` (wahi GET, wahi URL) - app code badalta nahi."""
+    from brain import pool_config
+    from brain.checkup import _gemini_models, _groq_models
+
+    def out(text=""):
+        print(ascii_only(text))
+
+    ids = _groq_models()
+    chat = [i for i in sorted(ids) if not any(k in i.lower() for k in CHAT_EXCLUDE)]
+    out("== Groq /models - chat/LLM wale (sirf naam) ==")
+    for name in chat:
+        out(f"  {name}")
+    out(f"  (chat/LLM: {len(chat)} | chhude: {len(ids) - len(chat)})")
+
+    out("")
+    out("== pool ke Groq IDs (STEP 2 table) ==")
+    for provider in pool_config.POOL:
+        if provider["api_style"] != "groq":
+            continue
+        for model in provider["models"]:
+            out(f"  T{provider['tier']} {provider['name']:9} {model:24}"
+                f" {'exists' if model in ids else 'GONE'}")
+
+    out(f"  -- STT (voice/stt.py): {config.GROQ_STT_MODEL:24}"
+        f" {'exists' if config.GROQ_STT_MODEL in ids else 'GONE'}")
+
+    out("")
+    out("== Gemini: config ke IDs list me hain? ==")
+    have = _gemini_models()
+    for model in config.GEMINI_MODELS:
+        out(f"  {model:24} {'haan' if model in have else 'nahi'}")
+
+
+def show_error(model="openai/gpt-oss-20b"):
+    """gpt-oss-20b par call + poora error (pehle 400 char, `mask()` ke baad).
+    Pehla trial wahi hai jo app bhejta hai (`brain/groq_client.py`); baaki 3 sirf
+    ye dekhne ke liye hain ki 400 kis param se aata hai."""
+    from gatekeeper.audit import mask
+    from groq import Groq
+    client = Groq(api_key=config.GROQ_API_KEY, timeout=config.BRAIN_TIMEOUT_GROQ)
+    msgs = [{"role": "user", "content": "time kya hai"}]
+    base = {"temperature": 0.7, "max_tokens": config.BRAIN_MAX_TOKENS}
+    trials = [("app ka shape (temperature + max_tokens)", dict(base)),
+              ("+ reasoning_effort=low",
+               dict(base, reasoning_effort=config.BRAIN_REASONING_EFFORT)),
+              ("max_tokens=5000 (retry wala)",
+               dict(temperature=0.7, max_tokens=config.BRAIN_MAX_TOKENS_RETRY)),
+              ("sirf messages, koi param nahi", {})]
+    for label, extra in trials:
+        try:
+            reply = client.chat.completions.create(model=model, messages=msgs, **extra)
+            text = (reply.choices[0].message.content or "").strip()
+            print(ascii_only(f"OK   {label} -> {len(text)} chars"))
+        except Exception as exc:
+            print(ascii_only(f"FAIL {label}\n     {mask(str(exc))[:400]}"))
+
+
+if __name__ == "__main__":
+    wanted = [a for a in sys.argv[1:] if a.startswith("--")]
+    if wanted == ["--models"]:
+        audit_models()
+    elif wanted == ["--show-error"]:
+        show_error()
+    else:
+        print("usage: python tests/dryrun_llm.py --models | --show-error")
+        print("bina flag: library hai - dryrun_latency2.py ise import karta hai")
