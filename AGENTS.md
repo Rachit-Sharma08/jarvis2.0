@@ -613,6 +613,46 @@ endpoint mat likho.
   **Test me provider API kabhi sach me call na ho:** agar test direct library
   call karta hai to pehle guard check karo, warna suite chup-chaap hang ho jayega.
 
+## 8.1.4 HUD WINDOW KE PAKKAUREY NIYAM (13 Oct 2026 — R-2)
+
+- **"Pehle se khuli hai" check ka return value ZAROOR propagate karo.** Yahi asli
+  bug tha: `hud_window._focus_existing()` `EnumWindows` se window dhoondta tha, par
+  aakhir me `return False` likha tha — matlab "window mili" ka faisla **lapiset** ho
+  jaata tha. `open()` is liye har baar naya browser chala deta tha: 4 wake = 4
+  window. **Dhoondhne wala koi bhi hissa (EnumWindows / list scan / grep) chahe
+  `nonlocal` flag se ho ya return se — caller ko sach milna chahiye, warna har call
+  naya kaam karta rahega.** Test me iska pakkaura: `focus_existing()` window
+  maujood hone par `True` return kare (`test_desktop_hud_single.py`).
+- **Browser window ka pakka signal TITLE hai, process nahi.** Edge `--user-data-dir`
+  wale launch par `Popen` ka process window bane se **pehle** hi mar sakta hai (kaam
+  dusre browser process ko bhej deta hai) — `self._proc.poll()` se "khuli hai" ka
+  faisla galat hota hai. `is_open()` ab bhi **window** se puchhta hai.
+- **`--app` window me title page ka hota hai, URL ka nahi.** `ui/index.html` ka
+  `<title>__PRABH_ASSISTANT_NAME__ HUD</title>` → `server/app.py` ke `fill_html()`
+  bhar deta hai → asli title `Jarvis HUD`. `win_find.is_hud_title()` exact title +
+  URL + `config.DISPLAY_NAME` pakde; **sirf `'Jarvis'` se nahi** (warna user ka
+  apna "Jarvis - Wikipedia" tab bhi pakad lete).
+- **"Dheere khulne wali" window ka bhi ek hi raasta ho.** Edge window 1-2 s me
+  banata hai — usi der me dobara spawn = 2 window. `SPAWN_GRACE_SECONDS` (8 s)
+  isi ke liye hai: abhi spawn kiya par window nahi dikhi to intezaar, naya spawn
+  nahi. Grace ki **hadd ke baad** dobara koshish hogi (Edge mar gaya to app
+  chup-chup na baith jaaye).
+- **HUD file 200 cross kare to split karo — seam `win_find.py` hai.** Sirf
+  `ctypes` (`EnumWindows`) wala hissa `desktop/win_find.py` me gaya; `hud_window.py`
+  me sirf `command()` + `HudWindow` class. Naya `win_find` ko `test_desktop.py` ke
+  `SOURCE_FILES` list me daalna mat bhoolna (warna uska hygiene check chup ho
+  jaata hai).
+- **Browser wala test = `finder`/`spawner` inject karo, asli Edge nahi.**
+  `HudWindow(exe=..., finder=..., spawner=...)` — `available()` sirf
+  `Path(exe).is_file()` dekhti hai, is liye `sys.executable` kaafi hai. Asli taskkill
+  (`subprocess.run`) bhi fake do — `tests/hudhelp.py` ke fakes yahi hain. Wake
+  simulate karne ke liye `callbacks.on_wake()` **asli** call karo aur sirf
+  `wake/command.run` nakli rakho (HUD wala hissa sach chalta rahe).
+- **Live pakkaura throwaway script se karo** (`%TEMP%\opencode`, repo me nahi):
+  `open_hud.main()` 3 baar bula kar `EnumWindows` se "Jarvis HUD" windows gin lo.
+  Fix se pehle 3 call = 4 window, fix ke baad = **1**. Running app ko chheda
+  nahi — `open_hud` alag process hai.
+
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
 
 - **Tray list me app ka naam nahi, EXE ka naam dikhta hai.** Venv ka `python.exe` sirf
@@ -710,11 +750,15 @@ endpoint mat likho.
 
 ---
 
-## 11. ABHI KA SACH (11 Oct 2026 — E-1b merge ke baad)
+## 11. ABHI KA SACH (13 Oct 2026 — R-2 ke baad)
 
 - **main**: `60fcaac` — `fix/tool-loop` (E-1 per-turn tool dedup + E-1b test
   isolation) ff merge **ho chuka**. `test/dryrun-harness` pehle hi main me tha.
   Push **nahi** kiya gaya (main origin se 13 aage).
+- **`fix/hud-single` branch par R-2 commit hai (merge/push NAHI kiya).** Task:
+  har "Jarvis" par nayi HUD window. Wajah mili — `_focus_existing()` ka return
+  value lapiset tha. Nayi nateeja: suite **60 total = 54 pass + 6 jaane-pehchane
+  fail** (wahi purane 6, naya fail nahi). Rules naye section **8.1.4** me.
 - **`PRABH_NO_CARDS` default 1** (`config_tools.py`) — card nahi, code faisla karta
   hai; `PRABH_NO_CARDS=0` par purana card raasta. Card bhejna band, par card
   dikhane wala code (approvals/UI) maujood hai — sirf default band hai.
@@ -1068,3 +1112,24 @@ green**, sab file `<200`.
   ka SHA256 compare kiya. Suite: **56 = 50 pass + 6 purane fail**, aur
   `data\*.json` **426/426 pehle jaisa**. `fix/tool-loop` (E-1 + E-1b) main me
   **ff merge** (`60fcaac`), push nahi.
+- **R-2: HUD ek hi window (13 Oct 2026)** — har "Jarvis" par nayi window (taskbar
+  me 4). **Asli wajah VERIFIED:** `desktop/hud_window.py` ka `_focus_existing()`
+  `EnumWindows` se window dhoondta tha par aakhir me `return False` likha tha —
+  "window mili" ka faisla **lapiset**, is liye `open()` hamesha naya browser chala
+  deta tha. Live probe (throwaway, `%TEMP%\opencode`): window `Jarvis HUD` maujood
+  thi (hwnd 198372), `_focus_existing()` ne `False` kaha, 3 `open()` → **4 window**.
+  Fix: (1) nayi `desktop/win_find.py` — sirf ctypes (`EnumWindows` + **argtypes**,
+  64-bit ka pakkaura), `find_hud_window()`/`still_open()`/`bring_front()` +
+  pure `is_hud_title()`; (2) `focus_existing()` ab sach return karta hai (pehle
+  `_known()` = cached hwnd `IsWindow`, phir `finder()`); (3) `is_open()` ab **window**
+  se puchhta hai, process se nahi (Edge `--app` launch par `Popen` ka process window
+  se pehle mar sakta hai); (4) `SPAWN_GRACE_SECONDS = 8.0` — Edge dheere khulta
+  hai, usi der me dobara spawn = 2 window. **Title ka pakka signal**, sirf `'Jarvis'`
+  nahi (warna user ka "Jarvis - Wikipedia" tab pakad lete). Naye test
+  `test_desktop_hud_single.py` (94) + `test_desktop_hud_win.py` (130) + fakes
+  `tests/hudhelp.py` (152), sab `<=200`; split ke baad **dono** test me bug
+  wapas daal ke check kiya — fail hote hain (sirf production file badalne se test
+  chup ho jaata). **Live pakkaura:** nayi code se `open_hud.main()` 3 baar → **1**
+  window (pehle 3 → 4). Suite: **60 = 54 pass + 6 purane fail** (naya nahi).
+  Branch `fix/hud-single` par commit — **push/merge nahi**. Naye rules section
+  **8.1.4**.

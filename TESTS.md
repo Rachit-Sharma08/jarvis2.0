@@ -80,6 +80,8 @@ Ek-ek karke:
 | `test_desktop_autostart.py` | **Step 3 auto-start** — `FakeReg` (dict-based nakli `winreg`): naam `Jarvis`, command `pythonw desktop\launcher.py`, space wale path me quote, install/remove/status cycle, error + "pehle se nahi tha", CLI dispatch (registry ke baghair), module-level koi registry call nahi |
 | `test_wake_gate.py` | **Battery ka pakkaura** — `wake/gate.py` pure hai: khamoshi me 40 chunk me Vosk tak 0 (battery), awaaz + hangover par feed, `VAD_SILENCE_BLOCKS` par ek `listener.reset()`, `gate_on=False` par sab chunk (purana behaviour), wake ke baad reset, **khamoshi par flush** (`on_text` + crash-safe + flush khaali to reset), `config.describe()` me `gate=on` |
 | `test_desktop_login.py` | **Login ka asli pakkaura** — Run key ka cwd `C:\Windows\System32` hota hai aur wahan se `-m module` mar jaata hai: value me `-m` nahi, launcher ko **asli** cwd par load karke `BASE` prove, `sys.path.insert` ka order `import config` se pehle, `os.chdir` + `creationflags` (app start/mic/tray kabhi nahi) |
+| `test_desktop_hud_single.py` | **REGRESSION R-2: har "Jarvis" par nayi HUD window** (13-Oct). `_focus_existing()` hamesha `False` deta tha (bug) → 10 **asli** wake (`callbacks.on_wake`, `command.run` nakli) par **sirf 1** window + browser 1 hi baar; `focus_existing()` ab `True`; **alag process** (`open_hud.py` ka naya `HudWindow`) par bhi 1; `Ctrl+Alt+S` bhi wahi window |
+| `test_desktop_hud_win.py` | HUD window ke edge cases — `win_find.is_hud_title` **pure** (exact `Jarvis HUD` / URL / `J.A.R.V.I.S` pakde, "Jarvis - Wikipedia" na pakde), khaali title, **Edge dheere khule** (grace se 1 hi spawn), grace ki hadd ke baad dobara koshish, band karke dobara kholna |
 | `test_wake.py` | Wake constants, PCM/RMS + energy VAD (pure), Vosk JSON par `detect`, "jarvis" pakadna, model ke **error** raaste |
 | `test_name_jarvis.py` | **Step 1 naam**: persona `jarvis.txt`, mode id `sunday` dormant, tray/shortcut ka naam, `fill_html()` placeholder replace, aur UI grep (teen exception chhodkar har "Sunday" pakadta hai) |
 | `test_wake_phrases.py` | **Wake phrase + grammar** (5-Oct split): phrase variants + near-miss, grammar me **shabd** (multi-word phrase nahi) + `[unk]` aakhri + duplicate nahi, legacy "sunday" list (default band, `PRABH_WAKE_LEGACY=1` par chalu) |
@@ -102,6 +104,13 @@ Ek-ek karke:
 (`sounddevice`), aur `install_audio()` / `remove_audio()` jo dono ko `sys.modules`
 me daalte hain (playback late import karta hai, is liye bas yahi karna padta hai).
 Naya desktop test yahin se import kare.
+
+`tests/hudhelp.py` (HUD window, 13-Oct) — `FakeDesktop` (asli Edge ki jagah:
+`finder()` = nakli `find_hud_window()`, `spawner()` = nakli `Popen`, window
+"banati" hai), `FakeProc`, `FakeRun` (taskkill ka nakli), `FakeCommand`
+(`wake/command.run`), `FakeApp`, `make_hud()`, `wake()` (asli
+`callbacks.on_wake` call) aur `patched()` (`bring_front` fake +
+`HUD_PROFILE_DIR` temp par). Naya HUD test yahin se import kare.
 
 **Bade suite ko 2-3 file me todo** (AGENTS.md ka 200-line niyam). `test_desktop.py`
 200+ lines ho gaya to usme se theme alag karke naya file banao — jaise
