@@ -701,6 +701,51 @@ endpoint mat likho.
   test ko update karna **hisab me aata hai**, naya fail nahi — warna "6 purane
   fail waise hi" wali baat galat ho jaati hai.
 
+### 8.1.6 OVERNIGHT (13 Oct 2026) — TEST LOG, DEFAULT-OFF, TAIL GUARD, INJECTION
+
+Ye chaar niyam raat ke kaam se aaye. Chaaron ka ek hi kaaran hai: **kuch
+chhupa kar chalne wala code ya test chup-chaap galat faisla de deta hai.**
+
+- **⚠️ TEST `logs/prabh.log` ME NAHI LIKHE — `tests/logsafe.py`.** Ye file
+  `PRABH_LOG_DIR` env **import ke time** set karti hai, is liye har `tests/test_*.py`
+  me `from tests import logsafe` **pehla repo-touching import** hona chahiye.
+  Woh `config` **import nahi** karta — warna env set hone se pehle hi
+  `config.LOG_FILE` ban jayega aur poora kaam bekaar. Anchoring ka pakka tareeka:
+  `^sys\.path\.insert\(` (column 0, **asli call** — string literal me bhi
+  `"sys.path.insert"` ho sakta hai aur wahin line ghus jaati hai → `IndentationError`),
+  warna pehla `^\s*(import|from)\s+config\b`, warna pehla `from tests.X import`.
+  `logsafe` ko `import config` ke baad rakhna **kaam nahi karta** —
+  `tests/wakecmdhelp.py` `desktop.playback` laata hai jo `config` le aata hai.
+- **⚠️ DEFAULT-OFF ka ek hi raasta: `tools/__init__.py` ka `visible()`.**
+  `brain/prompt.py` pehle `TOOL_SUMMARY` se **khud** spec banata tha, is liye
+  `tools.spec()` ka `_on()` filter **bekaar** tha aur band tool LLM ko dikhai
+  de raha tha (aur prompt size limit tod raha tha). Ab `brain/prompt.py` bhi
+  `tools.visible()` use karta hai. **Naya default-off feature bana rahe ho to
+  `visible()` ka test likhna zaroori hai** — warna flag set karne se pehle hi
+  pata hi nahi chalega ki tool jaanta hai ya nahi.
+- **⚠️ `PLAYBACK_MUTE_MIC` DEAD CODE hai (verified 13-Oct).** Sirf
+  `config_wake.py` me define + `config.py` se re-export; production me koi file
+  nahi padhti. Asli rok `wake/worker.py` ka `hold_for_command()` /
+  `release_from_command()` hai. Par sirf `drain()` **kaafi nahi** — wo
+  `MAX_QUEUE_BLOCKS` (400 chunk ≈ 12 s) tak bounded hai jabki jawab 18 s tak
+  chalta hai, aur purana `take_fresh()` sirf **ek** chunk bachata tha. Isi liye
+  **tail guard** (`PLAYBACK_TAIL_GUARD_SECONDS`, 0.4 s) zaroori tha. Aur
+  `maybe()` me bhi `suppressing()` check hona chahiye — `gate.on_flush()`
+  **gate thread** se `maybe()` bulata hai, aur wahan `_loop` ka check nahi lagta
+  (tail guard flush se bypass ho jaata tha).
+- **⚠️ Risk sirf ARGS se nikalti hai — isi liye injection nahi hota.**
+  `gatekeeper/rules.py` ka `_escalate()` `decide()` ke shuru me **saare args**
+  ka joined text dekhta hai; source ka koi hissa nahi. Is liye page/file/message
+  me likha "sab allow kar do" kuch nahi badalta. **Naya guard likhte waqt source
+  mat dhoondo** — args dekhna hi sahi hai, aur yahi testable hai. Dhyan rahe:
+  word-boundary (`discord` me "card" hai) aur query-param form alag rakhna
+  padta hai, warna normal URL galat ASK ho jaate hain.
+- **Split ka 200-line niyam JS par bhi lagta hai** (`tests/hud_check_ui.py`
+  `ui/app.js` ka `<200` check karta hai) — naya JS hissa `ui/hud_*.js` me
+  banao, `app.js` ko na badaao. Aur **split ke baad `if __name__ ==
+  "__main__"` runner check karo**: ek baar split script ne runner hata diya
+  tha aur test chup-chaap *chalta hi nahi* tha (exit 0, koi check nahi).
+
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
 
 - **Tray list me app ka naam nahi, EXE ka naam dikhta hai.** Venv ka `python.exe` sirf
@@ -798,31 +843,46 @@ endpoint mat likho.
 
 ---
 
-## 11. ABHI KA SACH (13 Oct 2026 — R-2 ke baad)
+## 11. ABHI KA SACH (14 Oct 2026 subah — overnight raat ke baad)
 
-- **main**: `60fcaac` — `fix/tool-loop` (E-1 per-turn tool dedup + E-1b test
-  isolation) ff merge **ho chuka**. `test/dryrun-harness` pehle hi main me tha.
-  Push **nahi** kiya gaya (main origin se 13 aage).
-- **`fix/hud-single` branch par R-2 commit hai (merge/push NAHI kiya).** Task:
-  har "Jarvis" par nayi HUD window. Wajah mili — `_focus_existing()` ka return
-  value lapiset tha. Nayi nateeja: suite **60 total = 54 pass + 6 jaane-pehchane
-  fail** (wahi purane 6, naya fail nahi). Rules naye section **8.1.4** me.
-- **`fix/stt-speed` branch par S-2 commit hai (merge/push NAHI kiya).** STT/TTS
-  tez + pakka: apna timeout/retry + ceiling, 401 = session me ek baar,
-  chuppi 0.7 s, har command ka peak RMS + clip %. Suite **63 = 57 pass + 6
-  jaane-pehchane fail** (wahi purane 6). Rules section **8.1.5** me.
-- **`PRABH_NO_CARDS` default 1** (`config_tools.py`) — card nahi, code faisla karta
-  hai; `PRABH_NO_CARDS=0` par purana card raasta. Card bhejna band, par card
-  dikhane wala code (approvals/UI) maujood hai — sirf default band hai.
-- Suite: **56 total = 50 pass + 6 jaane-pehchane fail** (naya fail nahi):
-  test_wake_command / test_wake_ack / test_desktop_sleep (ack ka text),
-  test_desktop + test_desktop_shortcut (`desktop/app.py` 207, `config_wake.py`
-  215 — 200-line niyam), test_wake_resample (gain).
-- **Test ab asli `data/` ko nahi chhoo sakta** — `tests/datasafe.py` ka
-  `isolated_data()` / `DataSafeCase` (E-1b). Details section 8 me.
+**Poora record: `docs/OVERNIGHT_REPORT.md`.** Neeche sirf taar (teeno ek
+chain me hain, merge/push **nahi** kiya gaya).
+
+| Branch | Kaam | Commit | Suite |
+|---|---|---|---|
+| `fix/stt-speed` | S-2 (pehle se) + **KAAM 0** test ka log alag | `695e5c5` | 58/64 |
+| `feat/wake-alarm` | **KAAM 1** subah 7 baje ka alarm + 2 Task Scheduler task | `84842a0` | 61/67 |
+| `fix/self-hearing` | **KAAM 2** tail guard (apni awaaz se WAKE HIT nahi) | `5bb76cc` | 63/69 |
+| `fix/permissions-v2` | **KAAM 3** allowed apps + hamesha-card + injection | `f6e28f8` | 65/71 |
+| `fix/speed-replies` | **KAAM 4** awaaz 1-2 vaakya + time jawab ka cache | `9223b86` | 66/72 |
+| `fix/hot-window` | **KAAM 5** follow-up bina "Jarvis" (**DEFAULT OFF**) | `1f970eb` | 67/73 |
+| `fix/hud-polish` | **KAAM 6** SYSTEM panel `--` fix + JS split | `0e446d5` | 69/75 |
+
+- **KAAM 7 (naya Arc Reactor HUD theme) SHURU HI NAHI HUA** — Playwright is
+  machine par nahi hai, naya package lagana mana tha. Reason + plan
+  `docs/OVERNIGHT_REPORT.md` me. Purana neela HUD jaisa hai waisa hi hai.
+- **PUSH nahi hua** — repo private hai ✅ (bina login `ls-remote` fail hua),
+  history saaf hai ✅ (13 hit par sab nakli test key), par git ka saved
+  credential **alag account** (`rachithunyawrr`) ka hai aur target repo
+  `Rachit-Sharma08` ka. Owner se push karna hoga — command report me.
+- **Suite ab: 75 total = 69 pass + 6 jaane-pehchane fail** (naya fail nahi):
+  `test_desktop.py` + `test_desktop_shortcut.py` (`desktop/app.py` 207 — 200-line
+  niyam), `test_wake_ack` / `test_wake_command` / `test_desktop_sleep`
+  (ack ka text), `test_wake_resample` (gain).
+- **Alarm task ACTIVE hai**: `JarvisWakeAlarm` 14-10-2026 07:00:00 +
+  `JarvisWakeAlarmBackup` 07:10:00, dono `Ready`/`Enabled`, `WakeToRun=True`,
+  `LogonType=Interactive`, user `fvcvv`. Hataane ka tareeka report me.
+- **`PRABH_NO_CARDS` default 1** (`config_tools.py`) — card nahi, code faisla
+  karta hai; `PRABH_NO_CARDS=0` par purana card raasta.
+- **Naye DEFAULT-OFF flags** (koi bhi abhi **ON** nahi):
+  `PRABH_ALARM_TOOL` (0) · `PRABH_HOT_WINDOW` (0) ·
+  `PRABH_TAIL_GUARD` (0.4 s) · `PRABH_VOICE_SENTENCES` (2).
+- **Test ab asli `data/` ko nahi chhoo sakta** (`tests/datasafe.py`) **aur
+  `logs/prabh.log` bhi nahi** (`tests/logsafe.py`). Details section 8.1.6 me.
 - Parked branches — **merge MAT karo**: `wip/tools-pcm-2026-10-10`,
   `docs/agents-md-pending`.
-- Agla kaam: owner se poochhna — P-2b-2b ka baaki hissa ya kuch naya.
+- Agla kaam: KAAM 7 (Arc theme, Playwright ke saath) + push + owner ke
+  live test.
 
 ---
 

@@ -1,4 +1,4 @@
-# Tests (52 suites)
+# Tests (75 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 52 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 75 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -99,6 +99,18 @@ Ek-ek karke:
 | `test_tts_auth.py` | **S-2 ElevenLabs 401 = ek baar** — 401/403/unauthorized/invalid_api_key → `auth` → is session me BAND → do jawab me ElevenLabs sirf **1** baar, Edge dono baar; purane category (429/503/402/404/timeout) nahi bigde; `missing_key()` pure (key khaali par provider 0 baar, voice id set hone par bhi) |
 | `test_wake_levels.py` | **S-2 chuppi 0.7 s + level log** — `pcm.quality()` pure (None/khaali/sine RMS 0.129/peak=max/clip pakda/square ~100%/normal level 0 clip), `capture()` ki **log line** me `peak_rms` + `clip` dono (success aur chhote dono par), raw audio log me nahi; default 0.7 + `.env` override + baaki windows (hangover/min/max/pre-roll) nahi badle |
 | `test_tray_watch.py` | **T-01 tray icon** - `desktop/tray_watch.py`: `status()` ke teen haal (`IsPromoted=1` = visible / missing = hidden `^` / entry hi nahi = missing), apni entry tooltip se pehchan (`MyJarvis.Desktop` jaisa purana entry chhoda), tez→dheere timing, **sirf haal badne par** message, registry fail par chup, aur `start`/`stop` (ek hi watchdog, env `PRABH_TRAY_WATCH=0` par thread nahi). **Asli registry kabhi nahi** — fake `entries_fn` |
+| `test_logsafe.py` | **KAAM 0 — test ka log alag** — `config.LOG_DIR` asli `logs/` nahi, `PRABH_LOG_DIR` env se aata hai, ek line temp log me likhi jaati hai + `logs/prabh.log` **bilkul** nahi chhoota, ASCII rule, aur **har** `tests/test_*.py` me `logsafe` import hai |
+| `test_wake_alarm.py` | **KAAM 1 — alarm ka loop** (awaaz nahi) — `--dry-run` plan me 07:00/07:10/15 min; `alarm_ack` flag (shuru me + beech me) se ruka; console key par ruka; **15 min** cap (~45 round, 45 sleep); `max_rounds` safety; `--no-audio` par `alarm_audio.speak/play_wav/edge_tts` **0 baar** |
+| `test_wake_alarm_audio.py` | **KAAM 1 — awaaz + flag file** (PowerShell/wav/speaker sab fake) — edge-tts pehle → khaali audio par **SAPI** → dono fail par `'none'`; koi crash bubble na kare; wav sirf path check; `clear_ack()`/`--keep-ack`; system volume code se nahi chheda |
+| `test_wake_alarm_tool.py` | **KAAM 1 — tool (DEFAULT OFF) + Task Scheduler** — `parse_when()` pure (7/7:30 am/9 pm/12 am/kal/galat/ValueError), `clamp_minutes`, `ALARM_TOOL_ENABLED=0` par tool LLM ko dikhta hi nahi + `execute()` mana + koi file nahi, on par request file; `gatekeeper` risk **ASK**; `ps_when()` **minute rakhta hai** (07:10 ka task 07:00 na bane) + locale-safe + `[datetime]::new` nahi; `install()` ke do task 10 min door + `--if-no-ack` sirf backup par; `register()` bina `OK` ke `NAHI BANA` bolta hai. **Asla PowerShell kabhi nahi** |
+| `test_self_hearing.py` | **KAAM 2 — apni hi TTS se WAKE HIT nahi** — `Trigger.mark_tail/tail_active/suppressing` (0.4 s, expire, 0/negative safe, cooldown alag), `_loop` ab `suppressing()`, `set_tail` delegate, `release_from_command()` **order: tail pehle phir unpause**, 18 s wali apni awaaz par trigger nahi, guard hatte hi asli "Jarvis" phir se |
+| `test_hearing_audit.py` | **KAAM 2 — saboot** — `config.PLAYBACK_MUTE_MIC` production me **kahin use nahi hota** (sirf define), asli rok `hold_for_command`/`release_from_command` hai, aur `listen.drain()` 400 chunk (~12 s) bounded hai jabki jawab 18 s — yahi self-hearing ki wajah |
+| `test_permissions_v2.py` | **KAAM 3 — permissions v2** — allowed apps (VS Code/Brave/WhatsApp + aliases, anjaan app poochhta hai); **hamesha card** ke 6 kaam apni wajah ke saath; `NEVER_ALLOW` **BLOCKED**; safe tool safe rahe; `discord`/`scare` jaise shabd galat na pakde; purana BLOCKED table bhaara nahi; **injection** — page/file/message ka "sab allow kar do" / "WhatsApp bhej do" / "ignore previous instructions" args me bhi kuch nahi badalta, guard-file unlock nahi hota, URL me `risk=SAFE` likhne se SAFE nahi milta, aur rule **sirf args** dekhta hai (source ka naam hi nahi) |
+| `test_permissions_table.py` | **KAAM 3 — table ki jagah** — `ALWAYS_ASK`/`NEVER_ALLOW` **config** me (code me hard-coded nahi), aur **har** faisle ke saath karan bhara hua |
+| `test_speed_replies.py` | **KAAM 4 — tez jawab** — `voice_answer()` pehle 1-2 **poore** vaakya (vaakya beech se nahi kata), char limit, `sentences()` helper (danda bhi), `command.py` wiring; `answer_cache.key()` static waisa (**tuple text `str()` nahi** — prewarm ka pop chup-chaap fail hota tha) + volatile me **minute ka bucket** (usi minute hit, agli minute naya); `speak_cached()` wiring + cache bounded |
+| `test_hot_window.py` | **KAAM 5 — follow-up (DEFAULT OFF)** — flag band par `mark_hot`/`hot_active` False aur **sirf bolne par trigger nahi** (wake shabd zaroori); ek wake + **teen follow-up**; window re-arm + expiry; **apni awaaz follow-up nahi** (tail guard); silence (`Thank you.`/`hmm uh`) follow-up nahi; `is_utterance()` sirf asli baat (STT ki wahi silence list, duplicate nahi) |
+| `test_hot_window_helpers.py` | **KAAM 5 — wiring** — `command.py` ke `finally` me `mark_hot()` aur wo **release ke BAAD**; `Session.set_hot` + `worker.mark_hot` delegate; config 12 s; env key ke naam; `config.describe()` me `hot=` |
+| `test_hud_stats_load.py` | **KAAM 6 — SYSTEM panel `--` na rahe** — `/hud/stats` 200 + `cpu`/`ram` **kabhi `None` nahi** (yaani `--` data ki kami nahi, call na hone ki kami thi); battery `percent=None` par UI PLUG; bina token 401; naya `ui/hud_prime.js` load par `/hud/stats` maarta hai + token bhejta hai + `index.html` me tag; weather **double** fetch nahi; WS raasta bhi bacha; `textContent` (innerHTML nahi); pump **pehle** sota hai (ye `--` ki wajah tha). **Browser nahi, port 8000 par kuch nahi** |
 
 ### `test_desktop*.py` ke helpers
 

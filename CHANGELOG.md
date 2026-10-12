@@ -1122,6 +1122,48 @@ aur khaali/length/ghalat JSON = failure count.
 
 ---
 
+test+feat(overnight): 7 branch, 75 suite — test log alag, alarm, tail guard,
+permissions v2, tez jawab, hot window, HUD stats fix (KAAM 0-6)
+
+Ek raat ka kaam, har kaam apni branch par (chain), koi merge/push nahi.
+
+KAAM 0 (fix/stt-speed, 695e5c5) — test ab logs/prabh.log me NAHI likhte
+  (tests/logsafe.py + PRABH_LOG_DIR). Wajah: S-1 audit me nakli RMS 0.129 asli
+  mic ka data samajh aaya tha. 64 test file me import, puri suite pehle
+  +17974 byte, ab +0.
+
+KAAM 1 (feat/wake-alarm, 84842a0) — subah 7 baje ka alarm. tools/alarm_loop.py
+  + alarm_audio.py + wake_alarm.py + alarm_task.py + alarm.py (DEFAULT OFF).
+  Do Task Scheduler task ban chuke hain (07:00 + 07:10 backup, dono Ready).
+  teen asli galti: Register-ScheduledTask par -ErrorAction Stop na hone se "OK"
+  jhooth bola; [datetime]::new 5-arg overload exist hi nahi karta; ps_when()
+  minute hataa raha tha (07:10 ka task 07:00 par bana).
+
+KAAM 2 (fix/self-hearing, 5bb76cc) — tail guard 0.4 s. drain() 400 chunk
+  (~12 s) bounded hai par jawab 18 s — apni awaaz queue me bachi rehti thi,
+  take_fresh() sirf ek chunk bachata tha. maybe() me bhi suppressing() check
+  (gate.on_flush gate thread se bypass kar sakta tha).
+
+KAAM 3 (fix/permissions-v2, f6e28f8) — Brave/WhatsApp/VS Code allowed apps;
+  ALWAYS_ASK (7) + NEVER_ALLOW (2); injection nahi kar sakta kyunki risk sirf
+  args se nikal ti hai (source ka koi hissa nahi).
+
+KAAM 4 (fix/speed-replies, 9223b86) — awaaz 1-2 poore vaakya; time/date jawab
+  ka minute-bucket cache (purana cache kabhi hit nahi hua tha). Sentence
+  streaming ka design note (code nahi — sahi soch raha tha).
+
+KAAM 5 (fix/hot-window, 1f970eb) — follow-up bina "Jarvis", DEFAULT OFF.
+  Apni awaaz follow-up nahi ban sakti (tail guard + is_utterance pehle).
+
+KAAM 6 (fix/hud-polish, 0e446d5) — SYSTEM panel ka "--" fix. render() sirf WS
+  event par chalti thi, pump pehle 2 s sota hai, aur WS na chala to "--"
+  hamesha. Naya ui/hud_prime.js. Type-bar 1366x768 FIX NAHI hua (Playwright
+  nahi hai — honestly chhoda).
+
+Suite 75 = 69 pass + 6 jaane-pehchane fail (naya nahi). Push nahi hua — git
+ka saved credential alag account ka hai. Poora record docs/OVERNIGHT_REPORT.md.
+
+Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 ## Keys
 
 - `.env` me 6 brain/voice keys + voice ids (values kabhi commit nahi).
