@@ -77,6 +77,15 @@ class Session(life_mod.Lifecycle):
         """Abhi sunna band hai? (tray ka MUTE ya command ka hold - dono)"""
         return self._paused.is_set()
 
+    def set_tail(self, seconds=None) -> None:
+        """Hold chhodne ke baad `seconds` tak wake na maana jaye (KAAM 2).
+
+        `worker.release_from_command()` bulata hai — mic queue me humari TTS
+        ka pichhla hissa pada hota hai, aur `drain()` 400 chunk tak hi phenkta
+        hai. Ye `Trigger.suppressing()` wala hissa hai; `_loop` yahi check
+        karta hai."""
+        self._trig.mark_tail(seconds)
+
     # ---- zindagi ----
     def start(self, on_wake=None, on_state=None) -> bool:
         """Model + mic kholo aur sunne wala thread chalao. -> chala ya nahi."""
@@ -157,7 +166,7 @@ class Session(life_mod.Lifecycle):
                 continue
             if not self._mic.alive:
                 break
-            if self._paused.is_set() or self._trig.cooling():
+            if self._paused.is_set() or self._trig.suppressing():
                 continue                             # chunk phenko, suno nahi
             if self._trig.take_fresh():
                 self._trig.drop_pending(self._listener)

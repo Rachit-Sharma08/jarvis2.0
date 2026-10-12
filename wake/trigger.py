@@ -44,6 +44,7 @@ class Trigger:
         self.wakes = 0
         self._cool_until = 0.0
         self._fresh = False       # unpause hua: pichla partial phek do
+        self._tail_until = 0.0    # tail guard: apni hi TTS ka pichhla hissa
 
     def set_callbacks(self, on_wake=None, on_state=None) -> None:
         """Naye `start()` ke callbacks. Count (`wakes`) jaan-boojh kar **nahi** chhuta."""
@@ -59,13 +60,43 @@ class Trigger:
             self.gate = gate
 
     def reset_cooldown(self) -> None:
-        """Naye `start()` par cooldown saaf - pichle session ka wait naya
-        session rokega to trigger hi na ho (restart ke baad pehla "Jarvis")."""
+        """Naye `start()` par cooldown **aur** tail guard saaf.
+
+        Pichle session ka wait naya session rokega to trigger hi na ho (restart
+        ke baad pehla "Jarvis" na chubke). Tail bhi saaf karna zaroori hai —
+        warna app restart ke turant baad pehle 0.4 s ka "Jarvis" hi chhoot
+        jayega."""
         self._cool_until = 0.0
+        self._tail_until = 0.0
 
     def cooling(self) -> bool:
         """Abhi cooldown chal raha hai? (ek trigger ke baad ~1.5 s)"""
         return time.monotonic() < self._cool_until
+
+    def mark_tail(self, seconds=None) -> None:
+        """Hold chhoda — `seconds` tak **koi** chunk trigger na kar sake.
+
+        **Apni hi awaaz se WAKE HIT** ka pakkaura (KAAM 2). `drain()` sirf
+        `MAX_QUEUE_BLOCKS` (400 chunk ≈ 12 s) tak phenkta hai, par jawab 18 s
+        me banta hai — to mic queue me hamari TTS bachi rehti hai. Purana
+        `take_fresh()` sirf **ek** chunk bachata tha, uske baad Vosk ko wahi
+        shor chala jaata tha. Ab poora tail window ignore hota hai.
+
+        `seconds` na diya to `config.PLAYBACK_TAIL_GUARD_SECONDS` (0.4 s)."""
+        span = config.PLAYBACK_TAIL_GUARD_SECONDS if seconds is None else float(seconds)
+        self._tail_until = time.monotonic() + max(0.0, span)
+        log.info("tail guard: %.2fs tak wake nahi", span)
+
+    def tail_active(self) -> bool:
+        """Abhi tail guard chal raha hai?"""
+        return time.monotonic() < self._tail_until
+
+    def suppressing(self) -> bool:
+        """Chunk phenko, suno nahi — cooldown **ya** tail guard.
+
+        `Session._loop` sirf yahi check karta hai. Do alag baatein hain: cooldown
+        ek trigger ke baad hai, tail guard apni TTS ke baad."""
+        return self.cooling() or self.tail_active()
 
     def mark_unpaused(self) -> None:
         """MUTE hat gaya - pichle command ka partial agle me na leak ho."""
@@ -84,7 +115,17 @@ class Trigger:
         return self.maybe(text)
 
     def maybe(self, text: str) -> bool:
-        """Wake shabd hai? -> cooldown + `fire()`. -> trigger hua ya nahi."""
+        """Wake shabd hai? -> cooldown + `fire()`. -> trigger hua ya nahi.
+
+        **`suppressing()` yahin bhi check hota hai**, sirf `_loop` me nahi —
+        kyunki `gate.on_flush()` bhi `maybe()` ko **gate thread** se bulata
+        hai, aur wahan `_loop` ka check nahi lagta. Gate ne text ko tail window
+        me pakda ho to us flush par bhi trigger nahi hona chahiye (warna apni
+        hi TTS se WAKE HIT). `_loop` ka check tez raasta hai (Vosk tak audio
+        jaata hi nahi); ye aakhri zid hai."""
+        if self.suppressing():
+            log.info("suppressed (cooldown/tail): %r", text[:60])
+            return False
         if not phrase_mod.hit(text):
             return False
         self._cool_until = time.monotonic() + config.WAKE_COOLDOWN_SECONDS

@@ -112,7 +112,27 @@ COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-t
 
 # Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye â€” is liye
 # "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
+#
+# â„ `PLAYBACK_MUTE_MIC` **kahin use nahi hota** (13-Oct ka audit: sirf define
+# hai, koi code nahi padhta). Asli rok ka raasta `wake/worker.py` ka
+# `hold_for_command()` / `release_from_command()` hai - command poore chalte
+# tak sunna band, phir chhod dena. Ye flag abhi bhi pada hai taaki purana
+# `.env` me koi use na toot jaaye; naya kaam is par nahi banaya.
 PLAYBACK_MUTE_MIC = True
+
+# ---- tail guard (13-Oct, KAAM 2) -------------------------------------------
+# **Apni hi awaaz se WAKE HIT** ka asli nuksan yahi hai. Command ke dauraan
+# jab ka nahi hota; nuksan `release_from_command()` ke **turant baad** hota hai:
+# mic ki queue me humari TTS ka poora shor pada hota hai, aur `drain()` sirf
+# `MAX_QUEUE_BLOCKS` (400 chunk = ~12 s) tak phenkta hai. Jawab 18 s me banta
+# hai (log: `speak 18530ms`), to queue me ~6 s ki apni awaaz **bachi** rehti
+# hai - aur `take_fresh()` sirf **ek** chunk bachata hai. Uske baad Vosk ko
+# wahi shor jaata hai.
+#
+# Is liye: hold chhodte hi `TAIL_GUARD_SECONDS` tak **koi bhi chunk** trigger
+# nahi kar sakta. Raasta `wake/trigger.py` ka `suppressing()` hai, aur
+# `Session._loop` wahi check karta hai.
+PLAYBACK_TAIL_GUARD_SECONDS = float(os.getenv("PRABH_TAIL_GUARD", "0.4") or 0.4)
 
 # ---- beep ack (12-Oct) ------------------------------------------------------
 # "Ji, boliye" ~5 s leti thi (ElevenLabs 401 + edge + speaker), aur uske baad ka

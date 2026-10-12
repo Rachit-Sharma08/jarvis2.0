@@ -20,6 +20,7 @@ capture aur uske aage ka TTS turant ruk jaane chahiye (`worker.stop()` ka join
 sirf 3 second ka hai).
 """
 
+import config
 from log_setup import get_logger
 from wake import listen
 from wake import session as session_mod
@@ -80,11 +81,17 @@ def hold_for_command() -> bool:
 
 
 def release_from_command() -> None:
-    """Command khatam — phir se sunne do (MUTE nahi kiya to)."""
+    """Command khatam — phir se sunne do (MUTE nahi kiya to).
+
+    **Tail guard (KAAM 2):** hold chhodne se *pehle* `set_tail()` — mic queue
+    me humari TTS ka pichhla hissa pada hota hai (drain 400 chunk tak hi
+    phenkta hai, jawab 18 s tak chalta hai). Bina iske Vosk ko apni hi awaaz
+    milti hai aur WAKE HIT dobara ho jaata hai."""
     global _HELD
     if not _HELD:
         return
     _HELD = False
+    _SESSION.set_tail(config.PLAYBACK_TAIL_GUARD_SECONDS)
     _SESSION.set_paused(False)
 
 
