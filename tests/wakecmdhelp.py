@@ -93,21 +93,31 @@ def engine_say(confirm=False):
 
 
 def talk(allowed=None, heard="aaj ka din kya hai", out=None, confirm=False,
-         mic_chunks=None, on_confirm=None, on_sleep=None):
-    """Poora `command.run` — sab fake ke saath. -> (result, spy, hub, engine).
+         mic_chunks=None, on_confirm=None, on_sleep=None, beep=None,
+         capture=None):
+    """Poora `command.run` - sab fake ke saath. -> (result, spy, hub, engine).
 
     `heard` = STT ka text (jo user ne bola). Jawab engine se aata hai.
     `HUB` dono jagah patch hota hai (`command` status bhejta hai, `ask` brain ke
-    event) — sirf ek ko patch karna doosre ke events chup-chaap kho deta hai."""
+    event) - sirf ek ko patch karna doosre ke events chup-chaap kho deta hai.
+    `beep` = `config.ACK_BEEP` kya rahe; `None` matlab purana bolne wala raasta
+    (default) - naya beep raasta `tests/test_listen_flow.py` me hai. Asli
+    `playback.beep()` kabhi nahi chalta, warna test me speaker baj jayega.
+    `capture` = `listen.capture` ka fake (`tests/test_listen_flow.py` use karta
+    hai, warna capture hamesha CHUNKS return karta)."""
     mic = FakeMic(mic_chunks if mic_chunks is not None else CHUNKS)
     said, hub = Spy(1), hub_spy()
+    beeps = Spy(0)
+    said.beeps = beeps               # 4-tuple wapas wahi rahe (purane tests)
     engine = FakeEngine(engine_say(confirm=confirm) if out is None else out)
     stop = threading.Event()
     listen.reset()
     with patch(config, "COMMAND_WARMUP_SECONDS", 0), \
-            patch(listen, "capture", lambda *a, **k: CHUNKS), \
+            patch(config, "ACK_BEEP", bool(beep)), \
+            patch(listen, "capture", capture or (lambda *a, **k: CHUNKS)), \
             patch(listen, "to_text", lambda *a, **k: heard), \
             patch(playback, "say", said), \
+            patch(playback, "beep", beeps), \
             patch(command, "HUB", hub), \
             patch(ask, "HUB", hub), \
             patch("server.state", "ENGINE", engine):

@@ -26,11 +26,11 @@ def config_stt_name() -> str:
 
 
 def describe() -> str:
-    """Log + `--wake-info` ke liye ek line (aakhri field hamesha `gate=`)."""
+    """Log + `--wake-info` ke liye ek line (aakhri field hamesha `gate=`/`beep=`)."""
     import config_wake as wake
 
     folder = wake.model_path()
-    return "wake=%s word=%s%s model=%s stt=%s direct=%s cards=%s gate=%s" % (
+    return "wake=%s word=%s%s model=%s stt=%s direct=%s cards=%s gate=%s beep=%s" % (
         "ON" if wake.WAKE_ENABLED else "OFF",
         "/".join(wake.WAKE_WORDS),
         "+legacy" if wake.legacy_enabled() else "",
@@ -39,4 +39,5 @@ def describe() -> str:
         "on" if _tools_flag("direct") else "off",
         "off" if _tools_flag("cards") else "on",
         "on" if wake.WAKE_VOSK_GATE else "off",
+        "on" if wake.ACK_BEEP else "off",
     )

@@ -120,6 +120,26 @@ def play(audio: bytes, rate: int = None) -> int:
     return ms
 
 
+def beep(freq: int = None, ms: int = None) -> int:
+    """Chhota beep - "Ji, boliye" ki jagah (woh ~5 s leti thi).
+
+    Wahi raasta: `numpy` sine + `_modules()` ka `sounddevice`. Koi naya package
+    ya nayi file nahi. -> kitne ms baja (0 = nahi baja).
+    """
+    freq, ms = int(freq or config.ACK_BEEP_HZ), int(ms or config.ACK_BEEP_MS)
+    rate = int(config.OUTPUT_RATE)
+    wave = np.sin(2 * np.pi * freq * np.arange(int(rate * ms / 1000)) / rate)
+    tone = (wave * 8000).astype("<i2")          # halka - dheere se aaye jaaye
+    _, sd = _modules()
+    try:
+        sd.play(tone, samplerate=rate, device=config.OUTPUT_DEVICE, blocking=True)
+    except Exception as exc:
+        log.warning("beep nahi baja: %s: %s", type(exc).__name__, exc)
+        return 0
+    log.info("beep: %dHz %dms", freq, ms)
+    return ms
+
+
 def say(text: str, mode: str = None, rate: int = None) -> int:
     """Text bol kar suno. -> kitni der lagi (ms); `0` matlab nahi bola.
 

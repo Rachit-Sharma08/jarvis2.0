@@ -147,7 +147,7 @@ def test_config_knobs():
     print("GATE: CONFIG")
     truthy("gate default ON hai", config.WAKE_VOSK_GATE is True)
     show(config.describe())
-    check("describe me gate", config.describe().split()[-1], "gate=on")
+    check("describe me gate", "gate=on" in config.describe().split(), True)
 
 
 for fn in (test_silence_not_fed, test_speech_fed, test_silence_blocks_reset,

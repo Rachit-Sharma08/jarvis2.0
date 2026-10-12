@@ -114,6 +114,12 @@ COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-t
 # "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
 PLAYBACK_MUTE_MIC = True
 
+# ---- beep ack (12-Oct) ------------------------------------------------------
+# "Ji, boliye" ~5 s leti thi (ElevenLabs 401 + edge + speaker), aur uske baad ka
+# 1 s warmup command phenk deta tha. Ab beep + turant capture; `=0` par purana.
+ACK_BEEP = os.getenv("PRABH_WAKE_ACK_BEEP", "1").strip().lower() not in ("0", "false", "no", "off")
+ACK_BEEP_HZ, ACK_BEEP_MS, ACK_BEEP_DROP_SECONDS = 880, 120, 0.2
+
 # ---- wake debug (4-Oct, doosra command nahi sunta tha) ----------------------
 # `PRABH_WAKE_DEBUG=1` se har 3 second ek line: kitne chunk aaye, kitne Vosk
 # ko gaye, kitne chhode, RMS kya tha. Isi se pata chala ki command ke baad

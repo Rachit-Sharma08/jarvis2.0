@@ -43,6 +43,7 @@ from server.hub import HUB
 from voice import tts
 from wake import ask
 from wake import listen
+from wake import phrase as phrase_mod
 
 log = get_logger("wake_command")
 
@@ -113,9 +114,20 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
         listen.drain(mic, stop)
         talking, peak = listen.peek_speech(mic, stop)
         if talking:
+            # **Ek saans wala command**: ack/beep dono nahi, warmup/drain bhi
+            # nahi - queue me jo audio hai wahi capture chalta hai.
             log.info("user pehle se bol raha hai (rms=%.3f) - ack skip", peak)
-            settled_by = stage() + float(config.COMMAND_WARMUP_SECONDS)
             watch.stage("ack", at)
+            watch.stage("warmup", at)
+        elif config.ACK_BEEP:
+            # Beep (12-Oct): ~5 s ki "Ji, boliye" + 1 s warmup ki jagah. Beep ka
+            # audio `drop_seconds` phenkta hai, phir capture turant shuru.
+            from desktop import playback
+
+            playback.beep()
+            watch.stage("ack", at)
+            at = stage()
+            listen.drop_seconds(mic, stop, config.ACK_BEEP_DROP_SECONDS)
             watch.stage("warmup", at)
         else:
             ack = random.choice(config.ACK_ON_WAKE) if hasattr(config.ACK_ON_WAKE, "__iter__") and not isinstance(config.ACK_ON_WAKE, str) else config.ACK_ON_WAKE
@@ -137,8 +149,10 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
         watch.stage("capture", at)
 
         # 4. WAV + Groq STT (wahi guard jo browser wale raaste par chalta hai).
+        # `strip_wake`: ek saans wale command me STT "jarvis" bhi suna deta hai.
+        # Khaali (ya sirf "jarvis") text par brain **bilkul nahi** chalta.
         at = stage()
-        text = listen.to_text(chunks, stop)
+        text = phrase_mod.strip_wake(listen.to_text(chunks, stop))
         if not text:
             ask.speak(config.NOT_UNDERSTOOD, stop)
             return "no-text"

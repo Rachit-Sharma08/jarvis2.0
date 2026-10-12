@@ -69,6 +69,22 @@ def drain(mic, stop=None) -> int:
     return dropped
 
 
+def drop_seconds(mic, stop=None, seconds: float = 0.2) -> int:
+    """Sirf `seconds` tak ka audio phenko - **poora drain nahi** (beep ka hissa).
+
+    Poora `drain()` command ko bhi phenk deta tha. -> kitne chunk phenke."""
+    stop = stop or _STOP
+    left = max(0, int(round(float(seconds) / audio_mod.BLOCK_SECONDS)))
+    dropped = 0
+    while dropped < left and not stop.is_set():
+        try:
+            mic.chunks.get_nowait()
+        except (queue.Empty, AttributeError):
+            break
+        dropped += 1
+    return dropped
+
+
 def warmup(mic, stop=None, deadline=None) -> int:
     """Mic settle hone do, phir queue khaali karo. -> kitne chunk phenke.
 

@@ -40,6 +40,21 @@ def hit(text: str) -> bool:
     return any(word in words for word in config.WAKE_WORDS)
 
 
+def strip_wake(text: str) -> str:
+    """STT ke shuru ka wake shabd hata do ("Jarvis, mausam kaisa hai").
+
+    Sirf shuru me - pehla shabd wake ho, ya greeting ke baad doosra. Beech ka
+    "jarvis" command ka hissa hai, hatana nahi hai.
+    """
+    words = str(text or "").split()
+    head = [w.strip(".,!?;:-'\"").lower() for w in words[:2]]
+    if head and head[0] in config.WAKE_WORDS:
+        return " ".join(words[1:]).strip()
+    if len(head) > 1 and head[1] in config.WAKE_WORDS and head[0] in GREETING:
+        return " ".join(words[2:]).strip()
+    return " ".join(words).strip()
+
+
 def phrase(text: str) -> str:
     """Wake shabd wala hissa — greeting sahit. `''` agar wake word hi na ho.
 
