@@ -4,8 +4,10 @@ import config
 from brain import health
 from core.timing import Stopwatch
 from log_setup import get_logger
+from voice import answer_cache
 from voice import tts_cartesia, tts_edge, tts_elevenlabs, tts_female
-from voice.tts_text import clip, clip_answer, clean  # noqa: F401 (re-export)
+from voice.tts_text import (clip, clip_answer, clean,  # noqa: F401 (re-export)
+                            voice_answer)
 
 log = get_logger("tts")
 
@@ -59,7 +61,7 @@ async def speak_cached(text: str, mode: str) -> tuple:
     Cache hit par bhi ek line log hota hai, is liye speed ka proof log me
     dikhta hai (`tts cache hit: N chars`).
     """
-    key = (text, mode)
+    key = answer_cache.key(text, mode)
     hit = _CACHE.get(key)
     if hit is not None:
         log.info("tts cache hit: %d chars", len(text or ""))

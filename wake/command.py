@@ -178,8 +178,11 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
         #    hai: HUD par poora jawab dikhta hi hai, par 500 char bolne me 4.3 s
         #    lagta tha sirf playback me â€” is liye user ko "late" lagta tha.
         at = stage()
+        # `voice_answer()` pehle 1-2 **poore** vaakya leta hai (KAAM 4); pehle
+        # `clip_answer()` 220 char par beech se kaat raha tha. HUD par poora
+        # jawab waise hi rehta hai - sirf awaaz chhoti.
         spoken = config.BRAIN_FAILED if failed else (
-            tts.clip_answer(answer) or config.BRAIN_FAILED)
+            tts.voice_answer(answer) or config.BRAIN_FAILED)
         ask.speak(spoken, stop)
         watch.stage("speak", at)
         return "asked" if asked else "ok"

@@ -17,6 +17,10 @@ TTS_MAX_CHARS = 500
 # is liye user ko jawab "late" lagta tha; ~220 char ≈ 2 s. Vaakya ke end par
 # kat-ta hai (beech se nahi) — `voice/tts.py` ka `clip_answer()`.
 VOICE_ANSWER_MAX_CHARS = int(os.getenv("PRABH_VOICE_MAX", "220") or 220)
+# Awaaz me **pehle itne poore vaakya** bolne hain (KAAM 4). 220 char par kaatne
+# se beech ka tukda sunai deta tha; 1-2 vaakya poore bolne se jawab samajh aata
+# hai aur turant shuru hota hai. HUD par poora jawab waise hi rehta hai.
+VOICE_SENTENCES = int(os.getenv("PRABH_VOICE_SENTENCES", "2") or 2)
 AUDIO_MAX_BYTES = 10 * 1024 * 1024
 RECORD_MAX_SECONDS = 30
 

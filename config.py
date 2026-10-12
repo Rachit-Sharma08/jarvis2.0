@@ -47,7 +47,8 @@ from config_voice import (  # noqa: E402
     CARTESIA_VERSION, ELEVENLABS_API_KEY, ELEVENLABS_MODEL, EDGE_VOICES,
     FEMALE_ONLY_MODES, RECORD_MAX_SECONDS, STT_HARD_MARGIN_SECONDS,
     STT_MAX_RETRIES, STT_MIN_DURATION_MS, STT_TIMEOUT_SECONDS, TTS_CHAIN,
-    TTS_MAX_CHARS, VOICE_ANSWER_MAX_CHARS, VOICE_ENV, has_cartesia, has_elevenlabs,
+    TTS_MAX_CHARS, VOICE_ANSWER_MAX_CHARS, VOICE_ENV, VOICE_SENTENCES,
+    has_cartesia, has_elevenlabs,
     stt_deadline, voice_for,
 )
 from config_hud import (  # noqa: E402

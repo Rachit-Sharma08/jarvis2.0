@@ -70,3 +70,43 @@ def clip_answer(text: str, limit: int = None) -> str:
     if best > limit // 3:
         return head[:best + 1].strip()
     return clip(text, limit)
+
+
+def sentences(text: str) -> list:
+    """Text ke poore vaakya. Beech se nahi kaate — `. ` / `? ` / `! ` / `। `
+    par hi. Shuru ke whitespace chhodi jati hai, khaali vaakya nahi."""
+    out, buf = [], ""
+    for ch in str(text or ""):
+        buf += ch
+        if ch in ".?!।" and not buf.rstrip().endswith((".", "!", "?", "।")):
+            continue
+        if ch in ".?!।" and len(buf.strip()) > 1:
+            out.append(buf.strip())
+            buf = ""
+    if buf.strip():
+        out.append(buf.strip())
+    return out
+
+
+def voice_answer(text: str, max_sentences: int = None) -> str:
+    """Awaaz ke liye jawab — **pehle 1-2 poore vaakya** (KAAM 4).
+
+    `clip_answer()` 220 **char** par kaatta tha, jo beech se vaakya tod sakta
+    tha (awaaz mein beech ka tukda sunai deta hai). Yahan pehle vaakya
+    **pura** hota hai; agar 1-2 vaakya me char limit aa jaaye to
+    `clip_answer()` par hafte hain.
+
+    HUD par **poora** jawab rehta hai — ye sirf awaaz ke liye hai.
+    """
+    limit = config.VOICE_ANSWER_MAX_CHARS
+    want = max_sentences if max_sentences is not None else config.VOICE_SENTENCES
+    text = (text or "").strip()
+    if not text:
+        return ""
+    parts = sentences(text)
+    if len(parts) > 1:
+        head = " ".join(parts[:max(1, want)])
+        if len(head) <= limit:
+            return head                     # pura vaakya — sabse accha
+        return clip_answer(head, limit)     # limit aayi to wahi purana kaat
+    return clip_answer(text, limit)
