@@ -4,7 +4,21 @@
 bhi isi ke hisaab se validate hota hai â€” koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, rss, notes, pomodoro, webhook
+from tools import alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, rss, notes, pomodoro, webhook
+
+import config
+
+# `PRABH_ALARM_TOOL=0` (default) par alarm tools **bilkul gayab** — na LLM ko
+# dikhte hain (spec), na chal sakte hain (execute). Har naye mic/awaaz feature
+# ka yahi niyam hai.
+_ALARM_TOOLS = ("set_wake_alarm", "alarm_status")
+
+
+def _on(name: str) -> bool:
+    if name in _ALARM_TOOLS and not config.ALARM_TOOL_ENABLED:
+        return False
+    return True
+
 
 TOOLS = {
     "get_time_date": system.get_time_date,
@@ -32,6 +46,8 @@ TOOLS = {
     "kb_add": kb.kb_add,
     "kb_search": kb.kb_search,
     "daily_brief": brief.daily_brief,
+    "set_wake_alarm": alarm.set_wake_alarm,
+    "alarm_status": alarm.alarm_status,
 }
 
 TOOL_ARGS = {
@@ -60,6 +76,8 @@ TOOL_ARGS = {
     "kb_add": ("text", "filename"),
     "kb_search": ("query",),
     "daily_brief": (),
+    "set_wake_alarm": ("at", "repeat_minutes"),
+    "alarm_status": (),
 }
 
 TOOL_SUMMARY = {
@@ -88,16 +106,36 @@ TOOL_SUMMARY = {
     "kb_add": "knowledge base me text save karo",
     "kb_search": "knowledge base me search karo",
     "daily_brief": "daily brief dikhao (reminders+todos)",
+    "set_wake_alarm": "uthne ka alarm set karo (at jaise '7:00 am')",
+    "alarm_status": "abhi ka alarm batao",
 }
+
+# Har wo tool jo is waqt band hai (default OFF) — UI/banner me dikhane ke liye.
+def disabled() -> list:
+    return sorted(name for name in TOOLS if not _on(name))
+
+
+def visible() -> list:
+    """LLM ko dikhne wale tool (ordered). Band (default OFF) yahan nahi.
+
+    **Yahi ek hi raasta hai** — `brain/prompt.py` bhi yahi use karta hai.
+    Pehle wo `TOOL_SUMMARY` se khud list banata tha, is liye `spec()` ka
+    filter bekaar tha aur band tool system prompt me chala gaya."""
+    return [name for name in TOOL_SUMMARY if _on(name)]
 
 
 def spec() -> str:
     """LLM ke system prompt ke liye ek-line description."""
     lines = []
-    for name, summary in TOOL_SUMMARY.items():
+    for name in visible():
         args = ", ".join(TOOL_ARGS[name])
-        lines.append(f"- {name}({args}): {summary}")
+        lines.append(f"- {name}({args}): {TOOL_SUMMARY[name]}")
     return "\n".join(lines)
+
+
+def disabled() -> list:
+    """Abhi band (default OFF) tools - UI/banner ke liye."""
+    return sorted(name for name in TOOLS if not _on(name))
 
 
 def execute(name: str, args: dict) -> str:
@@ -105,6 +143,8 @@ def execute(name: str, args: dict) -> str:
     func = TOOLS.get(name)
     if func is None:
         return f"'{name}' naam ka koi tool nahi hai."
+    if not _on(name):
+        return f"'{name}' abhi band hai (feature flag off)."
     missing = set(TOOL_ARGS[name]) - set(args)
     extra = set(args) - set(TOOL_ARGS[name])
     if missing or extra:

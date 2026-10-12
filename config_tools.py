@@ -45,7 +45,18 @@ TOOL_BASE_RISK = {
     "kb_add": SAFE,
     "kb_search": SAFE,
     "daily_brief": SAFE,
+    # Alarm (13-Oct). `set_wake_alarm` sirf `data/alarm_request.json` likhta hai
+    # — Task Scheduler se kuch nahi chhoota. Task banana hamesha haath se hota
+    # hai (`tools/wake_alarm.py --install`), is liye ye tool system nahi badalta.
+    # Risky hai (PC ki timing badalta hai) is liye **ASK** — kaam card se.
+    "set_wake_alarm": ASK,
+    "alarm_status": SAFE,
 }
+
+# Jarvis ke andar wala alarm tool — **DEFAULT OFF**. Sirf is par tool LLM ko
+# dikhai deta hai; task scheduler par iska koi asar nahi.
+ALARM_TOOL_ENABLED = os.getenv("PRABH_ALARM_TOOL", "0").strip().lower() in (
+    "1", "true", "yes", "on")
 
 # open_app sirf inhi me SAFE hai. Baaki sab poochhega.
 ALLOWED_APPS = {

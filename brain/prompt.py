@@ -8,6 +8,7 @@ import json
 
 import config
 from tools import TOOL_ARGS, TOOL_SUMMARY
+import tools
 
 RULES = """
 
@@ -49,7 +50,11 @@ def build(persona: str, tools_on: bool = True) -> str:
         if ctx:
             parts.append(ctx)
         return "\n\n".join(parts) + TOOLS_OFF_NOTE
-    spec = "\n".join(f"- {name}({', '.join(TOOL_ARGS[name])}): {TOOL_SUMMARY[name]}" for name in TOOL_SUMMARY)
+    # `tools.visible()` — band (default OFF) tool yahan se nikal jaate hain.
+    # Pehle `TOOL_SUMMARY` seedha iterate hota tha, to `_on()` ka filter bekaar
+    # tha aur `set_wake_alarm` LLM ko dikhai de raha tha.
+    spec = "\n".join(f"- {name}({', '.join(TOOL_ARGS[name])}): {TOOL_SUMMARY[name]}"
+                     for name in tools.visible())
     ctx = memory.MEM.context(max_turns=10)
     parts = [persona]
     if ctx:

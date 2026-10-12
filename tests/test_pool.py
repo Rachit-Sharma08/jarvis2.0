@@ -16,7 +16,6 @@ import brain.pool as pool
 from brain import health
 from poolhelp import HIST, check, finish, no_sleep, p, restore, use
 
-
 def test_tier_failover():
     print("TIER FAILOVER")
     fake = (p("t1only", 1), p("t2only", 2))

@@ -15,7 +15,6 @@ import brain.pool_config as pc
 from brain import health
 from poolhelp import HIST, check, finish, p, raiser, restore, use
 
-
 def test_cooldown():
     print("COOLDOWN / RETRY-AFTER")
     fake = (p("nv", 1), p("other", 2))
