@@ -26,11 +26,15 @@ def config_stt_name() -> str:
 
 
 def describe() -> str:
-    """Log + `--wake-info` ke liye ek line (aakhri field hamesha `gate=`/`beep=`)."""
+    """Log + `--wake-info` ke liye ek line (aakhri field hamesha `hot=`)."""
     import config_wake as wake
 
     folder = wake.model_path()
-    return "wake=%s word=%s%s model=%s stt=%s direct=%s cards=%s gate=%s beep=%s" % (
+    # `hot=` 13-Oct (KAAM 5): follow-up window on hai ya nahi. `--wake-info` se
+    # pata chalna zaroori hai, warna "follow-up nahi ho raha" ka pata hi nahi
+    # chalega - flag to DEFAULT OFF hai.
+    return ("wake=%s word=%s%s model=%s stt=%s direct=%s cards=%s gate=%s "
+            "beep=%s hot=%s") % (
         "ON" if wake.WAKE_ENABLED else "OFF",
         "/".join(wake.WAKE_WORDS),
         "+legacy" if wake.legacy_enabled() else "",
@@ -40,4 +44,5 @@ def describe() -> str:
         "off" if _tools_flag("cards") else "on",
         "on" if wake.WAKE_VOSK_GATE else "off",
         "on" if wake.ACK_BEEP else "off",
+        ("on:%.0fs" % wake.HOT_WINDOW_SECONDS) if wake.HOT_WINDOW_ENABLED else "off",
     )

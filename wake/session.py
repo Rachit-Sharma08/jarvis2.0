@@ -86,6 +86,13 @@ class Session(life_mod.Lifecycle):
         karta hai."""
         self._trig.mark_tail(seconds)
 
+    def set_hot(self, seconds=None) -> bool:
+        """Follow-up window kholo (KAAM 5). -> khola ya nahi (band = False).
+
+        `worker.mark_hot()` se aata hai. **DEFAULT OFF** par kuch nahi hota —
+        `Trigger.mark_hot()` khud `config.HOT_WINDOW_ENABLED` check karta hai."""
+        return self._trig.mark_hot(seconds)
+
     # ---- zindagi ----
     def start(self, on_wake=None, on_state=None) -> bool:
         """Model + mic kholo aur sunne wala thread chalao. -> chala ya nahi."""

@@ -20,9 +20,32 @@ import time
 
 import config
 from log_setup import get_logger
+from voice import stt_guard
 from wake import phrase as phrase_mod
 
 log = get_logger("wake_trigger")
+
+
+def is_utterance(text: str) -> bool:
+    """Ye text **baat** hai (khamoshi/short filler nahi)?
+
+    Follow-up window me sirf sunte rehna hai — is liye "jarvis" shabd ki
+    zaroorat nahi, par "uh"/"hmm"/"Thank you." jaisa kuch bhi follow-up nahi
+    hai. Guard wahi jo STT ke liye hai (`voice/stt_guard.py`) — ek hi jagah,
+    do alag list nahi."""
+    body = str(text or "").strip()
+    if len(body) < 3 or len(body.split()) < 2:
+        return False
+    if stt_guard.is_silence_phrase(body):
+        return False
+    # Poore text ke shabd **saare** filler hue to bhi follow-up nahi — jaise
+    # "hmm uh". `is_silence_phrase()` poora text ek shabd pakadta hai, is liye
+    # yahan shabd-girdi ki. List wahi hai (duplicate nahi).
+    words = {w.strip(".,!?।'\"") for w in body.split()}
+    fillers = {p.strip(".") for p in stt_guard.SILENCE_PHRASES}
+    if words and words <= fillers:
+        return False
+    return True
 
 
 class Trigger:
@@ -45,6 +68,7 @@ class Trigger:
         self._cool_until = 0.0
         self._fresh = False       # unpause hua: pichla partial phek do
         self._tail_until = 0.0    # tail guard: apni hi TTS ka pichhla hissa
+        self._hot_until = 0.0     # follow-up window (DEFAULT OFF)
 
     def set_callbacks(self, on_wake=None, on_state=None) -> None:
         """Naye `start()` ke callbacks. Count (`wakes`) jaan-boojh kar **nahi** chhuta."""
@@ -68,6 +92,7 @@ class Trigger:
         jayega."""
         self._cool_until = 0.0
         self._tail_until = 0.0
+        self._hot_until = 0.0
 
     def cooling(self) -> bool:
         """Abhi cooldown chal raha hai? (ek trigger ke baad ~1.5 s)"""
@@ -90,6 +115,30 @@ class Trigger:
     def tail_active(self) -> bool:
         """Abhi tail guard chal raha hai?"""
         return time.monotonic() < self._tail_until
+
+    def mark_hot(self, seconds=None) -> bool:
+        """Follow-up window kholo — **"Jarvis" na bola** tab bhi trigger.
+
+        **DEFAULT OFF** (`config.HOT_WINDOW_ENABLED=0`): band par ye kuch
+        nahi karta aur `hot_active()` hamesha `False` rehta hai — yaani app
+        ka raasta bilkul purane jaisa.
+
+        Wapas `False` = feature band tha ya time nahi mila (log me likha gaya).
+        Follow-up par window **dobara** lagta hai, is liye chain ban sakta hai.
+        """
+        if not config.HOT_WINDOW_ENABLED:
+            log.info("hot window band hai (PRABH_HOT_WINDOW=1 karo)")
+            return False
+        span = config.HOT_WINDOW_SECONDS if seconds is None else float(seconds)
+        self._hot_until = time.monotonic() + max(0.0, span)
+        log.info("hot window: %.0fs tak follow-up bina 'Jarvis'", span)
+        return True
+
+    def hot_active(self) -> bool:
+        """Abhi follow-up window khula hai?"""
+        if not config.HOT_WINDOW_ENABLED:
+            return False
+        return time.monotonic() < self._hot_until
 
     def suppressing(self) -> bool:
         """Chunk phenko, suno nahi — cooldown **ya** tail guard.
@@ -126,6 +175,17 @@ class Trigger:
         if self.suppressing():
             log.info("suppressed (cooldown/tail): %r", text[:60])
             return False
+
+        # Follow-up window: "Jarvis" bola hi nahi, phir bhi trigger — par sirf
+        # asli **baat** par. Tail/cooldown pehle check ho chuke hain, is liye
+        # apni hi TTS is raaste se trigger nahi kar sakti.
+        if self.hot_active() and is_utterance(text):
+            log.info("FOLLOW-UP HIT (bina 'Jarvis'): %r", text[:60])
+            self._cool_until = time.monotonic() + config.WAKE_COOLDOWN_SECONDS
+            self.mark_hot()                 # agla follow-up ka window dobara
+            self.fire(text)
+            return True
+
         if not phrase_mod.hit(text):
             return False
         self._cool_until = time.monotonic() + config.WAKE_COOLDOWN_SECONDS

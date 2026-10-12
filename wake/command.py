@@ -192,6 +192,10 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
         listen.drain(mic, stop)
         if held:
             wake_worker.release_from_command()
+        # Jawab ke baad follow-up window (KAAM 5). **DEFAULT OFF** par ye
+        # `False` return karta hai aur kuch nahi hota. Release ke BAAD taaki
+        # tail guard pehle lage — warna apni hi awaaz follow-up ban jaati.
+        wake_worker.mark_hot()
         _safe(on_busy, False)
         HUB.publish({"type": "status", "value": "idle"})
         watch.total()

@@ -95,6 +95,16 @@ def release_from_command() -> None:
     _SESSION.set_paused(False)
 
 
+def mark_hot(seconds=None) -> bool:
+    """Follow-up window kholo — "Jarvis" na bola tab bhi (KAAM 5).
+
+    `wake/command.py` apne `finally` me ye bulata hai, yaani har jawab ke baad.
+    **DEFAULT OFF**: `config.HOT_WINDOW_ENABLED=0` par `Trigger.mark_hot()`
+    `False` return karta hai aur kuch nahi hota — app purane jaise hi hai.
+    """
+    return _SESSION.set_hot(seconds)
+
+
 def wakes() -> int:
     """Ab tak kitne trigger — test + `--wake-info` ke liye."""
     return _SESSION.wakes()

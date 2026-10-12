@@ -110,6 +110,19 @@ COMMAND_PRE_ROLL_SECONDS = 0.6
 COMMAND_WAIT_SECONDS = 5.0         # pehla shabd aaya hi nahi -> "sun nahi aaya"
 COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-ta hai
 
+# ---- hot window (13-Oct, KAAM 5) -------------------------------------------
+# Jawab ke baad **"Jarvis" na bole** follow-up puchh sakte ho. Us window me
+# sirf bolna sunna kaafi hai.
+#
+# **DEFAULT OFF** (`PRABH_HOT_WINDOW=0`). Naye mic/awaaz wale feature ka yahi
+# niyam hai - jab tak Rachit on na kare, `Trigger.hot_active()` hamesha False
+# rahega aur raasta purane waise hi chalega.
+HOT_WINDOW_ENABLED = os.getenv("PRABH_HOT_WINDOW", "0").strip().lower() in (
+    "1", "true", "yes", "on")
+# Kitni der. Follow-up par window **dobara** lag jaata hai, is liye teen
+# follow-up chain kar sakte ho (test me wahi hai).
+HOT_WINDOW_SECONDS = float(os.getenv("PRABH_HOT_WINDOW_SECONDS", "12") or 12)
+
 # Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye â€” is liye
 # "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
 #
