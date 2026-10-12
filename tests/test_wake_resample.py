@@ -15,6 +15,7 @@ import sys
 import numpy as np
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 import config
 from wake import audio as audio_mod

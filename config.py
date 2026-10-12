@@ -22,7 +22,11 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent
 PERSONAS_DIR = BASE_DIR / "personas"
 UI_DIR = BASE_DIR / "ui"
-LOG_DIR = BASE_DIR / "logs"
+# Log ka folder. `PRABH_LOG_DIR` se badal sakte ho — **test isi ka istemaal
+# karte hain** (`tests/logsafe.py`): test bhi yehi `logs/prabh.log` me likhte
+# the, jisse asli app ka log nakli entry se bhar jaata tha (S-1 me RMS 0.129
+# wahi galti thi). Test ka apna temp folder = analysis saaf.
+LOG_DIR = Path(os.getenv("PRABH_LOG_DIR") or (BASE_DIR / "logs"))
 LOG_FILE = LOG_DIR / "prabh.log"
 
 load_dotenv(BASE_DIR / ".env")

@@ -13,6 +13,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 import config
 from gatekeeper import keeper, patterns

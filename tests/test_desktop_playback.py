@@ -12,6 +12,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 from tests.desktophelp import (  # noqa: E402
     FAILED, FakeFormat, FakeMini, FakeSd, check, finish, install_audio,

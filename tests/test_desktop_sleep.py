@@ -24,6 +24,7 @@ import threading
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 from tests.wakehelp import check, finish, truthy  # noqa: E402
 from tests.wakecmdhelp import patch, talk  # noqa: E402

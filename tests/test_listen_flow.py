@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 from tests.datasafe import isolated_data                  # noqa: E402
 from tests.wakehelp import check, finish, loud, quiet, truthy  # noqa: E402

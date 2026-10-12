@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 from brain import prompt
 from core import memory, modes

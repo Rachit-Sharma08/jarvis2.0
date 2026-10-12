@@ -20,6 +20,7 @@ if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8", 
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 from desktophelp import check, finish
 from tests.hudhelp import (FRONTED, FakeApp, FakeCommand, FakeDesktop,

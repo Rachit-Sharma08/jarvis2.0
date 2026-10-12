@@ -16,6 +16,7 @@ import wave
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 from tests.wakehelp import FAILED, check, finish, loud, quiet, show, truthy  # noqa: E402
 
