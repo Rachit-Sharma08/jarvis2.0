@@ -432,3 +432,208 @@ D:\prabh\.venv\Scripts\python.exe D:\prabh\main.py --wake-info
   aur probe wahin, repo me nahi.
 - **Naya test har kaam ke saath** likha: 11 nayi suite, sab TESTS.md ki
   table me.
+---
+
+# PART 2 — 14 Oct 2026 (KAAM A, B, C, D)
+
+Raat wala record upar hai. **Ye part 2 hai** — Rachit institute me tha,
+main akela chala. Shuru `main` (3322328) par.
+
+**Suite ab:** 77 total = **71 pass + wahi 6 jaane-pehchane fail**.
+Purane 6: `test_desktop` · `test_desktop_shortcut` · `test_desktop_sleep` ·
+`test_wake_ack` · `test_wake_command` · `test_wake_resample`. Ek bhi naya
+fail nahi.
+
+---
+
+## 1. Ek nazar me — Part 2
+
+| # | Kaam | Status | Branch | Commit |
+|---|---|---|---|---|
+| A | **Bottom bar ka katna** (Playwright verified) | **ho gaya** | `fix/hud-bar` | `8c48f30` |
+| B | **Arc Reactor / sunset theme** | **ho gaya** | `feat/hud-arc` | `5a2587f` |
+| C | Docs (AGENTS/TESTS/report) | **ho gaya** | `feat/agent-skills` | (is commit) |
+| D | **3 skill + 3 subagent** | **ho gaya** | `feat/agent-skills` | `5b40852` |
+| — | **Push** | ⏳ **tera login** | — | — |
+
+---
+
+## 2. KAAM A — bottom bar (branch `fix/hud-bar`, commit `8c48f30`)
+
+### Tera shak theek tha — par wajah alag nikli
+
+Tune kaha tha "type-bar 1366x768 par neeche se kat rahi hai". Maine pehle
+**pakadne ki koshish** ki, aur pata chala ki **bar ka box kabhi bhi viewport
+se bahar nahi gaya**:
+
+| Kya check kiya | Nateeja |
+|---|---|
+| 800x540 → 1920x1080 (100 viewport) | **0** bar-cut |
+| Browser zoom 1.0 / 1.25 / 1.5 | **0** |
+| Windows 125% / 150% / 175% scale | **0** |
+| Fonts load na ho (offline first run) | **0** |
+| 60 chat + 30 orb lines bhar kar | **0** |
+| Asli launch size 1200x720 (Edge chrome ke saath) | **0** |
+
+### Asli wajah ye mili
+
+`.remind-pill` par `position: absolute; bottom: 8px` tha — **par
+`.bottombar` par `position: relative` NAHI tha**. Is liye wo `.hud`
+(`position: relative`, `height: 100vh`) ke against position hua, yaani
+**viewport ke bilkul neeche**:
+
+| Element | 1366x768 par |
+|---|---|
+| `.remind-pill` (REMINDER text) | y = 746 … **760** |
+| `.qlbl` (BROWSER/YOUTUBE/WHATSAPP label) | y = 745 … 754 |
+| `.bottombar` ka apna bottom edge | y = 756 |
+
+Yaani reminder text un label par **chadh** diya tha, aur bar ke apne edge
+se 4px **neeche**. User ko yahi "type-bar neeche se kat rahi hai" dikha.
+
+**Do aur asli overlap** bhi (sab 3 size par reproduce):
+- `.notice` / `.micflag` `position: fixed; bottom: 84px` — left/right column
+  ke panels par (panel bottom 685, notice 670…684).
+- `.brainwarn` `position: fixed; top: 6px` — topbar (10…49) aur ruler par.
+
+### Fix
+
+- Bottom bar ab **2-row grid**: row 1 = `.barhint` (reminder/notice/micflag
+  side me, static flow), row 2 = controls. Koi magic `bottom: 84px` nahi.
+- `brainwarn` topbar ke apne `.tb-mid` flow me (khaali to `display:none`).
+- Confirm card `hud_bottom.css` (187 line, limit par) se naye
+  `ui/hud_card.css` me gaya.
+
+### Test
+
+`tests/test_hud_bar.py` + `hudcheck_bar.py` + `hudserve.py`. 5 viewport par
+bar-cut, har element ka clip, aur 13 overlap pair. **Bug-injection:** fix
+wapas kharab karne par **5 check fail** hue — test sach me bug pakadta hai.
+
+---
+
+## 3. KAAM B — Arc Reactor / sunset theme (branch `feat/hud-arc`, commit `5a2587f`)
+
+Default abhi bhi **purana neela** (`neon`) — uska ek pixel nahi hila. Naya
+theme `?theme=arc` ya `PRABH_HUD_THEME=arc`.
+
+### Reference
+
+`https://jarvis.mukh1.com/s/arc-reactor?theme=sunset` — Playwright se
+**sirf screenshot dekha**. Unka code/CSS/SVG/asset **copy nahi** kiya;
+sab apne likha. Chhota footer credit: "Interface style inspired by Mukh.1".
+
+### Teen asli bug — sirf browser me pakde
+
+Ye teeno source-check se **bilkul nahi** dikhte:
+
+1. **`<html data-theme>` set hi nahi ho raha tha.** Saari arc CSS
+   `html[data-theme="arc"]` ke andar thi, aur attribute `None` reh gaya —
+   is liye pura theme invisible, jabki `.a-root` DOM me maujood tha.
+2. **SVG `document.createElement("svg")` se bana tha** (HTML namespace).
+   Attributes sahi the, par `getBBox()` **sab 0x0** — rings/ticks/arcs
+   poori tarah invisible. `createElementNS` hi asli `<svg>` banata hai.
+3. **`.a-mid { align-items: start }`** + SVG size ka **circular
+   dependency** — container height SVG se, SVG height container se. Dono
+   0 par atke. Ab size seedha `vh` se: `min(52vh, 420px)`.
+
+### Perf (i5)
+
+Sirf CSS transform/SVG — **WebGL/canvas nahi**. JS timers ~30fps
+(typewriter 28 ms, core-number 33 ms), hidden tab par **ruk-te** hain,
+`prefers-reduced-motion` maana jaata hai. Headless Chromium me dono theme
+ka CPU sum **barabar** (~100%, software rasterizer) aur JS heap 10 MB —
+yaani page ka apna cost timers tak seemit hai.
+
+### Test
+
+`tests/test_hud_arc.py` + `arccheck.py` + `arc_probe.py`. 1366x768 +
+1920x1080 par clip/overflow, input bar, reactor ka **asli geometry**
+(`getBBox() > 0`), 3 state label, Hindi typewriter, default neela
+regress nahi, `?theme=` whitelist. **Bug-injection:** namespace bug wapas
+daalne par **8 clean FAIL** (pehle `KeyError` se crash ho raha tha — test
+ko theek kiya).
+
+---
+
+## 4. KAAM D — skills + subagents (branch `feat/agent-skills`, commit `5b40852`)
+
+Opencode docs padh kar likhe (`/docs/skills`, `/docs/agents`). Internet se
+**kuch install nahi**.
+
+**Skills** (`.opencode/skills/<naam>/SKILL.md`, har ek <80 line):
+`hud-playwright-check` · `safe-git-push` · `jarvis-rules`
+
+**Subagents** (`.opencode/agents/<naam>.md`, sab `mode: subagent`,
+`edit: deny`): `reviewer` (diff review) · `tester` (suite + Playwright) ·
+`planner` (kaam baantna)
+
+Workflow: build likhe → **reviewer** se diff check karaye → tab commit.
+KAAM D ka diff reviewer subagent se check karaya: **4/4 PASS**.
+
+---
+
+## 5. ⏳ TERA KAAM — push
+
+Teen branch push karni hain (main **nahi**):
+
+```
+git push -u origin fix/hud-bar
+git push -u origin feat/hud-arc
+git push -u origin feat/agent-skills
+```
+
+Push se pehle (maine **check** kar liya tha, kaam nahi bacha):
+
+| Check | Nateeja |
+|---|---|
+| `git log --format="%ae" origin/main..HEAD` | **sab** `339157645+Rachit-Sharma08@users.noreply.github.com` |
+| Key scan (`gsk_`/`sk_`/`sk-`/`AIza`) | **0** asli key (sirf pattern *naam* — ginti ke liye) |
+
+Agar login/permission maange to **ruk ja** — password/token kabhi mat
+maang, credential/account kabhi mat badal.
+
+---
+
+## 6. Subah / test me kya dekhna
+
+| # | Kya | Kaise | Expected |
+|---|---|---|---|
+| 1 | **Neela HUD** (default) | `.env` me kuch nahi, HUD kholo | **bilkul purana** dikhe |
+| 2 | **Arc theme** | `.env`: `PRABH_HUD_THEME=arc` + restart | orange reactor + panels |
+| 3 | Theme sirf URL se | `http://127.0.0.1:8000/?theme=arc` | arc khule |
+| 4 | Adhoori theme | `/?theme=<script>` | **default** (neon) |
+| 5 | **Bottom bar** | Reminder ON karo (`?"kal shaam ko gym"`) | BROWSER label **dikh** rahe |
+| 6 | Bar chhota window | Edge ko chhota karo | bar poora dikhe, cut nahi |
+| 7 | **Devanagari** | Hindi type karo / awaaz se puchho | "अगला कल…" sahi |
+| 8 | Reactor ghoomta hai | Core dekho | rings/dots dheere ghoome |
+| 9 | Reduced motion | Windows → accessibility | animation band |
+| 10 | `theme=` pata | `python main.py --wake-info` | `theme=neon` ya `theme=arc` |
+
+---
+
+## 7. Jo maine nahi kiya (saaf list)
+
+- **Purane 6 fail** — ek bhi theek nahi (AGENTS 8.1.2 ke mutabiq hisab me
+  aata hai, naya fail nahi).
+- **KAAM 4c** (sentence streaming ka code) — phir nahi kiya; design note
+  `docs/SENTENCE_STREAM_NOTE.md` me hi hai.
+- **`PLAYBACK_MUTE_MIC`** — dead code, phir nahi chheda. Tera faisla.
+- **Live alarm test / wake live test** — sab nakli rahe (NIYAM). Tere PC par.
+- **`main` me kuch merge nahi**, **koi force-push nahi**, history nahi badli.
+
+---
+
+## 8. Safety ka record
+
+- `.env` **kabhi nahi khuli**. Koi key/token print, log ya commit nahi hua.
+- Jarvis (`start_prabh.bat`) **chala nahi**. Koi process **kill nahi** kiya.
+  Port 8000 par kuch nahi chala — sab test 8731+ par.
+- Asli mic/speaker se awaaz nahi. **Sirf nakli.**
+- **Koi naya package nahi.** Playwright pehle se install tha.
+- Playwright **sirf headless + bundled Chromium** — Rachit ke Chrome/Edge
+  ka koi profile/cookie kabhi nahi chhua. Koi window nahi khuli.
+- Reference site sirf **padhi** (1-2 baar), code copy nahi.
+- `google.com` par kahin nahi gaya. Certificate wala koi jugaad nahi.
+- Screenshot **sab** `%TEMP%\opencode` me — repo me koi nahi.
+- **Naye test har kaam ke saath**: 2 nayi Playwright suite + 2 helper.

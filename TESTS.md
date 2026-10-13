@@ -111,6 +111,8 @@ Ek-ek karke:
 | `test_hot_window.py` | **KAAM 5 — follow-up (DEFAULT OFF)** — flag band par `mark_hot`/`hot_active` False aur **sirf bolne par trigger nahi** (wake shabd zaroori); ek wake + **teen follow-up**; window re-arm + expiry; **apni awaaz follow-up nahi** (tail guard); silence (`Thank you.`/`hmm uh`) follow-up nahi; `is_utterance()` sirf asli baat (STT ki wahi silence list, duplicate nahi) |
 | `test_hot_window_helpers.py` | **KAAM 5 — wiring** — `command.py` ke `finally` me `mark_hot()` aur wo **release ke BAAD**; `Session.set_hot` + `worker.mark_hot` delegate; config 12 s; env key ke naam; `config.describe()` me `hot=` |
 | `test_hud_stats_load.py` | **KAAM 6 — SYSTEM panel `--` na rahe** — `/hud/stats` 200 + `cpu`/`ram` **kabhi `None` nahi** (yaani `--` data ki kami nahi, call na hone ki kami thi); battery `percent=None` par UI PLUG; bina token 401; naya `ui/hud_prime.js` load par `/hud/stats` maarta hai + token bhejta hai + `index.html` me tag; weather **double** fetch nahi; WS raasta bhi bacha; `textContent` (innerHTML nahi); pump **pehle** sota hai (ye `--` ki wajah tha). **Browser nahi, port 8000 par kuch nahi** |
+| `test_hud_bar.py` | **KAAM A — bottom bar (Playwright headless, nakli server)** — 1366x768 + 1280x720 + 1920x1080 + 1200x688 + 1024x700 par bar ka cut nahi, koi element clip nahi, 13 overlap pair me koi overlap nahi, hud overflow nahi. Bug-injection: `.remind-pill` par absolute wapas daalne se 5 check fail. Screenshot `%TEMP%` me, repo me nahi |
+| `test_hud_arc.py` | **KAAM B — Arc theme (Playwright headless, nakli server)** — 1366x768 + 1920x1080 par clip/overflow nahi, input bar poori, reactor ka **asli geometry** (`getBBox()` > 0 — namespace bug yahin pakda), 3 state label, Hindi typewriter, default neela regress nahi, `?theme=` whitelist (adhoori value reject, bada `ARC` chalta hai). Bug-injection: namespace bug wapas daalne par 8 clean FAIL (crash nahi). Screenshot `%TEMP%` me |
 
 ### `test_desktop*.py` ke helpers
 
@@ -184,6 +186,19 @@ Runner sirf hai; saare checks char helper me hain (har file `<200` lines):
 | `hud_check_ui.py` | XSS guard (innerHTML/eval nahi), HTML ids, `<200` line, fonts, clock, orb SVG+animation, activity tags, STOP wiring, 1366x768 grid |
 | `hud_check_get.py` | same-origin GET ka rule — Referer / `Sec-Fetch-Site` proof, cross-site reject, `origin_from_referer()` |
 | `hud_check_api.py` | weather `_parse` mock + crash-safe, stats shape/cache, `/hud/*` security + CSP, `/hud/quick` extra-field 422, gatekeeper no-bypass, **ek shared Engine** |
+
+### Playwright helper (`hudserve.py` + `hudcheck_bar.py`/`arccheck.py`)
+
+`tests/hudserve.py` dono Playwright suite ka shared nakli server hai — sirf
+`ui/` static + `/hud/stats` + `/hud/weather`, port **8731+** (8000 kabhi
+nahin), `import config` nahi (`.env` chhua hi nahi). `ThreadingHTTPServer` +
+HTTP/1.1 + Content-Length — warna Chromium ke parallel load beech me kat
+jaate hain aur alag-alag baar alag JS error aata hai. `?theme=` ka rule asli
+server jaisa (lowercase + whitelist).
+
+`hudcheck_bar.py` (KAAM A) aur `arccheck.py` + `arc_probe.py` (KAAM B) me
+asli checks hain; `test_hud_bar.py` / `test_hud_arc.py` sirf runner hain.
+Dono ke niyam `hud-playwright-check` skill me hain.
 
 Naya test is file me daalna ho to sahi helper chune — nayi file banane se pehle
 socho, `hud_check_ui.py` UI ke liye hai aur `hud_check_api.py` server ke liye.

@@ -115,8 +115,12 @@ prabh/
   start_prabh.bat    -> supervisor chalao (registry entry nahi, wo Step 3 ke aakhir me)
   ui/index.html, app.js (chat+ws glue), voice_ui.js (mic+speaker)
   ui/hud_base.css, hud_panel.css, hud_left.css, hud_center.css, hud_right.css, hud_bottom.css
+  ui/hud_card.css (KAAM A: confirm card, hud_bottom se nikla), arc.css, arc_layout.css,
+  arc_core.css, arc_bottom.css (KAAM B: Arc theme, sirf `html[data-theme="arc"]` me)
   ui/hud_clock.js, hud_stats.js, hud_activity.js, hud_status.js, hud_orb.js,
-  ui/hud_weather.js, hud_quick.js
+  ui/hud_weather.js, hud_quick.js, hud_prime.js (KAAM 6: load par /hud/stats)
+  ui/arc_config.js, arc_reactor.js, arc_dom.js, arc_live.js, arc_shell.js,
+  arc_wire.js, arc_boot.js, arc_load.js (KAAM B: arc theme, sirf arc par boot)
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
@@ -700,7 +704,6 @@ endpoint mat likho.
   default **pakadta** hai (`test_speed_fix.py` me 0.9 s). Value badal ke us
   test ko update karna **hisab me aata hai**, naya fail nahi — warna "6 purane
   fail waise hi" wali baat galat ho jaati hai.
-
 ### 8.1.6 OVERNIGHT (13 Oct 2026) — TEST LOG, DEFAULT-OFF, TAIL GUARD, INJECTION
 
 Ye chaar niyam raat ke kaam se aaye. Chaaron ka ek hi kaaran hai: **kuch
@@ -745,6 +748,30 @@ chhupa kar chalne wala code ya test chup-chaap galat faisla de deta hai.**
   banao, `app.js` ko na badaao. Aur **split ke baad `if __name__ ==
   "__main__"` runner check karo**: ek baar split script ne runner hata diya
   tha aur test chup-chaap *chalta hi nahi* tha (exit 0, koi check nahi).
+
+
+### 8.1.7 HUD THEME + GIT IDENTITY KE PAKKAUREY NIYAM (14 Oct 2026 — KAAM B/D)
+
+- **Naya HUD theme = purana DEFAULT.** `PRABH_HUD_THEME` (`config_hud.hud_theme()`,
+  default `"neon"`). Nayi look `html[data-theme="arc"]` ke **andar** hi likho —
+  default HUD ka ek pixel bhi na hile. `?theme=` sirf `server/app.py` ke
+  `resolve_theme()` se guzre (whitelist: neon/arc, adhoori value = default).
+  Query string seedha attribute me **kabhi** nahi (XSS).
+- **Theme ka har constant Python se.** Rang/number `config_hud.py` me,
+  `fill_html()` meta me bhare, JS `meta.content` se padhe. Value dobara mat
+  likho — do jagah likha matlab dono alag ho jayenge.
+- **SVG `createElementNS` se.** `document.createElement("svg")` HTML-namespace
+  ka hota hai — usme SVG children `getBBox() = 0x0` dete hain (sab invisible,
+  attributes sahi). Test me **tag nahi, geometry** check karo (`getBBox() > 0`).
+- **Dynamic `<script>` par `async = false`.** DOM se banaya `<script>` default
+  async hota hai — load order toot jaata hai. Pehle se chali aa rahi file bhi
+  toot sakti hai (arc_shell `arc_dom` se pehle chala tha).
+- **Git identity: global config hi.** User `Rachit Sharma`, email
+  `339157645+Rachit-Sharma08@users.noreply.github.com`. Kabhi `-c user.name`,
+  `--author`, ya local user config mat lagao. Push se pehle
+  `git log --format="%ae" origin/main..HEAD` — sab wahi email honi chahiye.
+- **`Prabh Dev` / `prabh@local` kahin nahi.** Ye naam/code me nahi aana chahiye.
+  Har kaam me grep karke confirm karo.
 
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
 
