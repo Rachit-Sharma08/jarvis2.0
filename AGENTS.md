@@ -770,8 +770,6 @@ chhupa kar chalne wala code ya test chup-chaap galat faisla de deta hai.**
   `339157645+Rachit-Sharma08@users.noreply.github.com`. Kabhi `-c user.name`,
   `--author`, ya local user config mat lagao. Push se pehle
   `git log --format="%ae" origin/main..HEAD` — sab wahi email honi chahiye.
-- **`Prabh Dev` / `prabh@local` kahin nahi.** Ye naam/code me nahi aana chahiye.
-  Har kaam me grep karke confirm karo.
 
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
 
