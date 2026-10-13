@@ -64,6 +64,12 @@ from config_hud import (  # noqa: E402
     WEATHER_TIMEOUT_SECONDS, WEATHER_URL, hud_theme, quick_by_id, quick_ids,
     temp_percent, weather_text,
 )
+# ---- Computer vision (15-Oct) — owner pehchan, DEFAULT OFF ----
+from config_vision import (  # noqa: E402
+    CAMERA_HEIGHT, CAMERA_INDEX, CAMERA_WIDTH, ENROLL_SAMPLES, NEEDS_CAMERA,
+    NEEDS_ENROLL, NOT_OWNER, TOO_FAST, VISION_ENABLED, VISION_THRESHOLD,
+    state as vision_state,
+)
 from config_desktop import (  # noqa: E402
     AUTOSTART_NAME, AUTOSTART_RUN_KEY, AUTOSTART_SCRIPT, BASE_DIR,
     BROWSER_CANDIDATES, DATA_DIR, EXIT_ALREADY_RUNNING, EXIT_NO_TRAY, EXIT_QUIT,

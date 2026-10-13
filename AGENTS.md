@@ -835,6 +835,17 @@ tak jaata hai — teeno **overlap** karte hain. Gate ka sahi number sirf **asli
 mic par measure** karke decide hoga (NIYAM: main asli mic nahi chalaunga).
 Abhi ke faisal ko `tests/test_wake_gain.py` pin karta hai.
 
+- **⚠️ `config_*.py` KABHI `log_setup` IMPORT MAT KARO.** `log_setup.py`
+  khud `from config import LOG_DIR, LOG_FILE` karta hai, aur `config.py`
+  me har `config_*.py` aata hai — to `config -> config_vision -> log_setup ->
+  config` **circular** ho jaata hai aur `get_logger` "partially initialized
+  module" error deta hai. Isi wajah se raat me **`test_pool`, `test_probe`,
+  `test_stt_guard` teen ek saath toote** — aur wajah dikhne me 5 minute lage
+  kyunki error app ke config par tha, vision par nahi. Har baar naya
+  `config_*.py` bana to ye pehle check karo: **kya ye `log_setup` (ya koi
+  bhi jo `config` import karta ho) import kar raha hai? Nahi karna chahiye.**
+  `config.py` ka apna import bhi cyclic mat banao.
+
 **Ye raat ka sabse bada seekha:** toota hua test **production ki galti
 nahi, apni purani soch ki galti** ho sakta hai. Test padho — phir decide
 karo production badalna hai ya test. Har baar production "theek hai" bolna

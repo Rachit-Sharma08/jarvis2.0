@@ -17,6 +17,7 @@ from desktop import sleep as sleep_mod
 from desktop.state import STATE
 from gatekeeper import keeper
 from log_setup import get_logger
+from vision import gate as vision_gate
 from wake import command
 from wake import worker as wake_worker
 
@@ -47,8 +48,15 @@ def on_tools_change(on: bool, _app=None) -> None:
 def allowed() -> tuple:
     """Command (Step 2c) chalega ya nahi. -> (bool, reason).
 
-    Do pakkaure: **mic MUTE** aur **PC lock**. Dono me na recording hoti hai na
-    koi awaaz — chup-chaap kuch nahi, sirf `logs/prabh.log` me ek line.
+    **Teen** pakkaure, is hi tarah se: **mic MUTE**, **PC lock**, aur
+    **vision (owner ki shakal)**. Pehle do me na recording hoti hai na koi
+    awaaz. Teesra camera se ek frame leta hai — par sirf tab jab
+    `PRABH_VISION=1`, jo **default 0** hai. Default par ye ek dict lookup
+    karke wapas aa jaata hai: camera kabhi initialize hi nahi hota.
+
+    Vision ka apna guard `vision/gate.py` me hai (fail-safe = DENY, sahi
+    chhode jaye to `ERROR` = deny). Ye sirf usko bhejta hai — faisla wahin
+    hota hai, taaki vision ka logic `desktop/` me na phile.
 
     Ye `wake/command.py` me `desktop/` ka import nahi karwata — wake module ko
     halka rakhne ke liye faisla yahan se callback ke roop me bheja jaata hai."""
@@ -56,6 +64,9 @@ def allowed() -> tuple:
         return False, "mic mute hai"
     if lockwatch.is_locked():
         return False, "PC lock hai"
+    ok, reason = vision_gate.check()
+    if not ok:
+        return False, reason
     return True, ""
 
 

@@ -152,7 +152,11 @@ PROTECTED_FOLDER_NAMES = (
     "program files (x86)", "programdata", "recovery", "boot", "driver",
     "$recycle.bin", "system volume information",
 )
-SECRET_FILE_NAMES = (".env", ".env.local", "credentials", "secrets.json", "id_rsa", "id_ed25519")
+SECRET_FILE_NAMES = (".env", ".env.local", "credentials", "secrets.json", "id_rsa", "id_ed25519",
+                     # 15-Oct: face embedding (biometric data). Ye koi LLM/tool
+                     # nahi padh sakta — bilkul `.env` jaisa. `data/` already
+                     # gitignored hai, par tool se padhna alag baat hai.
+                     "owner_face.npz")
 
 # Kill switch. Default **ON** (user ka faisla, 4-Oct) — app start hote hi tools
 # khule. `.env` me `PRABH_TOOLS_ON=0` se wapas default OFF kar sakta hai.
