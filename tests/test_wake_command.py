@@ -45,7 +45,8 @@ def test_happy_path():
     show("run: poora flow — 'Ji, boliye' -> jawab ki awaaz")
     got, said, hub, engine = talk()
     check("result ok", got, "ok")
-    check("pehla shabd ACK", said.calls[0], config.ACK_ON_WAKE)
+    # `ACK_ON_WAKE` 5 phrases ki tuple hai; har baar `random.choice` se ek.
+    check("pehla shabd ACK", said.calls[0] in config.ACK_ON_WAKE, True)
     truthy("brain ko command gayi", engine.calls)
     check("brain ko wahi text mila", engine.calls[0][0], "aaj ka din kya hai")
     check("rid 'voice' se shuru", engine.calls[0][1].startswith("voice"), True)
@@ -84,19 +85,46 @@ def test_allowed_crash_is_safe():
     check("kuch nahi bola", said.calls, [])
 
 
-def test_not_heard():
-    show("run: kuch suna hi nahi -> 'Samajh nahi aaya, dobara boliye'")
+def _not_heard_run(beep):
+    """`command.run` not-heard tak — beep flag set karke. (said, got) deta hai."""
     from tests.wakehelp import FakeMic
 
     said, hub = Spy(1), hub_spy()
     with patch(config, "COMMAND_WARMUP_SECONDS", 0), \
+            patch(config, "ACK_BEEP", beep), \
             patch(listen, "capture", lambda *a, **k: None), \
             patch(playback, "say", said), patch(command, "HUB", hub), \
             patch(ask, "HUB", hub):
         got = command.run(FakeMic([]), threading.Event())
-    check("not-heard", got, "not-heard")
-    check("sirf do line boli", said.calls, [config.ACK_ON_WAKE,
-                                            config.NOT_UNDERSTOOD])
+    return got, said
+
+
+def test_not_heard():
+    show("run: kuch suna hi nahi -> 'Samajh nahi aaya, dobara boliye'")
+    # Dono raaste check karte hain, kyunki boli jaane wali line ki sankhya
+    # `ACK_BEEP` par tiki hai (12-Oct ka tez-kar):
+    #   beep ON  -> awaaz wala ack **nahi** bolta, sirf beep. Sirf 1 line.
+    #   beep OFF -> awaaz wala ack + "Samajh nahi aaya". 2 line.
+    #
+    # Pehle sirf beep-ON (default) check hota tha, is liye beep-OFF ka raasta
+    # kabhi chala hi nahi — matlab `ACK_ON_WAKE` ke 5 phrases me se koi bhi
+    # bol na paaye to bhi koi nahi pakadta tha.
+
+    got, said = _not_heard_run(beep=True)
+    check("beep par: not-heard", got, "not-heard")
+    # Sirf wahi line — ack ki jagah beep baji (playback.beep, `say` nahi).
+    check("beep par: sirf 1 line boli", len(said.calls), 1)
+    check("beep par: wahi line NOT_UNDERSTOOD",
+          said.calls[0], config.NOT_UNDERSTOOD)
+
+    got, said = _not_heard_run(beep=False)
+    check("beep band par: not-heard", got, "not-heard")
+    # `ACK_ON_WAKE` tuple hai, har baar me se ek random — `==` nahi, `in`.
+    check("beep band par: do line boli", len(said.calls), 2)
+    check("beep band par: pehli valid ack",
+          said.calls[0] in config.ACK_ON_WAKE, True)
+    check("beep band par: doosri NOT_UNDERSTOOD",
+          said.calls[1], config.NOT_UNDERSTOOD)
 
 
 def test_stt_rejected():

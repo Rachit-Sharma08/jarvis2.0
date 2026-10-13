@@ -41,39 +41,6 @@ WAKE_MODEL_ALT_DIR = str(MODEL_DIR / "vosk-model-small-hi-0.22")
 WAKE_WORDS = wake_words()
 WAKE_GRAMMAR = wake_grammar()
 
-# ---- audio ----
-SAMPLE_RATE = 16000          # Vosk isko hi maangta hai (16 kHz mono)
-BLOCK_MS = 30                # 30 ms ka chunk â€” Vosk ke liye ideal
-CHANNELS = 1
-INPUT_DEVICE = os.getenv("PRABH_WAKE_MIC", "").strip() or None
-# 5-Oct ka sabse bada bug: **MME** ka mic kachra deta tha (peak -19..-52 dB, Vosk
-# `"hey"`/`"huh"` sunta tha, 0 jarvis-hit). **WASAPI** par peak -7.6 dB aur wahi
-# grammar `"hello jarvis"` pakad leti thi. Is liye mic WASAPI se khulta hai.
-# Device number `PRABH_WAKE_MIC` se diya ho to wo pehle (user ka faisla).
-INPUT_HOSTAPI = os.getenv("PRABH_WAKE_MIC_HOSTAPI", "WASAPI").strip().upper()
-
-# Energy VAD. **5-Oct ka doosra asli bug yahin tha**: mic WASAPI se theek khul
-# raha tha, lekin door/dheere bolne par chunk ka RMS sirf **0.0055** hota tha,
-# jabki threshold 0.010 tha â€” 90 s me 3003 chunk me se sirf **31** chunk Vosk
-# tak pahuncha aur `finals=0` raha. Mic ki khamoshi 0.0000-0.0026 hai (fan/hawa),
-# aur paas bolne par RMS 0.023 (peak 0.81) â€” wahi audio Vosk ne "hello jarvis"
-# pehchan liya. Is liye threshold beech me: **0.004**.
-# Fan ka shor 0.0026 se upar nahi jaata, to VAD band nahi hota.
-# 4-Oct: 0.012 -> 0.010 -> 5-Oct: **0.004**. `.env` ke `PRABH_VAD` se badalte ho.
-VAD_THRESHOLD = float(os.getenv("PRABH_VAD", "0.0075"))
-VAD_SILENCE_BLOCKS = 12      # ~0.36 s khamoshi = VAD ke baad band
-VAD_HANGOVER_BLOCKS = 30     # ~0.9 s â€” VAD ke dauraan awaaz mat kaato
-
-# ---- digital gain (5-Oct ka teesra bug) --------------------------------------
-# Level par 100x ka farak tha: door/dheere bolne par RMS **0.0014**, paas-zor
-# bolne par **0.16** (peak 0.99). Wahi audio gain se theek hua â€” 8x par `hello`
-# + `jarvis` dono finals me aa gaye. Ye `wake/pcm.py` ka `AutoGain` hai jo
-# sirf **awaaz** par lagta hai, khamoshi par nahi (warna VAD hamesha "bol raha
-# hai" bolta aur battery jaati).
-# `.env`: `PRABH_WAKE_GAIN=auto` (default) | koi number (fixed gain) | `0`/`off`
-INPUT_GAIN = os.getenv("PRABH_WAKE_GAIN", "auto").strip().lower()
-INPUT_GAIN_TARGET = float(os.getenv("PRABH_WAKE_GAIN_TARGET", "0.12"))
-INPUT_GAIN_MAX = float(os.getenv("PRABH_WAKE_GAIN_MAX", "12"))
 
 # ---- battery ka pakkaura ----
 # Vosk ko **har** chunk dena = 3.9% CPU chalu, chahe koi na bol (battery jaati
@@ -147,11 +114,6 @@ PLAYBACK_MUTE_MIC = True
 # `Session._loop` wahi check karta hai.
 PLAYBACK_TAIL_GUARD_SECONDS = float(os.getenv("PRABH_TAIL_GUARD", "0.4") or 0.4)
 
-# ---- beep ack (12-Oct) ------------------------------------------------------
-# "Ji, boliye" ~5 s leti thi (ElevenLabs 401 + edge + speaker), aur uske baad ka
-# 1 s warmup command phenk deta tha. Ab beep + turant capture; `=0` par purana.
-ACK_BEEP = os.getenv("PRABH_WAKE_ACK_BEEP", "1").strip().lower() not in ("0", "false", "no", "off")
-ACK_BEEP_HZ, ACK_BEEP_MS, ACK_BEEP_DROP_SECONDS = 880, 120, 0.2
 
 # ---- wake debug (4-Oct, doosra command nahi sunta tha) ----------------------
 # `PRABH_WAKE_DEBUG=1` se har 3 second ek line: kitne chunk aaye, kitne Vosk
@@ -161,36 +123,6 @@ ACK_BEEP_HZ, ACK_BEEP_MS, ACK_BEEP_DROP_SECONDS = 880, 120, 0.2
 WAKE_DEBUG = os.getenv("PRABH_WAKE_DEBUG", "0") not in ("0", "", "no", "false")
 WAKE_DEBUG_SECONDS = 3.0
 
-# "Ji, boliye" bolne se **pehle** itni der suno (4-Oct). Agar user is dauraan
-# bol hi raha hai to ack chhod do â€” warna hamari awaaz uske upar chadh jaati
-# hai, command ka pehla shabd kat-ta hai aur use lagta hai "sun nahi pa raha".
-# Isi 0.18 s ka kaam hai: mic settle + bolne ki pehli awaaz pakadna. Nahi mila
-# to normal raasta (ack + 1 s warm-up). `.env` ke `PRABH_ACK_PEEK` se.
-COMMAND_ACK_PEEK_SECONDS = float(os.getenv("PRABH_ACK_PEEK", "0.18"))
-
-# ---- wake ke jawab ----
-# Ye chaaron line sirf `wake/command.py` bolti hai. UI me text nahi â€” awaaz.
-ACK_ON_WAKE = ("Ji, boliye.", "On it.", "Got it.", "Right away.", "Working on it.")
-NOT_HEARD = "Kuch sun nahi aaya. Dobara boliye."
-# Awaaz saaf nahi aayi: kuch bola hi nahi, bahut chhota bola, ya STT guard ne
-# ("Thank you." jaisa) reject kar diya. TEENO ka jawab ek hi line.
-NOT_UNDERSTOOD = "Samajh nahi aaya, dobara boliye."
-# Brain ya net fail. Chhota rakha hai â€” asli wajah log me hai.
-BRAIN_FAILED = "Abhi jawab nahi mil pa raha."
-# ASK wala tool: card screen par aayega. **Awaaz se Allow kabhi nahi** â€” sirf
-# screen ka button. Ye line sirf itni batati hai ki screen dekh lo.
-CONFIRM_VOICE = "Screen par confirm kijiye."
-STOP_WORD = ("ruk jao", "band karo", "shukriya", "thanks", "stop")
-
-# ---- "so jao" (battery) ----
-# Mic sunna **kabhi band nahi** hota (warna "Jarvis" sunai hi nahi dega). Is liye
-# battery ka asal nuksan hataane ke liye bhaari sab (HUD, stats pump, browser)
-# band karna padta hai â€” sirf mic + gate chalta reheta hai. Puri tarah band karna
-# tray ke Quit se (CPU 0, phir "Jarvis" kaam nahi karega).
-SLEEP_WORDS = ("so jao", "so jaiye", "sone jao", "soye raho", "soye rahiye",
-               "so jaa", "band ho jao", "soye jao")
-SLEEP_ACK = "So gaya. Jarvis boliye."      # chhota â€” TTS + playback = waqt
-SLEEP_FROM_TRAY = "SO JAAO"                # tray ka item
 
 # ---- WhatsApp call (Step 2, Option A) ----------------------------------------
 # Ye char constant ab `config_tools.py` me hain (WhatsApp Web ek tool hai) â€”
@@ -226,3 +158,33 @@ def wake_available() -> bool:
 # Yahan se re-export, is liye config.describe aur config_wake.describe dono
 # pehle jaise chalte hain.
 from config_describe import config_stt_name, describe  # noqa: E402,F401
+
+# ---- "Jarvis kya bolta hai" (14-Oct: file 200 cross) ----------------------
+# Spoken lines, ack beep aur ack peek ab `config_lines.py` me hain. Yahan se
+# **re-export** — is liye `config.X` aur `config_wake.X` dono pehle jaise
+# chalte hain (isi file me `config_describe` ka bhi yahi kiya gaya hai).
+#
+# Model ki functions (`model_path`/`wake_available`) jaan-boojh kar yahin
+# rakhe gaye hain: `test_wake.py` `config_wake.WAKE_MODEL_DIR` **mutate** karta
+# hai aur phir `model_path()` se usi module ka global padha jaata hai. Kahin
+# aur shift karte to wo mutation bekaar hota aur "model na ho" wala check
+# chup-chaap GALAT pass hota.
+from config_lines import (  # noqa: E402,F401
+    ACK_BEEP, ACK_BEEP_DROP_SECONDS, ACK_BEEP_HZ, ACK_BEEP_MS,
+    ACK_ON_WAKE, BRAIN_FAILED, COMMAND_ACK_PEEK_SECONDS, CONFIRM_VOICE,
+    NOT_HEARD, NOT_UNDERSTOOD, SLEEP_ACK, SLEEP_FROM_TRAY, SLEEP_WORDS,
+    STOP_WORD,
+)
+
+# ---- audio (14-Oct: file 200 cross) ---------------------------------------
+# Sample rate, device, VAD aur digital gain ab `config_audio.py` me hain.
+# Yahan se **re-export** — is liye `config.VAD_THRESHOLD` aur
+# `config_wake.VAD_THRESHOLD` dono pehle jaise chalte hain.
+#
+# Ye hissa is liye nikala ki 200 cross ho raha tha; koi test inhe source-text
+# se nahi dhoondta, is liye koi test reference shift nahi hua.
+from config_audio import (  # noqa: E402,F401
+    BLOCK_MS, CHANNELS, INPUT_DEVICE, INPUT_GAIN, INPUT_GAIN_MAX,
+    INPUT_GAIN_TARGET, INPUT_HOSTAPI, SAMPLE_RATE, VAD_HANGOVER_BLOCKS,
+    VAD_SILENCE_BLOCKS, VAD_THRESHOLD,
+)

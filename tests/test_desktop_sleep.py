@@ -120,7 +120,9 @@ def test_command_sleep_skips_brain():
     got, said, _hub, engine = talk(heard="jarvis so jao", on_sleep=lambda: None)
     check("command.run = sleep", got, "sleep")
     check("brain chhua hi nahi", engine.calls, [])
-    check("pehle ack bola", said.calls[0], config.ACK_ON_WAKE)
+    # `ACK_ON_WAKE` tuple hai, har baar me se ek random boli jaati hai — is liye
+    # `==` nahi, `in` sahi pakkaura hai.
+    check("pehle ack bola", said.calls[0] in config.ACK_ON_WAKE, True)
     truthy("sleep ack bhi bola", config.SLEEP_ACK in said.calls)
 
 

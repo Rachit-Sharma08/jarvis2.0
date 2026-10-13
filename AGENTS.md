@@ -71,7 +71,11 @@ prabh/
   personas/jarvis.txt, personas/prabh.txt
   config_desktop.py   -> tray rang, HUD size/path, crash backoff, exit codes, mic/lock helpers,
                         HUD_HOTKEY + HUD_SHORTCUT_NAME
-  config_wake.py      -> wake word, VAD, command window, WhatsApp call ke constants
+  config_wake.py      -> wake word, command window, hot window, mic retry, tail guard
+  config_lines.py     -> jo Jarvis BOLTA hai: ACK_ON_WAKE, NOT_*, BRAIN_FAILED, SLEEP_*,
+                        ack beep, ack peek (config_wake se re-export)
+  config_audio.py     -> SAMPLE_RATE/BLOCK_MS, INPUT_DEVICE/HOSTAPI, VAD_*, INPUT_GAIN_*
+                        (config_wake se re-export)
   config_tray.py      -> tray watchdog ki timing (taskbar me icon dikhta hai ya ^ me)
   config_name.py      -> assistant ka naam (ASSISTANT_NAME/DISPLAY_NAME) + wake shabd
                          (+ purane "sunday" shabd LEGACY_WAKE_PHRASES me, default band)
@@ -89,6 +93,8 @@ prabh/
   server/weather.py        -> Open-Meteo fetch + 15 min cache + WMO labels
   voice/stt.py + stt_guard.py, voice/tts.py + tts_female.py + tts_*.py
   desktop/launcher.py -> app/tray/hud_window/single/state/micperm/lockwatch/startup.py
+  desktop/app_loop.py -> SundayApp ka steady-state mixin: mic `_preflight` + main `_wait`
+                        (200-line niyam; source-scan protected hisse app.py me hi rahe)
   desktop/actions.py  -> tray ke 5 button ka faisla (mute/HUD/TOOLS/restart/quit)
   desktop/callbacks.py -> app ke 4 callback ka matlab (lock/tools/wake/hotkey), app.py se alag
   desktop/startup.py  -> startup ki 4 line + say_hud()/say_wake() (line yahin banti hai)
@@ -124,7 +130,8 @@ prabh/
   ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
   ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (52 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py — poori list TESTS.md me)
+  tests/ (52 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py
+          + arclib.py + arc_probe.py + hudserve.py + pcmhelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
   docs/ROADMAP_STATUS.md  → OWNER ka roadmap-vs-reality + free-only plan (S1..S11). Roadmap
                             planning se pehle iska relevant section padho; naya task bhi wahin likho.
@@ -770,6 +777,68 @@ chhupa kar chalne wala code ya test chup-chaap galat faisla de deta hai.**
   `339157645+Rachit-Sharma08@users.noreply.github.com`. Kabhi `-c user.name`,
   `--author`, ya local user config mat lagao. Push se pehle
   `git log --format="%ae" origin/main..HEAD` — sab wahi email honi chahiye.
+
+### 8.1.8 RAAT KE 6 FAIL — SPLIT KE TRAP (15 Oct 2026)
+
+Ye chaar niyam 6 purane fail theek karte waqt mile. Chaaron ka ek hi kaaran
+hai: **test production ko nahi, apni purani soch ko pakadta hai.**
+
+- **⚠️ SOURCE-SCAN TEST PEHLE PADH, PHIR SPLIT KAR.** `desktop/app.py` aur
+  `config_wake.py` ke test in files ka **source text** dhoondte hain —
+  `config.STARTUP_SERVER`, `startup.say_hud(`, `start_retry(`,
+  `self.hotkey.start()`, `PLAYBACK_MUTE_MIC = True`, `PRABH_HOT_WINDOW`.
+  **Split se pehle `grep` karo** ki kaunsa method/string protected hai, aur
+  sirf **unprotected** hisse hi bahar nikalo. Ye 5 string check nahi, **7 test**
+  file hain jo inhe dhoondte hain (`test_desktop`, `_guard`, `_shortcut`,
+  `_prewarm`, `_hearing_audit`, `_hot_window`, `_hot_window_helpers`).
+- **⚠️ JIS TEST NE CONSTANT/FUNCTION MUTATE KI HAI, WO BAHAR MAT NIKAAL.**
+  `test_wake.py` `config_wake.WAKE_MODEL_DIR` **badalta** hai aur phir
+  `model_path()` se check karta hai — is liye `model_path`/`wake_available`
+  usi module me **zaroori** rahe, warna mutation bekaar hota aur "model na ho"
+  wala check **chup-chaap GALAT pass** hota. Waise hi `test_wake_levels.py`
+  `COMMAND_END_SILENCE_SECONDS` ko `importlib.reload(config_wake)` se check
+  karta hai — woh constant nikalne par reload dusre module ko reload **nahi**
+  karta, to value purani rahegi aur test **genuinely** fail hoga.
+- **⚠️ `import *` RE-EXPORT ME KISI NAAM KO CHHODNA MAT.** Naya `config_lines.py`
+  bana kar constants move kiye to `config_wake.py` ko **`from config_lines
+  import (...)` se poora list** dena hoga, warna `config.py` (jo `config_wake`
+  se import karta hai) khud toot jaata hai. Naya test `tests/test_config_parts.py`
+  ye rohta hai: production ka **har** `config.X` runtime par resolve hona
+  chahiye. Is test ka pehla version `ast.Assign` se dekh raha tha —
+  **`config.py` me naam `import` se aate hain, `X = ...` se nahi**, is liye
+  6 part ke har constant "missing" report ho gaye jabki runtime par sab theek
+  the. **Import kiye naam dekhne ke liye `getattr` chahiye, AST nahi.**
+- **⚠️ DEFAULT BADALNE PAR SIRF `want` MAT BADLO — DOOSRE KA RAASTA BHI CHECK
+  KARO.** Default `"neon"` → `"arc"` karte waqt `test_hud_bar.py` ka poora
+  subject hi neon ke selectors (`.bottombar`, `.remind-pill`, `.qlbl`,
+  `.composer`, `.brainwarn`) hai. Bina pin ke wo **chup-chaap fail** hota —
+  kyunki uske saare selectors arc me maujood hi nahi rehte. Is liye
+  `hudserve.FakeHud(theme="neon")` banaya. Naya pakkaura: `?theme=neon` aur
+  `?theme=arc` **dono** khol kar test karo, taaki flip se pata chale ki purana
+  look phat se toota ya nahi.
+
+**Bonus — `ACK_ON_WAKE` ka asli galti ka chhaka (14-Oct).** Wake command ek
+**random phrase** bolta hai (`random.choice` 5 me se), par 3 test poore
+**tuple** se compare kar rahe the (`== config.ACK_ON_WAKE`). Production theek
+tha, test purana tha — teeno theek hue. Par achha: line me likha tha
+`random.choice(x) if hasattr(x,"__iter__") and not isinstance(x,str) else x`
+— production apne hi config ka type check kar raha tha. **Aisa guard
+production me mat likho**; wo ek toote test ko satisfy karne ke liye hota
+hai, sahi hone ke liye nahi. `ACK_ON_WAKE` hamesha tuple hai.
+
+**Ek aur sach jo is raat nikla — `RmsGain` ka DEAD ZONE.** `wake/pcm.py` ka
+`speech_gate` 0.0015 hai; envelope apne input RMS par **atanakta** hai. Is
+liye **0.0015 se neeche ki koi awaaz kabhi gain nahi paati** — 4000 block baad
+bhi (math-check: `env=0.001400 < 0.0015`). `config_audio.py` ke comments me
+dheemi awaaz **0.0014** aur **0.0055** dono hain, aur fan ka shor **0.0026**
+tak jaata hai — teeno **overlap** karte hain. Gate ka sahi number sirf **asli
+mic par measure** karke decide hoga (NIYAM: main asli mic nahi chalaunga).
+Abhi ke faisal ko `tests/test_wake_gain.py` pin karta hai.
+
+**Ye raat ka sabse bada seekha:** toota hua test **production ki galti
+nahi, apni purani soch ki galti** ho sakta hai. Test padho — phir decide
+karo production badalna hai ya test. Har baar production "theek hai" bolna
+galat hota hai (waise bhi raat me do jagah aisa hi hua).
 
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
 

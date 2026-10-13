@@ -9,6 +9,12 @@ hai. Yahan crash ka Exit code `config.EXIT_RESTART` se jaata hai.
 
 Yahan sirf **kab kya chalta hai** likha hai. Callback ke andar ka faisla
 `desktop/callbacks.py` me hai, haalaat `desktop/state.py` me.
+
+`_preflight` aur `_wait` (mic ka haal + main loop) `desktop/app_loop.py` me
+hain — 200-line niyam ke liye. Wo sirf wahi hisse hain jo kisi test ke
+source-scan me nahi hain; baaki (startup lines, `start_retry`, hotkey,
+callbacks) jaan-boojh kar yahin rakhe gaye hain, warna `test_desktop*` ke
+wo checks chup-chaap fail ho jaate.
 """
 
 import sys
@@ -20,6 +26,7 @@ import uvicorn
 import config
 from core import sysstats
 from desktop import actions as actions_mod
+from desktop import app_loop
 from desktop import callbacks
 from desktop import hud_window, hotkey as hotkey_mod
 from desktop import lockwatch, micperm, single as single_mod, startup, tray_watch
@@ -27,14 +34,13 @@ from desktop.state import STATE
 from desktop.tray import Tray
 from gatekeeper import keeper
 from log_setup import get_logger
-from server import hud_reminders
 from server.hub import HUB
 from wake import ask as wake_ask, worker as wake_worker
 
 log = get_logger("app")
 
 
-class SundayApp:   # naam Step 1 me user-facing hua, class id wahi rakha
+class SundayApp(app_loop.AppLoop):   # naam Step 1 me user-facing hua, class id wahi rakha
     def __init__(self, open_hud_at_start: bool = False):
         self.open_hud_at_start = bool(open_hud_at_start)
         self.hud = hud_window.HudWindow()
@@ -82,15 +88,7 @@ class SundayApp:   # naam Step 1 me user-facing hua, class id wahi rakha
     def tray_actions(self) -> actions_mod.Actions:
         return self.tray.actions
 
-    # ---- hisse ----
-    def _preflight(self) -> None:
-        allowed, reason = micperm.status(sys.executable)
-        if not allowed:
-            STATE.set_mic(config.TRAY_ERROR, micperm.explain(reason))
-            log.error("mic band hai: %s", reason)
-        else:
-            log.info("mic permission: %s", reason or "theek hai")
-
+    # ---- hisse (`_preflight` + `_wait` `desktop/app_loop.py` me) ----
     def _start_server(self) -> None:
         from server.app import app as fastapi_app      # import late: config ready ho
 
@@ -155,20 +153,6 @@ class SundayApp:   # naam Step 1 me user-facing hua, class id wahi rakha
         startup.say_wake(started, "" if started else micperm.explain(reason))
         wake_ask.prewarm_async()
         return started
-
-    def _wait(self) -> None:
-        last = STATE.version()
-        ticks = 0
-        while not self._stop.wait(0.5):
-            ticks += 1
-            if STATE.version() != last:      # state badli + tray icon refresh
-                last = STATE.version()
-                self.tray.refresh()
-            if ticks % 10 == 0:  # ~5s
-                try:
-                    hud_reminders.broadcast()
-                except Exception:
-                    pass
 
     def _shutdown(self) -> None:
         log.info("band ho raha hai (code=%s)", self._code)

@@ -105,7 +105,11 @@ def test_ack_still_spoken_when_silent():
     got, said, _hub, _engine = talk(heard="kya mausam hai",
                                     mic_chunks=[quiet(1)] * 200)
     check("command chala", got, "ok")
-    check("ack bola", said.calls[0], config.ACK_ON_WAKE)
+    # `ACK_ON_WAKE` 5 phrases ki **tuple** hai aur har baar me se ek boli jaati
+    # hai (`random.choice`) — to `== config.ACK_ON_WAKE` kabhi sahi nahi ho
+    # sakta. `in` se check hota hai ki koi bhi **valid** ack boli gayi.
+    # (Seed nahi lagate: koi bhi phrase aa sakti hai, aur koi ek fix nahi.)
+    check("ack bola (tuple me se ek)", said.calls[0] in config.ACK_ON_WAKE, True)
 
 
 def test_answer_spoken_short_but_hud_full():

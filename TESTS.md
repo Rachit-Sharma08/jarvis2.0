@@ -113,6 +113,17 @@ Ek-ek karke:
 | `test_hud_stats_load.py` | **KAAM 6 — SYSTEM panel `--` na rahe** — `/hud/stats` 200 + `cpu`/`ram` **kabhi `None` nahi** (yaani `--` data ki kami nahi, call na hone ki kami thi); battery `percent=None` par UI PLUG; bina token 401; naya `ui/hud_prime.js` load par `/hud/stats` maarta hai + token bhejta hai + `index.html` me tag; weather **double** fetch nahi; WS raasta bhi bacha; `textContent` (innerHTML nahi); pump **pehle** sota hai (ye `--` ki wajah tha). **Browser nahi, port 8000 par kuch nahi** |
 | `test_hud_bar.py` | **KAAM A — bottom bar (Playwright headless, nakli server)** — 1366x768 + 1280x720 + 1920x1080 + 1200x688 + 1024x700 par bar ka cut nahi, koi element clip nahi, 13 overlap pair me koi overlap nahi, hud overflow nahi. Bug-injection: `.remind-pill` par absolute wapas daalne se 5 check fail. Screenshot `%TEMP%` me, repo me nahi |
 | `test_hud_arc.py` | **KAAM B — Arc theme (Playwright headless, nakli server)** — 1366x768 + 1920x1080 par clip/overflow nahi, input bar poori, reactor ka **asli geometry** (`getBBox()` > 0 — namespace bug yahin pakda), 3 state label, Hindi typewriter, default neela regress nahi, `?theme=` whitelist (adhoori value reject, bada `ARC` chalta hai). Bug-injection: namespace bug wapas daalne par 8 clean FAIL (crash nahi). Screenshot `%TEMP%` me |
+| `test_config_parts.py` | **config ka hissa poora hai ya nahi** — production me jo bhi `config.X` maangta hai wo **runtime** par resolve hona chahiye (`AttributeError` ka pakkaura); `config.py` jo `config_*.py` import karta hai uski file disk par; `config_lines`/`config_audio` ke har constant `config_wake` **aur** `config` dono me. Bug-injection: naya constant bana kar use ek production file me maanga → 2 FAIL, naam + jagah dono dikha. Sirf source padhta hai, koi module import nahi |
+| `test_wake_gain.py` | **Wake ka digital gain (14-Oct split)** — bina mic ke: khamoshi par gain 1 rahe (battery); **gate ke neeche (0.0015) ki awaaz 2000 block baad bhi gain na le** (DEAD ZONE pin); gate se upar (0.0055) dheemi awaaz par gain uthe; zor par gain 1.2 se neeche + clip nahi; do level comparable; `PRABH_WAKE_GAIN` ke teen raaste (auto/number/off). `test_wake_resample.py` se nikal kar alag kiya (200 cross) |
+
+### 14-Oct raat: 6 purane fail + 2 nayi suite
+
+| Test | Purani wajah | Kya hua |
+|---|---|---|
+| `test_desktop.py`, `test_desktop_shortcut.py` | `desktop/app.py` **207** line (limit 200) | `_preflight` + `_wait` → naya `desktop/app_loop.py` (mixin). **Sirf unprotected hisse** — 7 test in files ka source-text dhoondte hain |
+| `test_desktop.py` (same) | `config_wake.py` **228** line | Do hisse: `config_lines.py` (jo bolta hai) + `config_audio.py` (VAD/gain). Re-export poora |
+| `test_wake_ack.py`, `test_wake_command.py`, `test_desktop_sleep.py` | `== config.ACK_ON_WAKE` — par production 5 me se **ek random** bolta hai | Test ne `in` par shift hua. Production me us type-check line ko bhi hata diya |
+| `test_wake_resample.py` | Gain test RMS **0.0014** maanta tha, jo gate (0.0015) se **kam** hai — yaani kabhi gain nahi hota | Gain test nayi file me; dead zone ab **pin** hai. Asli masla: gate ka number asli mic par measure karna hoga |
 
 ### `test_desktop*.py` ke helpers
 
@@ -199,6 +210,32 @@ server jaisa (lowercase + whitelist).
 `hudcheck_bar.py` (KAAM A) aur `arccheck.py` + `arc_probe.py` (KAAM B) me
 asli checks hain; `test_hud_bar.py` / `test_hud_arc.py` sirf runner hain.
 Dono ke niyam `hud-playwright-check` skill me hain.
+
+**14-Oct ke do naye helpers:**
+
+- `tests/arclib.py` — `check` / `FAILED` / `wait_ready` / `set_state` /
+  `visible_css` / `shots_dir`. Ye is liye alag hai ki `arccheck.py` (theme) aur
+  `arc_layout.py` (geometry) dono ko ye chahiye — dono ek doosre se import
+  karte to **circular import**. `FAILED` ek list object hai aur teenon me wahi
+  hai, is liye runner ka `from arccheck import FAILED` sahi chalta hai.
+  **arccheck 200 cross tha to split hua:** `arc_layout.py` = clip/overflow/
+  geometry/state/Hindi (sirf arc), `arccheck.py` = default + `?theme=` whitelist
+  + wiring (dono themes).
+- `tests/pcmhelp.py` — `check` + `FAILED` + `gain_value()`. `test_wake_gain.py`
+  aur `test_wake_resample.py` dono ko ye chahiye; ek jagah likha hai taaki ek ka
+  fail doosre me na dikhe.
+
+**`hudserve.FakeHud(theme=...)` naya option (14-Oct):** `theme="neon"` dene par
+us theme ko pin karta hai (`__exit__` par wapas). `test_hud_bar.py` is liye
+`neon` pin karta hai — uske saare selectors (`.bottombar`, `.remind-pill`,
+`.qlbl`, `.composer`, `.brainwarn`) neon ke hain, arc ke nahi. **Bina pin ke
+default flip karte hi wo chup-chaap fail hota**, kyunki uske selectors maujood
+hi nahi rehte — yahi galti Phase 4 me 8 baar hui thi.
+
+**`hudserve.DEFAULT_THEME` module-level hai aur `filled_html()` use
+call-time par padhta hai** (import par nahi). Test runner use
+`config.hud_theme()` se bharta hai, is liye nakli server **bhi asli default
+serve** karta hai — comment me likha tha "asli values" par code hard-code tha.
 
 Naya test is file me daalna ho to sahi helper chune — nayi file banane se pehle
 socho, `hud_check_ui.py` UI ke liye hai aur `hud_check_api.py` server ke liye.

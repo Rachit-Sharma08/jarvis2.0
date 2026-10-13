@@ -139,7 +139,10 @@ def gatekeeper_uses():
     import ast
 
     used = set()
-    for name in ("command.py", "ask.py"):
+    # `guard.py` bhi (15-Oct): teen pure guard wahan shift hue. Usme abhi
+    # gatekeeper import nahi hai, par baad me koi add kare to ye check us par
+    # chup na ho jaaye — wahi galti jo `ask.py` bhoolne se hui thi.
+    for name in ("command.py", "ask.py", "guard.py"):
         src = (ROOT / "wake" / name).read_text(encoding="utf-8")
         for node in ast.walk(ast.parse(src)):
             if isinstance(node, ast.ImportFrom) and (node.module or "").startswith("gatekeeper"):

@@ -29,8 +29,12 @@ Har stage ka time `core/timing.py` ke `Stopwatch` se ek line me log hota hai:
 `TIME wake_command: TOTAL | ack=.. warmup=.. capture=.. stt=.. brain=.. speak=..`
 
 Mic ke chaar kaam (`drain`/`warmup`/`capture`/`to_text`) `wake/listen.py` me
-aur brain/speaker ka kaam `wake/ask.py` me hai â€” yahan sirf **flow** hai, is liye
+aur brain/speaker ka kaam `wake/ask.py` me hai — yahan sirf **flow** hai, is liye
 do files me se kabhi brain ka raasta dobara mat likhna.
+
+Teen pure guard (`_safe`/`_allowed`/`_is_sleep`) `wake/guard.py` me hain (15-Oct,
+200-line niyam). Yahan se import hote hain, is liye `command._is_sleep(...)`
+purane callers ke liye bhi chalta hai.
 """
 
 import time
@@ -45,39 +49,12 @@ from wake import ask
 from wake import listen
 from wake import phrase as phrase_mod
 
+# `_is_sleep` bhi re-export hota hai jaan-boojh kar — `command._is_sleep(...)`
+# ko do test seedha call karte hain (`test_desktop_sleep`, `test_wake_ack`).
+from wake.guard import _allowed, _is_sleep, _safe   # noqa: F401
+
 log = get_logger("wake_command")
 
-
-def _safe(callback, *args) -> None:
-    """Callback ka crash hamara crash nahi hai (HUD open, busy pill...)."""
-    if callback is None:
-        return
-    try:
-        callback(*args)
-    except Exception as exc:
-        log.warning("callback crash: %s: %s", type(exc).__name__, exc)
-
-
-def _allowed(allowed) -> tuple:
-    """`allowed()` se faisla. Default (koi callback nahi) = sab theek."""
-    if allowed is None:
-        return True, ""
-    try:
-        ok, reason = allowed()
-    except Exception as exc:
-        log.error("allowed() crash: %s: %s", type(exc).__name__, exc)
-        return False, "guard crash"
-    return bool(ok), str(reason or "")
-
-
-def _is_sleep(text: str) -> bool:
-    """'So jao' hai kya? Yahi guard `desktop/sleep.py` me hai â€” `wake/` ko
-    `desktop/` ka import nahi karwana (`tests/test_desktop_sleep.py` dono check
-    karta hai, taaki dono alag na ho jaayein)."""
-    low = (text or "").strip().lower()
-    if not low or len(low.split()) > 4:
-        return False
-    return any(word in low for word in config.SLEEP_WORDS)
 
 
 def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
@@ -130,7 +107,12 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
             listen.drop_seconds(mic, stop, config.ACK_BEEP_DROP_SECONDS)
             watch.stage("warmup", at)
         else:
-            ack = random.choice(config.ACK_ON_WAKE) if hasattr(config.ACK_ON_WAKE, "__iter__") and not isinstance(config.ACK_ON_WAKE, str) else config.ACK_ON_WAKE
+            # 5 alag ack phrases me se ek — har baar wahi "Ji, boliye" sunna robot jaisa
+            # lagta hai. `ACK_ON_WAKE` hamesha **tuple** hai, is liye type check
+            # ki zarurat nahi (pehle ek lambi `hasattr(...)` line thi jo apne hi
+            # config ka type andaza karti thi — toote test ko satisfy karne ke
+            # liye di gayi thi).
+            ack = random.choice(config.ACK_ON_WAKE)
             ask.speak(ack, stop)
             watch.stage("ack", at)
             # 2. Mic baithne do, phir queue khaali karo. Jitna warm-up ack me

@@ -31,11 +31,14 @@ SOURCE_FILES = ("desktop/app.py", "desktop/launcher.py", "desktop/tray.py",
                 "desktop/hud_window.py", "desktop/state.py", "desktop/startup.py",
                 "desktop/actions.py", "desktop/single.py", "desktop/playback.py",
                 "desktop/open_hud.py", "desktop/hotkey.py", "desktop/shortcut.py",
-                "desktop/win_find.py",
+                "desktop/win_find.py", "desktop/app_loop.py",
                 "wake/session.py", "wake/utterance.py", "wake/worker.py",
-                "wake/command.py", "wake/listen.py",
+                "wake/command.py", "wake/listen.py", "wake/guard.py",
                 "config.py", "config_name.py", "config_tools.py",
-                "config_desktop.py", "config_wake.py", "log_setup.py")
+                "config_desktop.py", "config_wake.py", "log_setup.py",
+                # 14-Oct: config_wake.py 200 cross tha -> config_lines.py +
+                # config_audio.py. Naya file banate hi list me daalna zaroori.
+                "config_lines.py", "config_audio.py")
 
 
 def test_config():
