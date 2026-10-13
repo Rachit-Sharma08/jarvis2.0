@@ -29,7 +29,7 @@ UI_JS = ("app.js", "tools.js", "hud_clock.js", "hud_stats.js", "hud_activity.js"
          "hud_status.js", "hud_orb.js", "hud_weather.js", "hud_quick.js",
          "recorder.js", "speaker.js", "voice_ui.js")
 UI_CSS = ("hud_base.css", "hud_panel.css", "hud_left.css", "hud_center.css",
-          "hud_right.css", "hud_bottom.css", "fonts.css")
+          "hud_right.css", "hud_bottom.css", "hud_card.css", "fonts.css")
 
 
 def check(name, got, want):

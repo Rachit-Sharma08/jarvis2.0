@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="/ui/hud_center.css" />
 <link rel="stylesheet" href="/ui/hud_right.css" />
 <link rel="stylesheet" href="/ui/hud_bottom.css" />
+<link rel="stylesheet" href="/ui/hud_card.css" />
 </head>
 <body>
 <div class="gridbg" aria-hidden="true"></div>
@@ -29,7 +30,12 @@
       <h1 class="brand" id="brand">__PRABH_DISPLAY_NAME__</h1>
       <span class="pill st-idle" id="status">â— IDLE</span>
     </div>
-    <div class="tb-mid" aria-hidden="true"><div class="ruler" id="ruler"></div></div>
+    <div class="tb-mid">
+      <div class="ruler" id="ruler" aria-hidden="true"></div>
+      <!-- KAAM A: brainwarn pehle `position: fixed; top: 6px` tha aur topbar
+           par chadh jaata tha. Ab topbar ke apne flow me hai (niche tb-mid). -->
+      <p class="brainwarn" id="brainwarn">__PRABH_BRAIN_WARN__</p>
+    </div>
     <div class="tb-right">
       <span class="pill sys" id="sysstate">SYSTEM â€¦</span>
       <span class="pill desk off" id="deskstate">DESKTOP â€¦</span>
@@ -125,7 +131,15 @@
   </aside>
 
   <!-- ============ BOTTOM BAR ============ -->
-  <footer class="bottombar"><div class="remind-pill" id="remindPill"></div>
+  <!-- KAAM A: .notice/.micflag ab bar ke apne .barhint row me hain. Pehle
+       `position: fixed; bottom: 84px` the aur 1366x768 par left/right
+       column ke panels par chadh jaati thi. -->
+  <footer class="bottombar">
+    <div class="barhint">
+      <div class="remind-pill" id="remindPill"></div>
+      <p class="notice" id="notice"></p>
+      <p class="micflag" id="micflag">MIC ON</p>
+    </div>
     <div class="qgroup" id="qLeft"></div>
     <div class="composer">
       <button class="mic" id="mic" type="button" title="Mic on/off">
@@ -138,10 +152,6 @@
     <div class="qgroup" id="qRight"></div>
   </footer>
 </main>
-
-<p class="notice" id="notice"></p>
-<p class="micflag" id="micflag">MIC ON</p>
-<p class="brainwarn" id="brainwarn">__PRABH_BRAIN_WARN__</p>
 
 <div class="overlay" id="confirmcard" hidden>
   <div class="card">

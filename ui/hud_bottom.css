@@ -4,12 +4,17 @@
 
 .bottombar {
   display: grid;
+  /* Row 1 = hint strip (reminder/notice/micflag), Row 2 = controls.
+     Pehle sirf ek row thi, is liye hint strip ke liye jagah hi nahi thi —
+     wahi 1366x768 par label par text chadh jane ki wajah tha (KAAM A). */
   grid-template-columns: auto 1fr auto;
+  grid-template-rows: auto auto;
   align-items: center;
-  gap: 14px;
-  padding: 8px 2px 2px;
+  gap: 6px 14px;
+  padding: 6px 2px 2px;
   border-top: 1px solid var(--border);
 }
+.bottombar > .qgroup, .bottombar > .composer { grid-row: 2; }
 
 /* ---- quick button groups ---- */
 .qgroup { display: flex; gap: 8px; }
@@ -107,81 +112,35 @@
 }
 #send:hover { background: var(--cyan-bright); }
 
-/* ================= CONFIRM CARD (overlay) ================= */
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 60;
+/* ---- Reminder pill (KAAM A ka fix) ----
+ *
+ * PEHLE: `position: absolute; bottom: 8px` — par `.bottombar` par
+ * `position: relative` NAHI tha. Is liye ye `.hud` (position: relative,
+ * height 100vh) ke against position hota tha, yaani browser viewport ke
+ * bilkul neeche. 1366x768 par ye y=746..760 par tha jabki quick-button
+ * ke label (.qlbl) y=745..754 par — yaani REMINDER TEXT un label par
+ * **chadh** diya tha, aur bar ke apne bottom edge (756) se 4px neeche.
+ * User ko yahi "type-bar neeche se kat rahi hai" dikha.
+ *
+ * AB: ye bar ka apna grid member hai (`.barhint` row), `position: static`.
+ * Is liye overlap ka sawaal hi nahi banta, chahe viewport kitna bhi chhota ho.
+ */
+.barhint {
+  grid-column: 1 / -1;
+  grid-row: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  background: rgba(2, 5, 12, 0.72);
+  gap: 12px;
+  min-height: 0;
 }
-.overlay[hidden] { display: none; }
-
-.card {
-  width: min(560px, 88vw);
-  background: rgba(8, 20, 38, 0.94);
-  border: 1px solid var(--cyan);
-  padding: 20px 22px;
-  box-shadow: 0 0 44px rgba(46, 168, 255, 0.4);
-}
-.card h3 {
-  font-family: var(--font-head);
-  font-size: 15px;
-  letter-spacing: 4px;
-  color: var(--amber);
-  margin-bottom: 12px;
-}
-.cardtool {
-  font-family: var(--font-mono);
-  font-size: 12px;
-  letter-spacing: 2px;
-  color: var(--cyan-bright);
-  margin-bottom: 8px;
-}
-.carddetail {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--ink);
-  background: rgba(0, 0, 0, 0.45);
-  border: 1px solid var(--border);
-  padding: 10px;
-  max-height: 220px;
-  overflow: auto;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-  margin-bottom: 14px;
-}
-.cardrow { display: flex; align-items: center; gap: 10px; }
-.cardrow button {
-  font-family: var(--font-head);
-  font-size: 12px;
-  letter-spacing: 3px;
-  padding: 9px 20px;
-  cursor: pointer;
-  background: rgba(6, 18, 34, 0.8);
-  border: 1px solid var(--border);
-  color: var(--ink);
-}
-#deny { color: #ff9c9c; border-color: rgba(255, 156, 156, 0.5); }
-#allow { color: #5cffb0; border-color: rgba(92, 255, 176, 0.5); }
-.cardrow button:disabled { opacity: 0.4; cursor: wait; }
-.count {
-  margin-left: auto;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: var(--amber);
-}
-
 .remind-pill {
-  position: absolute;
-  left: 20px;
-  bottom: 8px;
   font: 10px/14px var(--font-mono);
   color: var(--cyan-dim);
-  opacity: 0.7;
+  opacity: 0.8;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   display: none;
 }
 .remind-pill.show { display: block; }

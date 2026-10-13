@@ -125,26 +125,56 @@
 .actlist::-webkit-scrollbar-track { background: transparent; }
 .chatlog, .actlist { scrollbar-width: thin; scrollbar-color: var(--cyan-dim) transparent; }
 
-/* ---- Notice / micflag / brainwarn (screen ke upar, flow me nahi) ---- */
-.notice, .micflag, .brainwarn {
-  position: fixed;
-  z-index: 40;
-  margin: 0;
+/* ---- Notice / micflag / brainwarn ----
+ *
+ * KAAM A (14-Oct, Playwright verified): ye teen `position: fixed` overlays
+ * THE. `.notice` aur `.micflag` `bottom: 84px` par the — yaani wahi jagah
+ * jahan left/right column ke panels khatam hote hain (1366x768 par panel
+ * bottom 685, notice 670..684). Is liye error text CONVERSATION panel par
+ * chadh aata tha. `.brainwarn` `top: 6px` par tha aur topbar (10..49) ko
+ * dhak deta tha.
+ *
+ * AB: `.notice`/`.micflag` bottom bar ke apne `.barhint` row me hain
+ * (`hud_bottom.css`) — static flow, koi overlap nahi. `.brainwarn` abhi bhi
+ * fixed hai par topbar ke upar apni jagah banata hai (niche dekho).
+ */
+.notice, .micflag {
   font-size: 11px;
-  text-align: center;
-}
-.notice  { bottom: 84px; left: 50%; transform: translateX(-50%); color: #ff9c9c; min-height: 14px; }
-.micflag { bottom: 84px; right: 20px; font-family: var(--font-mono); letter-spacing: 3px; color: var(--amber); opacity: 0; }
-.micflag.on { opacity: 1; }
-
-.brainwarn {
-  top: 6px; left: 50%; transform: translateX(-50%);
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   display: none;
+}
+.notice { color: #ff9c9c; }
+.notice:not(:empty) { display: block; }
+.micflag {
+  font-family: var(--font-mono);
+  letter-spacing: 3px;
+  color: var(--amber);
+  margin-left: auto;
+}
+.micflag.on { display: block; }
+
+/* brainwarn: pehle `position: fixed; top: 6px` tha aur topbar (10..49) ko
+ * dhak deta tha (Playwright verified, KAAM A). Ab `.tb-mid` ke flow me hai —
+ * khaali ho to `display: none`, yaani topbar bilkul nahi hile. */
+.brainwarn {
+  display: none;
+  margin: 4px auto 0;
   max-width: 340px;
-  padding: 5px 12px;
+  padding: 2px 12px;
   border: 1px solid rgba(245, 166, 35, 0.5);
   background: rgba(245, 166, 35, 0.10);
   color: var(--amber);
-  line-height: 1.4;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  letter-spacing: 1px;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .brainwarn:not(:empty) { display: block; }
