@@ -31,15 +31,23 @@ FAKE_WEATHER = {
     "high": 36.0, "low": 24.5, "temp_percent": 73, "hint": "",
 }
 
+# `__PRABH_HUD_THEME__` ka default — **test runner ise bharta hai**
+# (`config.hud_theme()` se), taaki nakli server bhi asli default serve kare.
+# Yahan hard-code rakhne ka koi fayda nahi: default flip hote hi test asal
+# config ke bajaye khayali value check karta, aur asli bug chhoot jaata.
+# Neeche `filled_html()` isko PLACEHOLDERS me dhal deta hai.
+DEFAULT_THEME = "neon"
+
 PLACEHOLDERS = (
     ("__PRABH_TOKEN__", "nakli-token"),
     ("__PRABH_TOOLS_ON__", "1"),
     ("__PRABH_ASSISTANT_NAME__", "Jarvis"),
     ("__PRABH_DISPLAY_NAME__", "Jarvis"),
     ("__PRABH_BRAIN_WARN__", ""),
-    # --- KAAM B: arc theme. Values config_hud.py ke hain (nakli constants
-    # nahi — asli values, taaki test bhi asli config check kar sake). ---
-    ("__PRABH_HUD_THEME__", "neon"),
+    # --- KAAM B: arc theme. Rang/number `config_hud.py` ke hain (nakli
+    # constants nahi — asli values, taaki test bhi asli config check kar
+    # sake). Theme `DEFAULT_THEME` se aata hai, upar dekho. ---
+    ("__PRABH_HUD_THEME__", DEFAULT_THEME),
     ("__ARC_ACCENT__", "#ff8a2e"),
     ("__ARC_ACCENT_2__", "#ff5e3a"),
     ("__ARC_ROUTING__", '["WAKE", "STT", "BRAIN", "TTS"]'),
@@ -60,11 +68,15 @@ THEMES = ("neon", "arc")
 
 
 def filled_html(theme: str = "") -> str:
-    """index.html + placeholder bhari. `theme` dene par `?theme=` set hota hai."""
+    """index.html + placeholder bhari. `theme` dene par `?theme=` set hota hai.
+
+    `DEFAULT_THEME` **call time** par padha jaata hai, import par nahi — test
+    runner usse yahin set karta hai (`config.hud_theme()`).
+    """
     html = (UI / "index.html").read_text(encoding="utf-8")
     for name, value in PLACEHOLDERS:
-        if name == "__PRABH_HUD_THEME__" and theme:
-            value = theme
+        if name == "__PRABH_HUD_THEME__":
+            value = theme or DEFAULT_THEME
         html = html.replace(name, value)
     return html
 
@@ -140,14 +152,27 @@ class Server(http.server.ThreadingHTTPServer):
 
 
 class FakeHud:
-    """`with FakeHud() as hud:` — background me chalta hai, baad me band."""
+    """`with FakeHud() as hud:` — background me chalta hai, baad me band.
 
-    def __init__(self, port=None):
+    `theme="neon"` ya `"arc"` dene par usi theme ko **pin** kar deta hai
+    (chahe asli default kuch bhi ho), aur `__exit__` par wapas asli default.
+    Ye zaroori hai: ek test jo neele HUD ke selectors check karta hai, use
+    saaf-saaf `neon` pin karna chahiye — warna default flip karte hi wo
+    chup-chaap "sab theek" bolne lagta hai jabki uske saare selectors maujood
+    hi nahi rahte. Ye wahi galti hai jo Phase 4 me 8 baar hui thi.
+    """
+
+    def __init__(self, port=None, theme: str = ""):
         self.port = port or free_port()
         self.url = f"http://127.0.0.1:{self.port}/"
         self._httpd = None
+        self.theme = theme
+        self._prev_theme = None
 
     def __enter__(self):
+        if self.theme:
+            self._prev_theme = DEFAULT_THEME
+            globals()["DEFAULT_THEME"] = self.theme
         Server.allow_reuse_address = True
         self._httpd = Server(("127.0.0.1", self.port), Handler)
         threading.Thread(target=self._httpd.serve_forever, daemon=True).start()
@@ -157,4 +182,6 @@ class FakeHud:
         if self._httpd:
             self._httpd.shutdown()
             self._httpd.server_close()
+        if self.theme and self._prev_theme is not None:
+            globals()["DEFAULT_THEME"] = self._prev_theme
         return False

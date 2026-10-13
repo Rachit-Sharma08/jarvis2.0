@@ -1,122 +1,113 @@
 """KAAM B — Arc Reactor theme ka Playwright check (browser me, nakli data).
 
-Ye check karta hai:
-1. 1366x768 + 1920x1080 par koi clip/overflow nahi.
-2. Input bar (`.a-dock`) dono size par poori dikh rahi hai.
-3. Reactor SVG ka **asli geometry** (`getBBox()` > 0) — na ki sirf "svg tag
-   maujood hai". (Namespace wala asli bug yahin pakda: tag to tha, par
-   `getBBox()` sab 0x0 tha.)
-4. State badalne par label badle.
-5. Hindi (Devanagari) text typewriter line par sahi baithta hai.
-6. Default (bina `?theme=`) = purana neela HUD, aur `?theme=` whitelist.
+Ye file `test_hud_arc.py` se chalti hai, sirf wiring + **theme** wale checks
+karti hai. Baaki do hisse alag hain (14-Oct raat me 200-line niyam):
 
-JS probes `arc_probe.py` me hain (200-line niyam). Screenshot
-`%TEMP%\\opencode\\hudshots` me — repo me NAHI.
+- `arclib.py`    — shared plumbing (`check`, `FAILED`, `wait_ready`, ...)
+- `arc_layout.py` — clip/overflow/geometry/state/Hindi (sirf arc par)
+- `arccheck.py` (ye) — default + `?theme=` whitelist (dono themes par)
+
+Ye check karta hai:
+1. Default (bina `?theme=`) = **asli config ka default**.
+2. `?theme=arc` aur `?theme=neon` dono poore chalte hain.
+3. `?theme=<adhoora>` reject hota hai (attribute injection — XSS).
+
+**NAYA (14-Oct raat):** default `"neon"` se `"arc"` kar diya gaya (owner's
+faisla). Is liye yahan koi theme **hard-code nahi** — `EXPECTED_DEFAULT`
+`test_hud_arc.py` se `config.hud_theme()` ke through aata hai, aur nakli
+server ka `DEFAULT_THEME` bhi wahin se bharta hai. Test ab asli config ke
+khilaf hai, khayali value ke khilaf nahi.
+
+**Pakka niyam:** default badalne par sirf test ka `want` mat badlo — uske
+saath **doosre theme ka bhi raasta check karo** (`?theme=neon` wala check
+yahi hai). Warna default flip karte hi pata hi nahi chalega ki purana look
+phat se toota ya nahi — aur test chup-chaap pass rahega kyunki uske saare
+selectors maujood hi nahi honge.
+
+JS probes `arc_probe.py` me hain. Screenshot `%TEMP%\\opencode\\hudshots`
+me — repo me NAHI.
 """
 
 import tempfile
-from pathlib import Path
 
+import arc_layout
 import arc_probe
+import hudserve
+from arclib import FAILED, check, shots_dir, visible_css  # noqa: F401 (FAILED re-export)
 from hudserve import FakeHud
 
-FAILED = []
-
-SIZES = ((1366, 768), (1920, 1080))
-
-
-def check(name, got, want=True):
-    if got == want:
-        print(f"  OK   {name}")
-    else:
-        FAILED.append(name)
-        print(f"  FAIL {name} -> got {got!r}, want {want!r}")
+# `test_hud_arc.py` ise `config.hud_theme()` se bharta hai. Khaali rahe to
+# nakli server ka default maana jaata hai (self-check).
+EXPECTED_DEFAULT = ""
 
 
-def shots_dir() -> Path:
-    base = Path(tempfile.gettempdir()) / "opencode" / "hudshots"
-    base.mkdir(parents=True, exist_ok=True)
-    return base
+def hudserve_theme_default():
+    """Nakli server ka default theme — `hudserve.DEFAULT_THEME` se.
 
-
-def wait_ready(page):
-    """Arc tab POORA boot ho jaaye.
-
-    `arc_load.js` `<head>` me hai aur CSS/JS DOMContentLoaded par lagata hai,
-    is liye `load` ke turant baad `window.PRABH_ARC` shayad na bana ho. Ek
-    fixed `wait_for_timeout` guess tha aur 1920x1080 par boot miss ho gaya —
-    is liye ab hum **condition** ka intezaar karte hain, time ka nahi.
+    Ye sirf **fallback** hai (jab `EXPECTED_DEFAULT` khaali ho). Asli maan
+    rahe hue value test runner ke `config.hud_theme()` se aati hai. `hudserve`
+    khud config import nahi karta — `.env` se bachne ke liye.
     """
-    page.wait_for_function("() => !!window.PRABH_ARC && !!document.querySelector('.a-reactor')",
-                           timeout=15000)
-    page.wait_for_timeout(250)      # ek frame CSS/animation ke liye
+    return hudserve.DEFAULT_THEME or "neon"
 
 
-def set_state(page, state):
-    """Asli `setState` se call — DOM ko haath se nahi badalte."""
-    page.evaluate("(s) => window.PRABH_ARC_LIVE.setState(s)", state)
+def _own_other(want):
+    """Theme ke hisse se `(dikhne-wala, chhupne-wala)` selector jodi.
+
+    Dono theme alag-alag DOM root rakhte hain: arc ka `.a-root`, purane
+    neon ka `.hud`. Is liye har check ke liye pata hona zaroori hai ki
+    default kaun sa hai.
+    """
+    if want == "arc":
+        return ".a-root", ".hud"
+    return ".hud", ".a-root"
 
 
-def run_theme(page, url, out):
-    print("ARC THEME (headless, nakli data)")
-    for w, h in SIZES:
-        page.set_viewport_size({"width": w, "height": h})
-        page.goto(url, wait_until="load")
-        wait_ready(page)
-        tag = f"{w}x{h}"
+def _hidden_want(other):
+    """Chhupne wale selector ka expected hissa — dono alag hain.
 
-        fits = page.evaluate(arc_probe.FITS, list(arc_probe.MUST_FIT))
-        check(f"{tag} clip nahi", fits["cut"], [])
-        check(f"{tag} overflow nahi", fits["overflow"], [0, 0])
+    - `.a-root` (arc ka root) neon ke neeche **DOM me hota hi nahi** — arc
+      ka JS chalta hi nahi, to `visible_css()` `"absent"` deta hai.
+    - `.hud` (neon ka root) arc ke neeche **DOM me rehta hai**, sirf CSS
+      `display:none` karta hai — to `"none"` milta hai.
 
-        # Input bar poori dikhe (spec: 1366x768 par saaf).
-        dock = page.evaluate(
-            "(() => { const e = document.querySelector('.a-dock');"
-            " if (!e) return null; const b = e.getBoundingClientRect();"
-            " return [Math.round(b.width), Math.round(b.height)]; })()")
-        check(f"{tag} input bar hai", bool(dock and dock[0] > 200 and dock[1] > 20), True)
-
-        # Reactor ka ASLI geometry — tag hone se kaam nahi chalta.
-        geo = page.evaluate(arc_probe.GEOMETRY)
-        check(f"{tag} reactor size", geo["svg"] >= 150, True)
-        for sel in arc_probe.PARTS:
-            # `.get(...)` — missing key par `KeyError` se test **crash** ho
-            # jaata tha (suite ruk jaati, wajah adhoori). Missing ko 0
-            # maankar FAIL dena chahiye, crash nahi.
-            check(f"{tag} {sel} geometry", geo["parts"].get(sel, 0) > 0, True)
-        page.screenshot(path=str(out / f"arc_{w}x{h}.png"))
-
-        # State badalne par label badle.
-        for state, label in arc_probe.STATE_LABEL:
-            set_state(page, state)
-            page.wait_for_timeout(120)
-            check(f"{tag} status {state}", page.evaluate(
-                "document.getElementById('a-status-word').textContent"), label)
-            check(f"{tag} core {state}", page.evaluate(
-                "document.getElementById('a-corestate').textContent"), label)
-
-        # Hindi text — typewriter line par.
-        page.evaluate("(t) => window.PRABH_ARC.typewriter(t)", arc_probe.HINDI)
-        page.wait_for_timeout(1400)
-        check(f"{tag} Hindi typewriter", page.evaluate(
-            "document.getElementById('a-line').textContent"), arc_probe.HINDI)
-        check(f"{tag} Hindi line width > 0", page.evaluate(
-            "(() => { const e = document.getElementById('a-line');"
-            " return Math.round(e.scrollWidth); })()") > 50, True)
-        page.screenshot(path=str(out / f"arc_hindi_{w}x{h}.png"))
+    Ye do alag hain, is liye ek jaisa `"absent"` maanna galat hoga. Ye galti
+    split ke waqt hui thi — test ne pakad liya (2 fail), is liye test sahi
+    hai.
+    """
+    return "absent" if other == ".a-root" else "none"
 
 
 def run_default(page, url):
-    """Default (bina `?theme=`) = purana neela HUD. Test koi bhi na ho."""
-    print("DEFAULT THEME (neela — purana HUD)")
+    """Default (bina `?theme=`) = **asli** default, aur dono themes kholte hain.
+
+    Default ab `"arc"` hai, par purana `"neon"` bhi poora hai — ye check
+    dono ko `?theme=` se kholta hai, taaki default flip karne par pata chale
+    ki doosra theme toota ya nahi.
+    """
+    want = EXPECTED_DEFAULT or hudserve_theme_default()
+    print(f"DEFAULT THEME ({want})")
     page.set_viewport_size({"width": 1366, "height": 768})
+
     page.goto(url, wait_until="load")
     page.wait_for_timeout(700)
-    check("neela: purana .hud hai", page.evaluate(
-        "getComputedStyle(document.querySelector('.hud')).display") != "none", True)
-    check("neela: arc chhupa", page.evaluate("!!document.querySelector('.a-root')"), False)
-    check("neela: data-theme", page.evaluate(
-        "document.documentElement.getAttribute('data-theme')"), "neon")
+    check("default: data-theme", page.evaluate(
+        "document.documentElement.getAttribute('data-theme')"), want)
+
+    own, other = _own_other(want)
+    check(f"default: {own} dikha", visible_css(page, own), "shown")
+    check(f"default: {other} chhupa", visible_css(page, other), _hidden_want(other))
+
+    # --- Ab dono themes `?theme=` se poori tarah kholte hain (regression) ---
+    for name in ("arc", "neon"):
+        own, other = _own_other(name)
+        page.goto(url + "?theme=" + name, wait_until="load")
+        page.wait_for_timeout(700)
+        check(f"?theme={name}: data-theme", page.evaluate(
+            "document.documentElement.getAttribute('data-theme')"), name)
+        check(f"?theme={name}: {own} dikha", visible_css(page, own), "shown")
+        check(f"?theme={name}: {other} chhupa", visible_css(page, other),
+              _hidden_want(other))
 
 
 def run_micro(page, url):
@@ -147,7 +138,7 @@ def main():
         try:
             run_default(page, hud.url)
             run_micro(page, hud.url)
-            run_theme(page, hud.url + "?theme=arc", out)
+            arc_layout.run_theme(page, hud.url + "?theme=arc", out)
             check("koi JS error nahi", errors, [])
             check("screenshot repo ke bahar",
                   str(out).startswith(tempfile.gettempdir()), True)

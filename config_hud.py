@@ -6,7 +6,8 @@ jaisa hi likhna hai. Is file me koi logic nahi, sirf values aur chhote helpers.
 Rules: yahan koi API key nahi. Weather ke liye key chahiye hi nahi (Open-Meteo).
 
 KAAM B (14-Oct): naya "arc" theme yahin se aata hai (`PRABH_HUD_THEME`).
-Default `"neon"` — yaani Phase 4 wala neela HUD bilkul waisa hi rehta hai.
+Default `"arc"` (owner ka faisla). Purana neela `"neon"` bhi poora hai —
+`PRABH_HUD_THEME=neon` ya `/?theme=neon` se wapas.
 """
 
 import os
@@ -19,13 +20,14 @@ CYAN_BRIGHT = "#4cc3ff"
 CYAN_DIM = "#1c5f9e"
 AMBER = "#f5a623"
 
-# ---- Theme: purana neela (default) ya naya "arc" (KAAM B, 14-Oct) ----
-# `PRABH_HUD_THEME` se. Default `"neon"` = Phase 4 wala neela HUD, bilkul
-# waisa hi. `?theme=arc` URL par bhi on/off ho sakta hai (test/record ke liye).
+# ---- Theme: naya "arc" (default) ya purana neela "neon" ----
+# `PRABH_HUD_THEME` se. Default `"arc"` (owner ka faisla, 14-Oct raat: Arc ko
+# permanent rakhna). Purana neela `"neon"` BILKUL khatam nahi hua — wahi code
+# me hai aur `PRABH_HUD_THEME=neon` ya `/?theme=neon` se wapas aa jaata hai.
 #
 # Sirf LOOK ka reference <https://jarvis.mukh1.com> se liya gaya hai — unka
 # code/CSS/SVG/asset copy nahi kiya gaya. Chhota credit footer me hai.
-HUD_THEME_DEFAULT = "neon"
+HUD_THEME_DEFAULT = "arc"
 HUD_THEMES = ("neon", "arc")
 # Arc theme ka credit (footer me chhota). Reference ka naam — design bana
 # apna hai, sirf look ka.
@@ -146,7 +148,7 @@ def quick_ids() -> tuple:
 
 
 def hud_theme() -> str:
-    """HUD ka theme — `PRABH_HUD_THEME` env se, default `"neon"` (purana).
+    """HUD ka theme — `PRABH_HUD_THEME` env se, default `"arc"`.
 
     Kaam jaan-boojh kar nahi maana jaata: koi bhi adhoora ya adhoori value
     seedhi default par gir jaati hai, warna ek typo se poora HUD ka look badal
