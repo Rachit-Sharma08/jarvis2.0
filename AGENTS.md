@@ -886,6 +886,32 @@ chain me hain, merge/push **nahi** kiya gaya).
 
 ---
 
+## 10. SKILLS AUR SUBAGENTS (14 Oct 2026 — KAAM D)
+
+Apne liye likhe hain, internet se kuch install nahi kiya. Format opencode
+docs se liya (`opencode.ai/docs/skills`, `/agents` — 14-Oct ko padha).
+
+**Skills** (`.opencode/skills/<naam>/SKILL.md`, har ek <80 line):
+
+| Skill | Kaam |
+|---|---|
+| `hud-playwright-check` | HUD browser-verify: headless Chromium, nakli server, 3 viewport |
+| `safe-git-push` | Push se pehle email + key scan, force-push nahi, main nahi |
+| `jarvis-rules` | Project ke pakke niyam (suraksha/test/code/report) |
+
+**Subagents** (`.opencode/agents/<naam>.md`):
+
+| Agent | Kaam |
+|---|---|
+| `reviewer` | Sirf padhta hai: security, 200-line, test, key leak. Edit nahi |
+| `tester` | Sirf suite + Playwright chalata hai, pass/fail report |
+| `planner` | Sirf padhta hai: kaam baant-ta hai, kaun kya karega |
+
+**Workflow:** build likhe → reviewer se diff check karaye → tab commit.
+Reviewer/tester/planner ko edit ka haq nahi (`permission: edit: deny`).
+
+---
+
 
 ## ABHI KYA BAAKI HAI
 
