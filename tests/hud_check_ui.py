@@ -20,7 +20,15 @@ def test_xss_safety():
         for bad in ("innerHTML", "outerHTML", "insertAdjacentHTML",
                     "document.write", "eval(", "new Function"):
             check(f"{name}: {bad} nahi", bad in src, False)
-        if name not in ("recorder.js", "speaker.js", "voice_ui.js"):
+        # `textContent` ka check sirf un file par jo dynamic text banati hain.
+        # Teen chhoot: recorder/speaker/voice_ui (purane mic/speaker raaste).
+        # KAAM B ki do aur chhoot:
+        #   `arc_reactor.js` — sirf SVG geometry (attributes), koi text node
+        #   `arc_load.js`    — sirf `<link>`/`<script>` loader, koi text node
+        # In dono me dynamic text hai hi nahi, is liye ye check un par lagu
+        # nahi hota. Baki sab arc files me `textContent` zaroor hai.
+        if name not in ("recorder.js", "speaker.js", "voice_ui.js",
+                        "arc_reactor.js", "arc_load.js"):
             check(f"{name}: textContent hai", "textContent" in src, True)
 
     html = read("index.html")

@@ -1,0 +1,163 @@
+/* ARC THEME — reactor SVG, right column, bottom bar (KAAM B). */
+
+/* ============================ REACTOR ============================ */
+html[data-theme="arc"] .a-core-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 0;
+  height: 100%;
+}
+/* `aspect-ratio` + `height:100%` ek flex column me **collapse** kar dete hain
+ * (SVG ka used height 0 ho jaata hai, is liye sab kuch invisible). Is liye
+ * size seedha width se: `min()` viewport par, aur grid cell se chhota ho to
+ * chhota. `flex: none` zaroori hai warna flex use compress kar deta hai. */
+/* SVG ko **container ke width se** size karna hai, na ki container ke height
+ * se. `height:100%` + `aspect-ratio` chain flex column me 0 par collapse kar
+ * deta hai (dono ek doosre ka intezaar karte hain), aur `width: min(…,100%)`
+ * bhi collapse hota hai jab parent ka width `auto` ho.
+ *
+ * Is liye size seedha `vh` se lete hain — viewport ki height ek **pakki**
+ * value hai, is liye circular dependency nahi banti — aur parent ko
+ * `width: max-content` dete hain taaki box SVG ke around fit ho jaaye. */
+html[data-theme="arc"] .a-reactor {
+  flex: none;
+  display: block;
+  width: min(52vh, 420px);
+  height: min(52vh, 420px);
+  overflow: visible;
+}
+.a-tick { stroke: var(--a-accent-dim); stroke-width: 1; }
+.a-tick.major { stroke: var(--a-accent); stroke-width: 1.5; }
+.a-hex { fill: none; stroke: var(--a-accent-dim); stroke-width: 1; }
+.a-ring { fill: none; stroke: var(--a-accent-dim); stroke-width: 1; }
+.a-arc {
+  fill: none;
+  stroke: var(--a-accent);
+  stroke-width: 2;
+  stroke-linecap: round;
+  opacity: 0.75;
+}
+.a-arc.thin { stroke-width: 1; opacity: 0.45; }
+/* Ghoomte arcs — sirf `transform` rotate, GPU par sasta. */
+.a-spin { transform-origin: 200px 200px; animation: aSpin 40s linear infinite; }
+.a-spin.rev { animation-direction: reverse; animation-duration: 55s; }
+.a-spin.fast { animation-duration: 9s; }
+.a-orbit { transform-origin: 200px 200px; animation: aSpin 12s linear infinite; }
+.a-orbit.rev { animation-direction: reverse; animation-duration: 18s; }
+.a-odot { fill: var(--a-accent); }
+/* Core gradient ke stops — pehle bahut saturated th orange tha aur andar ka
+ * number/status padhna mushkil ho raha tha. Beech ka stop halka kar core ko
+ * "chamakta" banaya, aur text ke liye neeche ek halki shadow. */
+.a-core {
+  fill: url(#aCoreGrad);
+  animation: aPulse 3.4s ease-in-out infinite;
+}
+/* mic/awaaz ke level par halka pulse — `--a-lvl` JS set karta hai. */
+html[data-theme="arc"] .a-core.loud { animation-duration: 0.9s; }
+
+@keyframes aSpin { to { transform: rotate(360deg); } }
+@keyframes aPulse {
+  0%, 100% { opacity: 0.85; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.03); }
+}
+
+/* core ke andar: bada number + state */
+html[data-theme="arc"] .a-coretxt {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  pointer-events: none;
+  text-align: center;
+}
+.a-corenum {
+  font-family: var(--a-font-mono);
+  font-size: 40px;
+  color: #2a1206;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 10px rgba(255, 226, 196, 0.75);
+}
+.a-corestate {
+  font-family: var(--a-font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #3a1c08;
+  text-shadow: 0 1px 6px rgba(255, 226, 196, 0.6);
+  white-space: nowrap;
+}
+/* `width: max-content` + `position: relative` — pehla SVG ke around shrink
+ * hota hai (taaki coretxt ka `inset:0` sahi box par lage), doosra coretxt ko
+ * SVG ke upar absolute baithne deta hai. */
+html[data-theme="arc"] .a-reactor-box {
+  position: relative;
+  width: max-content;
+  flex: none;
+}
+
+/* ============================ RIGHT COLUMN ============================ */
+/* ROUTING chip: WAKE -> STT -> BRAIN -> TTS */
+.a-routing { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.a-node {
+  font-family: var(--a-font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--a-ink-dim);
+  padding: 3px 8px;
+  border: 1px solid var(--a-line-soft);
+}
+.a-node.live { color: var(--a-accent); border-color: var(--a-accent); }
+.a-arrow { color: var(--a-accent-dim); font-size: 10px; }
+
+html[data-theme="arc"] .a-actlist {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.a-act {
+  display: flex;
+  gap: 8px;
+  font-family: var(--a-font-mono);
+  font-size: 10px;
+  line-height: 1.5;
+  border-left: 2px solid var(--a-accent-dim);
+  padding-left: 7px;
+  overflow-wrap: anywhere;
+}
+.a-act time { color: var(--a-accent-dim); flex: none; }
+.a-act span { color: var(--a-ink-dim); }
+.a-act.warn { border-left-color: var(--a-accent); }
+.a-act.bad { border-left-color: var(--a-bad); }
+.a-act.good { border-left-color: var(--a-good); }
+
+/* LIVE TASK + status dot */
+.a-task { display: flex; flex-direction: column; gap: 5px; }
+.a-tasktop {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--a-font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--a-ink-dim);
+}
+.a-taskdot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--a-ink-dim); flex: none;
+}
+.a-taskdot.busy { background: var(--a-accent); box-shadow: 0 0 9px var(--a-accent); }
+.a-taskdot.err { background: var(--a-bad); }
+.a-tasktext {
+  font-family: var(--a-font-mono);
+  font-size: 11px;
+  color: var(--a-ink);
+  overflow-wrap: anywhere;
+}

@@ -1,5 +1,8 @@
 ﻿<!DOCTYPE html>
-<html lang="en">
+<!-- `data-theme` `<html>` par (arc CSS `html[data-theme="arc"]` ke andar
+     hai). Server (`fill_html`) ise bhar deta hai — JS nahi, warna pehle frame
+     par flash aata. Sirf "neon" (default) ya "arc" maane jaate hain. -->
+<html lang="en" data-theme="__PRABH_HUD_THEME__">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -9,6 +12,20 @@
      liye "Jarvis" app.js / hud_*.js me dobara likha nahi gaya. -->
 <meta name="prabh-name" content="__PRABH_ASSISTANT_NAME__" />
 <meta name="prabh-display" content="__PRABH_DISPLAY_NAME__" />
+<!-- KAAM B: theme + arc ke constants. Python ka ek hi source (`config_hud.py`);
+     JS unhe yahin se meta ke through padhta hai (`arc_config.js`). Content
+     JSON hai (numbers/arrays) ya plain text (credit/channel). -->
+<meta name="prabh-theme" content="__PRABH_HUD_THEME__" />
+<meta name="arc-accent" content="__ARC_ACCENT__" />
+<meta name="arc-accent-2" content="__ARC_ACCENT_2__" />
+<meta name="arc-routing" content="__ARC_ROUTING__" />
+<meta name="arc-channel" content="__ARC_CHANNEL__" />
+<meta name="arc-credit" content="__ARC_CREDIT__" />
+<meta name="arc-ticks" content="__ARC_TICKS__" />
+<meta name="arc-hex" content="__ARC_HEX__" />
+<meta name="arc-act-max" content="__ARC_ACT_MAX__" />
+<meta name="arc-type-ms" content="__ARC_TYPE_MS__" />
+<meta name="arc-frame-ms" content="__ARC_FRAME_MS__" />
 <title>__PRABH_ASSISTANT_NAME__ HUD</title>
 <link rel="stylesheet" href="/ui/fonts.css" />
 <link rel="stylesheet" href="/ui/hud_base.css" />
@@ -18,13 +35,15 @@
 <link rel="stylesheet" href="/ui/hud_right.css" />
 <link rel="stylesheet" href="/ui/hud_bottom.css" />
 <link rel="stylesheet" href="/ui/hud_card.css" />
+<!-- KAAM B: arc ki CSS+JS `arc_load.js` se (line limit). Default HUD par koi
+     asar nahi — CSS `html[data-theme="arc"]` ke andar hai. -->
+<script src="/ui/arc_load.js"></script>
 </head>
 <body>
 <div class="gridbg" aria-hidden="true"></div>
 
 <main class="hud">
 
-  <!-- ============ TOP BAR ============ -->
   <header class="topbar">
     <div class="tb-left">
       <h1 class="brand" id="brand">__PRABH_DISPLAY_NAME__</h1>
@@ -32,8 +51,7 @@
     </div>
     <div class="tb-mid">
       <div class="ruler" id="ruler" aria-hidden="true"></div>
-      <!-- KAAM A: brainwarn pehle `position: fixed; top: 6px` tha aur topbar
-           par chadh jaata tha. Ab topbar ke apne flow me hai (niche tb-mid). -->
+      <!-- KAAM A: brainwarn ab topbar ke apne flow me hai. -->
       <p class="brainwarn" id="brainwarn">__PRABH_BRAIN_WARN__</p>
     </div>
     <div class="tb-right">
@@ -46,7 +64,6 @@
     </div>
   </header>
 
-  <!-- ============ LEFT COLUMN ============ -->
   <aside class="col-left">
     <section class="panel" id="p-clock">
       <h2 class="ptab">CHRONOMETER</h2>
@@ -77,7 +94,6 @@
     </section>
   </aside>
 
-  <!-- ============ CENTER ============ -->
   <section class="col-center">
     <div class="orbwrap" id="orbwrap">
       <svg class="orb" viewBox="0 0 320 320" role="img" aria-label="Jarvis orb">
@@ -106,7 +122,6 @@
     <p class="orbline" id="orbLine"></p>
   </section>
 
-  <!-- ============ RIGHT COLUMN ============ -->
   <aside class="col-right">
     <section class="panel" id="p-weather">
       <h2 class="ptab">WEATHER</h2>
@@ -130,10 +145,7 @@
     </section>
   </aside>
 
-  <!-- ============ BOTTOM BAR ============ -->
-  <!-- KAAM A: .notice/.micflag ab bar ke apne .barhint row me hain. Pehle
-       `position: fixed; bottom: 84px` the aur 1366x768 par left/right
-       column ke panels par chadh jaati thi. -->
+  <!-- BOTTOM BAR (KAAM A: .notice/.micflag bar ke apne .barhint row me) -->
   <footer class="bottombar">
     <div class="barhint">
       <div class="remind-pill" id="remindPill"></div>

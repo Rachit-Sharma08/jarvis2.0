@@ -16,6 +16,7 @@ import json
 import socket
 import threading
 from pathlib import Path
+from urllib.parse import unquote
 
 UI = Path(__file__).resolve().parent.parent / "ui"
 
@@ -36,16 +37,34 @@ PLACEHOLDERS = (
     ("__PRABH_ASSISTANT_NAME__", "Jarvis"),
     ("__PRABH_DISPLAY_NAME__", "Jarvis"),
     ("__PRABH_BRAIN_WARN__", ""),
+    # --- KAAM B: arc theme. Values config_hud.py ke hain (nakli constants
+    # nahi — asli values, taaki test bhi asli config check kar sake). ---
+    ("__PRABH_HUD_THEME__", "neon"),
+    ("__ARC_ACCENT__", "#ff8a2e"),
+    ("__ARC_ACCENT_2__", "#ff5e3a"),
+    ("__ARC_ROUTING__", '["WAKE", "STT", "BRAIN", "TTS"]'),
+    ("__ARC_CHANNEL__", '"LOCAL"'),
+    ("__ARC_CREDIT__", '"Interface style inspired by Mukh.1"'),
+    ("__ARC_TICKS__", "72"),
+    ("__ARC_HEX__", "6"),
+    ("__ARC_ACT_MAX__", "6"),
+    ("__ARC_TYPE_MS__", "28"),
+    ("__ARC_FRAME_MS__", "33"),
 )
 
 CSS = "text/css"
 JS = "application/javascript"
 
+# Sirf ye do theme — `server/app.py` ke `resolve_theme()` ka wahi whitelist.
+THEMES = ("neon", "arc")
 
-def filled_html() -> str:
-    """index.html + placeholder bhari. `__PRABH_HUD_THEME__` bhi (KAAM B)."""
+
+def filled_html(theme: str = "") -> str:
+    """index.html + placeholder bhari. `theme` dene par `?theme=` set hota hai."""
     html = (UI / "index.html").read_text(encoding="utf-8")
     for name, value in PLACEHOLDERS:
+        if name == "__PRABH_HUD_THEME__" and theme:
+            value = theme
         html = html.replace(name, value)
     return html
 
@@ -77,9 +96,19 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         self.wfile.write(raw)
 
     def do_GET(self):                    # noqa: N802 - stdlib ka naam
-        path = self.path.split("?")[0]
+        path, _, query = self.path.partition("?")
         if path == "/":
-            return self._send(self._index(), "text/html; charset=utf-8")
+            # `?theme=arc` — asli server jaisa (`server/app.py` ka
+            # `resolve_theme`: lowercase + whitelist). Test yahi rule maangta
+            # hai, is liye nakli server bhi WAHI kare — warna test asli
+            # server se alag behave karega.
+            theme = ""
+            for part in query.split("&"):
+                if part.startswith("theme="):
+                    theme = unquote(part[6:]).strip().lower()
+                    if theme not in THEMES:
+                        theme = ""
+            return self._send(self._index(theme), "text/html; charset=utf-8")
         if path == "/hud/stats":
             return self._send(json.dumps(FAKE_STATS), "application/json")
         if path == "/hud/weather":
@@ -90,8 +119,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 return self._send(f.read_bytes(), _ctype(f.suffix))
         self.send_error(404)
 
-    def _index(self) -> bytes:
-        return filled_html().encode("utf-8")
+    def _index(self, theme: str = "") -> bytes:
+        return filled_html(theme).encode("utf-8")
 
 
 def free_port(start: int = 8731) -> int:

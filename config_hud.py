@@ -4,7 +4,12 @@ Ye `config.py` me re-export hote hain, isliye baaki code ko `config.WEATHER_CITY
 jaisa hi likhna hai. Is file me koi logic nahi, sirf values aur chhote helpers.
 
 Rules: yahan koi API key nahi. Weather ke liye key chahiye hi nahi (Open-Meteo).
+
+KAAM B (14-Oct): naya "arc" theme yahin se aata hai (`PRABH_HUD_THEME`).
+Default `"neon"` — yaani Phase 4 wala neela HUD bilkul waisa hi rehta hai.
 """
+
+import os
 
 # ---- Colors: reference photo + spec dono se ----
 # Photo washed-out thi, isliye saturation thodi barh kar diya. Exact value
@@ -13,6 +18,59 @@ CYAN = "#2ea8ff"
 CYAN_BRIGHT = "#4cc3ff"
 CYAN_DIM = "#1c5f9e"
 AMBER = "#f5a623"
+
+# ---- Theme: purana neela (default) ya naya "arc" (KAAM B, 14-Oct) ----
+# `PRABH_HUD_THEME` se. Default `"neon"` = Phase 4 wala neela HUD, bilkul
+# waisa hi. `?theme=arc` URL par bhi on/off ho sakta hai (test/record ke liye).
+#
+# Sirf LOOK ka reference <https://jarvis.mukh1.com> se liya gaya hai — unka
+# code/CSS/SVG/asset copy nahi kiya gaya. Chhota credit footer me hai.
+HUD_THEME_DEFAULT = "neon"
+HUD_THEMES = ("neon", "arc")
+# Arc theme ka credit (footer me chhota). Reference ka naam — design bana
+# apna hai, sirf look ka.
+ARC_CREDIT = "Interface style inspired by Mukh.1"
+
+# ---- Arc theme: performance + a11y (i5 laptop ke liye) ----
+# Sirf CSS transform/SVG animation — WebGL ya bhaara canvas NAHI.
+ARC_FPS = 30                 # isse tez raf nahi (i5 par battery)
+ARC_FRAME_MS = int(1000 / ARC_FPS)
+ARC_PAUSE_WHEN_HIDDEN = True # window background me — rAF band
+# Animation CSS hi chalati hai; `prefers-reduced-motion` ko maanta hai.
+# Ye sirf JS raf (typewriter/orbit number) ke liye hai.
+ARC_TYPE_MS = 28             # typewriter: ek character
+ARC_ACTIVITY_MAX = 6         # right panel me kitni purani lines
+ARC_TICK_COUNT = 72          # reactor ke bahar tick-marks
+ARC_HEX_NODES = 6            # hexagon nodes
+ARC_ORBIT_DOTS = 3           # ghoomte dots
+
+# ---- Fonts: Arc theme ----
+# Devanagari **laptop ke maujood font** se. Internet se koi font nahi —
+# CSP `default-src 'self'` hai aur offline bhi chalna hai. Windows 10/11
+# par Nirmala UI hota hi hai; Noto Sans Devanagari tab jab installed ho.
+ARC_FONT_MONO = ('"Share Tech Mono", "Nirmala UI", "Noto Sans Devanagari", '
+                 'Consolas, monospace')
+ARC_FONT_BODY = ('"Rajdhani", "Nirmala UI", "Noto Sans Devanagari", '
+                 '"Segoe UI", sans-serif')
+ARC_FONT_HEAD = ('"Orbitron", "Nirmala UI", "Noto Sans Devanagari", '
+                 '"Segoe UI", sans-serif')
+
+# ---- Arc theme: colours (CSS variables ke andar jayengi) ----
+# Gehra baingani-kaala + patli orange.
+ARC_BG = "#08050e"
+ARC_PANEL = "rgba(19, 12, 28, 0.72)"
+ARC_LINE = "rgba(255, 138, 46, 0.22)"
+ARC_ACCENT = "#ff8a2e"       # patli orange
+ARC_ACCENT_2 = "#ff5e3a"     # garm lali/orange (core ke andar)
+ARC_ACCENT_DIM = "#8a4a16"
+ARC_INK = "#f2e6da"
+ARC_INK_DIM = "#a08a78"
+ARC_GOOD = "#5cffb0"
+ARC_BAD = "#ff6b6b"
+
+# ---- Arc: routing chip (WAKE -> STT -> BRAIN -> TTS) ----
+ARC_ROUTING = ("WAKE", "STT", "BRAIN", "TTS")
+ARC_ROUTING_CHANNEL = "LOCAL"
 
 # ---- Fonts (ui/fonts.css me load, fallback yahan) ----
 FONT_HEAD = '"Orbitron", "Rajdhani", "Segoe UI", sans-serif'
@@ -85,6 +143,17 @@ def quick_by_id(button_id: str) -> dict:
 
 def quick_ids() -> tuple:
     return tuple(row["id"] for row in QUICK_BUTTONS)
+
+
+def hud_theme() -> str:
+    """HUD ka theme — `PRABH_HUD_THEME` env se, default `"neon"` (purana).
+
+    Kaam jaan-boojh kar nahi maana jaata: koi bhi adhoora ya adhoori value
+    seedhi default par gir jaati hai, warna ek typo se poora HUD ka look badal
+    jaata aur user ko samajh hi nahi aata kyun.
+    """
+    want = os.getenv("PRABH_HUD_THEME", HUD_THEME_DEFAULT).strip().lower()
+    return want if want in HUD_THEMES else HUD_THEME_DEFAULT
 
 
 def weather_text(code) -> str:

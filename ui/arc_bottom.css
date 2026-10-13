@@ -1,0 +1,150 @@
+/* ARC THEME — bottom bar (typewriter + chat + input) (KAAM B). */
+
+html[data-theme="arc"] .a-bottom {
+  display: grid;
+  grid-template-rows: auto auto;
+  gap: 8px;
+}
+
+/* ---- badi mono-space line (typewriter) + chhota chat panel ---- */
+html[data-theme="arc"] .a-lower {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: end;
+  min-height: 0;
+}
+
+/* Jarvis ka aakhri jawab — badi mono line, typewriter se bharte hue */
+.a-line {
+  font-family: var(--a-font-mono);
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--a-ink);
+  min-height: 24px;
+  overflow-wrap: anywhere;
+}
+.a-line::after {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 1em;
+  margin-left: 3px;
+  vertical-align: -2px;
+  background: var(--a-accent);
+  animation: aBlink 1s steps(1) infinite;
+}
+.a-line.done::after { display: none; }
+@keyframes aBlink { 0%, 50% { opacity: 1; } 51%, 100% { opacity: 0; } }
+
+/* chhota scrollable baat-cheet */
+html[data-theme="arc"] .a-chat {
+  height: 96px;
+  overflow-y: auto;
+  border-left: 1px solid var(--a-line);
+  padding-left: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--a-accent-dim) transparent;
+}
+html[data-theme="arc"] .a-chat::-webkit-scrollbar { width: 3px; }
+html[data-theme="arc"] .a-chat::-webkit-scrollbar-thumb {
+  background: var(--a-accent-dim);
+}
+.a-msg { display: flex; gap: 8px; font-size: 12px; line-height: 1.45; }
+.a-msg .who {
+  font-family: var(--a-font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  flex: none;
+  padding-top: 2px;
+}
+.a-msg .body { color: var(--a-ink-dim); overflow-wrap: anywhere; }
+.a-msg.you .who { color: var(--a-accent-dim); }
+.a-msg.you .body { color: var(--a-ink); }
+.a-msg.jarvis .who { color: var(--a-accent); }
+
+/* ---- input bar: SPACE/CLICK SPEAK · ESC STOP · type karo · LIVE ---- */
+html[data-theme="arc"] .a-dock {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  padding: 9px 12px;
+  border: 1px solid var(--a-line);
+  background: rgba(255, 138, 46, 0.04);
+}
+.a-keys { display: flex; align-items: center; gap: 9px; flex-wrap: wrap; }
+.a-key {
+  font-family: var(--a-font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--a-ink-dim);
+  white-space: nowrap;
+}
+.a-key kbd {
+  font-family: var(--a-font-mono);
+  font-size: 9px;
+  padding: 2px 6px;
+  margin-right: 5px;
+  color: var(--a-accent);
+  border: 1px solid var(--a-line);
+}
+.a-say {
+  font-family: var(--a-font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--a-ink-dim);
+  white-space: nowrap;
+}
+
+html[data-theme="arc"] .a-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid var(--a-line);
+  min-width: 0;
+}
+#a-cmd {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--a-ink);
+  font-family: var(--a-font-mono);
+  font-size: 13px;
+  padding: 5px 2px;
+}
+#a-cmd::placeholder { color: var(--a-accent-dim); }
+.a-live {
+  font-family: var(--a-font-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: var(--a-good);
+  border: 1px solid rgba(92, 255, 176, 0.45);
+  padding: 3px 8px;
+  flex: none;
+}
+
+.a-credit {
+  font-family: var(--a-font-mono);
+  font-size: 8px;
+  letter-spacing: 1px;
+  color: var(--a-accent-dim);
+  text-align: right;
+  flex: none;
+}
+
+/* ============================ REDUCED MOTION ============================ */
+/* `prefers-reduced-motion` ko maanna zaroori hai — sirf CSS transform/SVG
+ * animations hain, koi WebGL/canvas nahi. Ye ek block sab rok deta hai. */
+@media (prefers-reduced-motion: reduce) {
+  html[data-theme="arc"] .a-spin,
+  html[data-theme="arc"] .a-orbit,
+  html[data-theme="arc"] .a-core,
+  html[data-theme="arc"] .a-line::after,
+  html[data-theme="arc"] .a-taskdot.busy { animation: none !important; }
+}

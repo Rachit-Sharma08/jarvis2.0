@@ -35,7 +35,10 @@ def test_config():
     check("block 30ms", audio.BLOCK_SECONDS, 0.03)
     truthy("cooldown", config.WAKE_COOLDOWN_SECONDS > 0)
     describe = config.describe()
-    check("describe me 9 hisse", len(describe.split()), 9)
+    # 14-Oct (KAAM B): `theme=` ka field jud gaya, is liye 9 -> 10. Ye test
+    # jaan-boojh kar update hua hai (AGENTS 8.1.2 ka "purana test bhi badalna
+    # padta hai" wala niyam) — naya fail nahi.
+    check("describe me 10 hisse", len(describe.split()), 10)
     show(describe)
     truthy("describe me beep", "beep=on" in describe)
     truthy("describe me cards", "cards=off" in describe)

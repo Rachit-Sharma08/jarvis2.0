@@ -1,4 +1,5 @@
 import asyncio
+import json
 
 from html import escape
 
@@ -55,12 +56,18 @@ async def security_headers(request: Request, call_next):
     return response
 
 
-def fill_html(html: str) -> str:
-    """`index.html` ke placeholders bhar do — token, tools, naam.
+def fill_html(html: str, theme: str = "") -> str:
+    """`index.html` ke placeholders bhar do — token, tools, naam, theme.
 
     Ye **pure function** hai is liye test `GET /` chala ke ( asli server, port,
     Edge) verify karne ki zaroorat nahi padti. Route sirf isko call karta hai —
     yahin se naam aata hai, is liye UI me "Jarvis" hard-code nahi hai.
+
+    `theme` (KAAM B): `"neon"` ya `"arc"`. Route `?theme=` se deta hai, warna
+    `config.hud_theme()` (`PRABH_HUD_THEME`). **Sirf yehi do** maane jaate
+    hain — koi bhi adhoori value ya query string seedha `<html data-theme>`
+    me nahi jaati (warna ek `?theme=<script>` se attribute injection hota).
+    `resolve_theme()` wo whitelist hai; is function me dobara check nahi.
     """
     html = html.replace(security.TOKEN_PLACEHOLDER, security.token())
     html = html.replace("__PRABH_TOOLS_ON__", "1" if keeper.tools_on() else "0")
@@ -68,8 +75,37 @@ def fill_html(html: str) -> str:
     # shortcut — sab ek hi jagah se badalte hain.
     html = html.replace("__PRABH_ASSISTANT_NAME__", escape(config.ASSISTANT_NAME))
     html = html.replace("__PRABH_DISPLAY_NAME__", escape(config.DISPLAY_NAME))
+    html = html.replace("__PRABH_HUD_THEME__", theme or config.hud_theme())
+    # Arc ke constants — Python ka ek hi source (`config_hud.py`), JS me dobara
+    # nahi likhe. `json.dumps` safe hai (sirf humare numbers/strings) aur
+    # `escape` har value ko HTML-attribute safe banata hai.
+    html = html.replace("__ARC_ACCENT__", escape(config.ARC_ACCENT))
+    html = html.replace("__ARC_ACCENT_2__", escape(config.ARC_ACCENT_2))
+    html = html.replace("__ARC_ROUTING__", escape(json.dumps(list(config.ARC_ROUTING))))
+    html = html.replace("__ARC_CHANNEL__", json.dumps(config.ARC_ROUTING_CHANNEL))
+    # Credit plain text hai, is liye JSON nahi — `arc_config.js` ise meta se
+    # padhta hai. `escape` + `&quot;` se attribute ke andar "theek" rehta hai.
+    html = html.replace("__ARC_CREDIT__", escape(config.ARC_CREDIT, quote=True))
+    html = html.replace("__ARC_TICKS__", str(config.ARC_TICK_COUNT))
+    html = html.replace("__ARC_HEX__", str(config.ARC_HEX_NODES))
+    html = html.replace("__ARC_ACT_MAX__", str(config.ARC_ACTIVITY_MAX))
+    html = html.replace("__ARC_TYPE_MS__", str(config.ARC_TYPE_MS))
+    html = html.replace("__ARC_FRAME_MS__", str(config.ARC_FRAME_MS))
     # Startup warning plain text hai — ise HTML me escape karke hi daalte hain.
     return html.replace("__PRABH_BRAIN_WARN__", escape(checkup.banner()))
+
+
+def resolve_theme(raw: str) -> str:
+    """`?theme=` ya config se asli theme. **Sirf** do maane jaate hain.
+
+    Ye whitelist ka ek hi raasta hai (KAAM B). `fill_html()` is par bharosa
+    karta hai — is liye yahan se guzar ke koi value `<html data-theme="...">`
+    me nahi aa sakti, na ki ek query string attribute injection ban sakti hai.
+    """
+    want = (raw or "").strip().lower()
+    if want in config.HUD_THEMES:
+        return want
+    return config.hud_theme()
 
 
 @app.get("/")
@@ -78,8 +114,10 @@ async def index(request: Request):
     if denied:
         raise HTTPException(*denied)
 
+    # `?theme=arc` se switch (record/test ke liye); warna config ka value.
     return HTMLResponse(fill_html(
-        (config.UI_DIR / "index.html").read_text(encoding="utf-8")))
+        (config.UI_DIR / "index.html").read_text(encoding="utf-8"),
+        resolve_theme(request.query_params.get("theme", ""))))
 
 
 @app.post("/chat")

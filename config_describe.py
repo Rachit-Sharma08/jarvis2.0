@@ -29,12 +29,16 @@ def describe() -> str:
     """Log + `--wake-info` ke liye ek line (aakhri field hamesha `hot=`)."""
     import config_wake as wake
 
+    from config_hud import hud_theme
+
     folder = wake.model_path()
     # `hot=` 13-Oct (KAAM 5): follow-up window on hai ya nahi. `--wake-info` se
     # pata chalna zaroori hai, warna "follow-up nahi ho raha" ka pata hi nahi
     # chalega - flag to DEFAULT OFF hai.
+    # `theme=` 14-Oct (KAAM B): neela ya arc - dono DEFAULT me band hote
+    # hain, is liye yahan dekhna hi padta hai kaunsa chal raha hai.
     return ("wake=%s word=%s%s model=%s stt=%s direct=%s cards=%s gate=%s "
-            "beep=%s hot=%s") % (
+            "beep=%s hot=%s theme=%s") % (
         "ON" if wake.WAKE_ENABLED else "OFF",
         "/".join(wake.WAKE_WORDS),
         "+legacy" if wake.legacy_enabled() else "",
@@ -45,4 +49,5 @@ def describe() -> str:
         "on" if wake.WAKE_VOSK_GATE else "off",
         "on" if wake.ACK_BEEP else "off",
         ("on:%.0fs" % wake.HOT_WINDOW_SECONDS) if wake.HOT_WINDOW_ENABLED else "off",
+        hud_theme(),
     )
