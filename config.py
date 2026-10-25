@@ -26,7 +26,12 @@ UI_DIR = BASE_DIR / "ui"
 # `.env` pehle load hota hai — neeche har `os.getenv` isi par depend karta hai.
 # Pehle ye LOG_DIR ke *baad* tha, is liye `.env` me rakha `JARVIS_LOG_DIR`
 # chalta hi nahi tha (sirf asli environment variable chalta tha).
-load_dotenv(BASE_DIR / ".env")
+#
+# `JARVIS_NO_DOTENV=1` par skip — test suite isi se **code defaults** par chalti
+# hai. Warna developer ke `.env` ki tuning (TOOLS_ON=0, CMD_SILENCE=1.2) test
+# badal deti thi aur 5 suite bina wajah fail hote the.
+if not os.getenv("JARVIS_NO_DOTENV"):
+    load_dotenv(BASE_DIR / ".env")
 
 # Purane env naam yahan se naye naam me badal jaate hain — LOG_DIR usi par
 # depend karta hai, is liye ye import neeche ke kisi bhi getenv se pehle.

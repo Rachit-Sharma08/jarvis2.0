@@ -36,6 +36,10 @@ LOG_DIR = Path(tempfile.gettempdir()) / "prabh-test-logs"
 # pakda jaata hai.
 os.environ["JARVIS_LOG_DIR"] = str(LOG_DIR)
 
+# `.env` skip — suite **code defaults** par chale, developer ki tuning par nahi.
+# Warna `.env` copy karte hi 5 suite fail hote the (TOOLS_ON=0, CMD_SILENCE=1.2).
+os.environ["JARVIS_NO_DOTENV"] = "1"
+
 # ---- Test keys -------------------------------------------------------------
 # Suite **hermetic** honi chahiye: developer ke `.env` me key ho ya na ho,
 # natija wahi. Pehle 7 suite chupchaap `.env` par depend karti thin (key nahi to
