@@ -110,11 +110,6 @@ TOOL_SUMMARY = {
     "alarm_status": "abhi ka alarm batao",
 }
 
-# Har wo tool jo is waqt band hai (default OFF) — UI/banner me dikhane ke liye.
-def disabled() -> list:
-    return sorted(name for name in TOOLS if not _on(name))
-
-
 def visible() -> list:
     """LLM ko dikhne wale tool (ordered). Band (default OFF) yahan nahi.
 
