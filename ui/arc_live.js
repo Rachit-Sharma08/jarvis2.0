@@ -8,8 +8,8 @@
 (function () {
   "use strict";
 
-  const CFG = window.PRABH_ARC_CFG;
-  const DOM = window.PRABH_ARC_DOM;
+  const CFG = window.JARVIS_ARC_CFG;
+  const DOM = window.JARVIS_ARC_DOM;
   const byId = (id) => document.getElementById(id);
 
   // ---- STATE <-> UI label ----
@@ -102,7 +102,7 @@
     return String(s % 100).padStart(2, "0");
   }
 
-  window.PRABH_ARC_LIVE = {
+  window.JARVIS_ARC_LIVE = {
     setState: setState, setStats: setStats, setLatency: setLatency,
     setChannel: setChannel, pushActivity: pushActivity, renderActivity: renderActivity,
     setTask: setTask, coreNumber: coreNumber,

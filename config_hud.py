@@ -5,11 +5,12 @@ jaisa hi likhna hai. Is file me koi logic nahi, sirf values aur chhote helpers.
 
 Rules: yahan koi API key nahi. Weather ke liye key chahiye hi nahi (Open-Meteo).
 
-KAAM B (14-Oct): naya "arc" theme yahin se aata hai (`PRABH_HUD_THEME`).
+KAAM B (14-Oct): naya "arc" theme yahin se aata hai (`JARVIS_HUD_THEME`).
 Default `"arc"` (owner ka faisla). Purana neela `"neon"` bhi poora hai —
-`PRABH_HUD_THEME=neon` ya `/?theme=neon` se wapas.
+`JARVIS_HUD_THEME=neon` ya `/?theme=neon` se wapas.
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 
 # ---- Colors: reference photo + spec dono se ----
@@ -21,9 +22,9 @@ CYAN_DIM = "#1c5f9e"
 AMBER = "#f5a623"
 
 # ---- Theme: naya "arc" (default) ya purana neela "neon" ----
-# `PRABH_HUD_THEME` se. Default `"arc"` (owner ka faisla, 14-Oct raat: Arc ko
+# `JARVIS_HUD_THEME` se. Default `"arc"` (owner ka faisla, 14-Oct raat: Arc ko
 # permanent rakhna). Purana neela `"neon"` BILKUL khatam nahi hua — wahi code
-# me hai aur `PRABH_HUD_THEME=neon` ya `/?theme=neon` se wapas aa jaata hai.
+# me hai aur `JARVIS_HUD_THEME=neon` ya `/?theme=neon` se wapas aa jaata hai.
 #
 # Sirf LOOK ka reference <https://jarvis.mukh1.com> se liya gaya hai — unka
 # code/CSS/SVG/asset copy nahi kiya gaya. Chhota credit footer me hai.
@@ -148,13 +149,13 @@ def quick_ids() -> tuple:
 
 
 def hud_theme() -> str:
-    """HUD ka theme — `PRABH_HUD_THEME` env se, default `"arc"`.
+    """HUD ka theme — `JARVIS_HUD_THEME` env se, default `"arc"`.
 
     Kaam jaan-boojh kar nahi maana jaata: koi bhi adhoora ya adhoori value
     seedhi default par gir jaati hai, warna ek typo se poora HUD ka look badal
     jaata aur user ko samajh hi nahi aata kyun.
     """
-    want = os.getenv("PRABH_HUD_THEME", HUD_THEME_DEFAULT).strip().lower()
+    want = os.getenv("JARVIS_HUD_THEME", HUD_THEME_DEFAULT).strip().lower()
     return want if want in HUD_THEMES else HUD_THEME_DEFAULT
 
 

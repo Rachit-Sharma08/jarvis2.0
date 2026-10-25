@@ -97,7 +97,7 @@ class Trigger:
         = feature band ya time nahi mila. Follow-up par window **dobara** lagta
         hai, is liye chain ban sakta hai."""
         if not config.HOT_WINDOW_ENABLED:
-            log.info("hot window band hai (PRABH_HOT_WINDOW=1 karo)")
+            log.info("hot window band hai (JARVIS_HOT_WINDOW=1 karo)")
             return False
         span = config.HOT_WINDOW_SECONDS if seconds is None else float(seconds)
         self._hot_until = time.monotonic() + max(0.0, span)

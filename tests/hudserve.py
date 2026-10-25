@@ -6,7 +6,7 @@ SAF rules jo ye file Follow karti hai:
 - Port **8731** (8700+ ke beech, 8000 KABHI nahi — asli Jarvis ka port hai).
 - `import config` **NAHI** karte — is liye test me logsafe ka ordering koi
   sawaal hi nahi banta aur `.env` padha hi nahi jaata.
-- `PRABH_*` placeholder bhari jaati hain, `.env` ki koi key yahan nahi.
+- `JARVIS_*` placeholder bhari jaati hain, `.env` ki koi key yahan nahi.
 
 Browser sirf is server se baat karta hai; koi asli service nahi.
 """
@@ -31,7 +31,7 @@ FAKE_WEATHER = {
     "high": 36.0, "low": 24.5, "temp_percent": 73, "hint": "",
 }
 
-# `__PRABH_HUD_THEME__` ka default — **test runner ise bharta hai**
+# `__JARVIS_HUD_THEME__` ka default — **test runner ise bharta hai**
 # (`config.hud_theme()` se), taaki nakli server bhi asli default serve kare.
 # Yahan hard-code rakhne ka koi fayda nahi: default flip hote hi test asal
 # config ke bajaye khayali value check karta, aur asli bug chhoot jaata.
@@ -39,15 +39,15 @@ FAKE_WEATHER = {
 DEFAULT_THEME = "neon"
 
 PLACEHOLDERS = (
-    ("__PRABH_TOKEN__", "nakli-token"),
-    ("__PRABH_TOOLS_ON__", "1"),
-    ("__PRABH_ASSISTANT_NAME__", "Jarvis"),
-    ("__PRABH_DISPLAY_NAME__", "Jarvis"),
-    ("__PRABH_BRAIN_WARN__", ""),
+    ("__JARVIS_TOKEN__", "nakli-token"),
+    ("__JARVIS_TOOLS_ON__", "1"),
+    ("__JARVIS_ASSISTANT_NAME__", "Jarvis"),
+    ("__JARVIS_DISPLAY_NAME__", "Jarvis"),
+    ("__JARVIS_BRAIN_WARN__", ""),
     # --- KAAM B: arc theme. Rang/number `config_hud.py` ke hain (nakli
     # constants nahi — asli values, taaki test bhi asli config check kar
     # sake). Theme `DEFAULT_THEME` se aata hai, upar dekho. ---
-    ("__PRABH_HUD_THEME__", DEFAULT_THEME),
+    ("__JARVIS_HUD_THEME__", DEFAULT_THEME),
     ("__ARC_ACCENT__", "#ff8a2e"),
     ("__ARC_ACCENT_2__", "#ff5e3a"),
     ("__ARC_ROUTING__", '["WAKE", "STT", "BRAIN", "TTS"]'),
@@ -75,7 +75,7 @@ def filled_html(theme: str = "") -> str:
     """
     html = (UI / "index.html").read_text(encoding="utf-8")
     for name, value in PLACEHOLDERS:
-        if name == "__PRABH_HUD_THEME__":
+        if name == "__JARVIS_HUD_THEME__":
             value = theme or DEFAULT_THEME
         html = html.replace(name, value)
     return html

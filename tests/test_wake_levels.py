@@ -152,16 +152,16 @@ class TestSilenceDefault(unittest.TestCase):
     def test_env_override_still_works(self):
         import importlib
         import os
-        saved = os.environ.get("PRABH_CMD_SILENCE")
-        os.environ["PRABH_CMD_SILENCE"] = "1.2"
+        saved = os.environ.get("JARVIS_CMD_SILENCE")
+        os.environ["JARVIS_CMD_SILENCE"] = "1.2"
         try:
             importlib.reload(config_wake)
             check("env se 1.2", config_wake.COMMAND_END_SILENCE_SECONDS, 1.2)
         finally:
             if saved is None:
-                os.environ.pop("PRABH_CMD_SILENCE", None)
+                os.environ.pop("JARVIS_CMD_SILENCE", None)
             else:
-                os.environ["PRABH_CMD_SILENCE"] = saved
+                os.environ["JARVIS_CMD_SILENCE"] = saved
             importlib.reload(config_wake)
 
     def test_other_windows_unchanged(self):

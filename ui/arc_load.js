@@ -53,7 +53,7 @@
       // default **async** hota hai — yaani sab parallel download hote hain
       // aur jo pehle laut kar wahi pehle chalta hai. Load order toot'ne se
       // `arc_shell.js` `arc_dom.js` se pehle chala aur
-      // `window.PRABH_ARC_DOM` undefined mila ("Cannot read properties of
+      // `window.JARVIS_ARC_DOM` undefined mila ("Cannot read properties of
       // undefined"). `async = false` se order wahi rehta hai jo array me hai.
       s.async = false;
       document.body.appendChild(s);

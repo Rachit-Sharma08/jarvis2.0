@@ -15,7 +15,7 @@ class Speaker {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-prabh-token": this.token,
+          "x-jarvis-token": this.token,
         },
         body: JSON.stringify({ text, mode }),
       });

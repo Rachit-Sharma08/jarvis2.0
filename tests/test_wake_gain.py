@@ -1,4 +1,4 @@
-"""Wake ka digital gain — `RmsGain`, gate, aur `PRABH_WAKE_GAIN` teeno raaste.
+"""Wake ka digital gain — `RmsGain`, gate, aur `JARVIS_WAKE_GAIN` teeno raaste.
 
 Ye file 14-Oct raat me bani jab `test_wake_resample.py` 200 cross kar gaya. Gain
 ka hissa alag rakha gaya kyunki usme **alag hi ek sach** hai — wo gate ka
@@ -133,7 +133,7 @@ def test_fixed_gain():
 
 
 def test_make_gain_from_config():
-    """`PRABH_WAKE_GAIN`: auto (default) | number | off — teenon raaste."""
+    """`JARVIS_WAKE_GAIN`: auto (default) | number | off — teenon raaste."""
     old = config.INPUT_GAIN
     try:
         config.INPUT_GAIN = "auto"

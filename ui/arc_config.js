@@ -23,7 +23,7 @@ function read(name, fallback) {
     return (e && e.content) || fallback;
   }
 
-  window.PRABH_ARC_CFG = {
+  window.JARVIS_ARC_CFG = {
     accent: read("arc-accent", "#ff8a2e"),
     accent2: read("arc-accent-2", "#ff5e3a"),
     routing: read("arc-routing", ["WAKE", "STT", "BRAIN", "TTS"]),

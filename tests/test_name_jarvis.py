@@ -7,7 +7,7 @@ split, 200-line niyam). Yahan bacha hai:
 
 1. **UI text me "Sunday" na bache** — `ui/*.js` + `ui/*.html` grep. Do cheezein
    jaan-boojh kar bachayi hain: `hud_clock.js` ka weekday `DAYS` array (wo
-   calendar ka din hai, assistant ka naam nahi) aur `x-prabh-token` jaise
+   calendar ka din hai, assistant ka naam nahi) aur `x-jarvis-token` jaise
    **internal** ids (token/security ka hissa hai, naam nahi).
 
 Koi asli Vosk/mic/API nahi.
@@ -30,8 +30,8 @@ from server import app as server_app
 ROOT = Path(__file__).resolve().parent.parent
 UI_DIR = ROOT / "ui"
 
-# `x-prabh-token` / `PRABH_*` / meta `prabh-*` — token + security ka hissa hai.
-INTERNAL_RE = re.compile(r"prabh[-_]|PRABH_", re.IGNORECASE)
+# `x-jarvis-token` / `JARVIS_*` / meta `prabh-*` — token + security ka hissa hai.
+INTERNAL_RE = re.compile(r"prabh[-_]|JARVIS_", re.IGNORECASE)
 
 # ---- UI scan ka rule (teen chhoti baatein jaan-boojh kar) -------------------
 #
@@ -127,17 +127,17 @@ class TestUiHasNoSunday(unittest.TestCase):
         html = (UI_DIR / "index.html").read_text(encoding="utf-8")
         # Naam **config se** aata hai (server `/` placeholder replace karta hai) —
         # is liye HTML me "Jarvis" hard-code nahi, placeholder hai.
-        self.assertIn("<title>__PRABH_ASSISTANT_NAME__ HUD</title>", html)
-        self.assertIn('name="prabh-name" content="__PRABH_ASSISTANT_NAME__"', html)
-        self.assertIn('id="brand">__PRABH_DISPLAY_NAME__<', html)
-        self.assertIn('id="orbMode">__PRABH_DISPLAY_NAME__<', html)
+        self.assertIn("<title>__JARVIS_ASSISTANT_NAME__ HUD</title>", html)
+        self.assertIn('name="jarvis-name" content="__JARVIS_ASSISTANT_NAME__"', html)
+        self.assertIn('id="brand">__JARVIS_DISPLAY_NAME__<', html)
+        self.assertIn('id="orbMode">__JARVIS_DISPLAY_NAME__<', html)
 
     def test_server_replaces_name_placeholders(self):
         # `GET /` par placeholder sach me badal jaana chahiye. Sirf file me
         # dekhte hi kaafi nahi — jaisa Phase 4 me `hud_check_get.py` ka bug tha.
         served = render_index()
-        self.assertNotIn("__PRABH_ASSISTANT_NAME__", served)
-        self.assertNotIn("__PRABH_DISPLAY_NAME__", served)
+        self.assertNotIn("__JARVIS_ASSISTANT_NAME__", served)
+        self.assertNotIn("__JARVIS_DISPLAY_NAME__", served)
         self.assertIn("<title>Jarvis HUD</title>", served)
         self.assertIn('id="brand">J.A.R.V.I.S<', served)
 

@@ -15,7 +15,7 @@ faisla).
 
 App start hote hi TOOLS **ON** hota hai aur ab apne aap **OFF nahi** hota (pehle 30
 minute baad auto-OFF tha, wo hata diya gaya hai). Wapas purana behaviour chahiye
-to `.env` me `PRABH_TOOLS_AUTOOFF=30`. Default OFF karna ho to `PRABH_TOOLS_ON=0`.
+to `.env` me `JARVIS_TOOLS_AUTOOFF=30`. Default OFF karna ho to `JARVIS_TOOLS_ON=0`.
 
 Windows **lock** hone par TOOLS apne aap OFF ho jaata hai — sirf tab. Awaaz se
 OFF nahi hota (awaaz se sirf ALLOW nahi hota, tools bhi nahi).
@@ -70,7 +70,7 @@ OFF nahi hota (awaaz se sirf ALLOW nahi hota, tools bhi nahi).
    (replay block). Ek waqt me sirf ek card. 60 second me jawab na aaye to apne aap DENY.
 3. **Limit**: ek request me max **5 tool step**, **20 request/min**.
 4. **ALLOW sirf UI button** se — chat ya awaaz se koi raasta nahi.
-5. **Tools default ON**; restart = phir ON. Auto-OFF band hai (`.env` me `PRABH_TOOLS_AUTOOFF=30` se wapas 30 min).
+5. **Tools default ON**; restart = phir ON. Auto-OFF band hai (`.env` me `JARVIS_TOOLS_AUTOOFF=30` se wapas 30 min).
 6. **Delete sirf `send2trash`** (Recycle Bin). Permanent delete ka tool mat banao.
 7. **Secret masking** — `gatekeeper/audit.py` ka `mask()` tool output, ACTIVITY panel,
    confirm card, LLM ka text aur log, sab jagah lage. Naya UI output banate hi `textContent`

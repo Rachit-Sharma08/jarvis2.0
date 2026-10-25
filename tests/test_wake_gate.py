@@ -66,7 +66,7 @@ def test_silence_blocks_reset():
 
 
 def test_gate_off_switch():
-    print("GATE: PRABH_VOSK_GATE=0 (purana behaviour)")
+    print("GATE: JARVIS_VOSK_GATE=0 (purana behaviour)")
     listener = FakeListener()
     gate = gate_mod.Gate(gate_on=False)
     for _ in range(5):

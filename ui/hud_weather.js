@@ -14,7 +14,7 @@
   const arcEl = document.getElementById("tempArc");
   if (!tempEl) return;
 
-  const TOKEN = (document.querySelector('meta[name="prabh-token"]') || {}).content || "";
+  const TOKEN = (document.querySelector('meta[name="jarvis-token"]') || {}).content || "";
   const ARC = 151;                 // ardh-gol gauge ki perimeter
   const RETRY_MS = 10 * 60 * 1000; // fail par 10 min baad phir try
 
@@ -60,7 +60,7 @@
   async function load(force) {
     try {
       const reply = await fetch("/hud/weather", {
-        headers: { "x-prabh-token": TOKEN },
+        headers: { "x-jarvis-token": TOKEN },
         cache: "no-store"
       });
       if (!reply.ok) throw new Error("http " + reply.status);
@@ -76,5 +76,5 @@
   load(true);
   setInterval(() => load(true), 15 * 60 * 1000);
 
-  window.PRABH_WEATHER = { render: render, load: load };
+  window.JARVIS_WEATHER = { render: render, load: load };
 })();

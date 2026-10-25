@@ -3,14 +3,14 @@
 Rules: is file me **koi API key nahi**, aur camera ka koi model file yahan nahi
 (wo `data/` me hota hai, jo gitignored hai).
 
-**DEFAULT OFF** (`PRABH_VISION=0`). Ye project ka pakka niyam hai — naya
+**DEFAULT OFF** (`JARVIS_VISION=0`). Ye project ka pakka niyam hai — naya
 mic/camera feature tab tak band rahega jab tak owner khud na on kare. wajah:
 camera on = battery + privacy. Aur jab tak `insightface` install nahi hota,
 feature chalta hua dikhna hi galat hoga (usme se har command DENY hoti hai).
 
 Toggle aur uske asar:
 
-| `PRABH_VISION` | Asar |
+| `JARVIS_VISION` | Asar |
 |---|---|
 | `0` (default) | `allowed()` bilkul pehle jaisa — koi camera nahi khulta |
 | `1` | Har command se pehle camera se ek frame, phir owner match |
@@ -19,6 +19,7 @@ Toggle aur uske asar:
 kabhi initialize hi nahi hota.
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 
 # **Yahan `log_setup` import NAHI kar sakte.** Wajah (15-Oct raat ko 3 test
@@ -35,13 +36,13 @@ import os
 # ---- kholna / band karna ----
 # Default **0** — OFF. Mic/camera ka naya feature is project me default OFF
 # hota hai (AGENTS.md: DEFAULT OFF).
-VISION_ENABLED = os.getenv("PRABH_VISION", "0").strip().lower() in (
+VISION_ENABLED = os.getenv("JARVIS_VISION", "0").strip().lower() in (
     "1", "true", "yes", "on")
 
 # ---- match ka cut-off ----
 # `identity.DEFAULT_THRESHOLD` ka override. **Guess mat karna** — apni webcam
 # se enroll karke tune karo (enroll.py docstring dekho).
-_threshold = os.getenv("PRABH_VISION_THRESHOLD", "").strip()
+_threshold = os.getenv("JARVIS_VISION_THRESHOLD", "").strip()
 try:
     VISION_THRESHOLD = float(_threshold) if _threshold else None
 except ValueError:
@@ -52,14 +53,14 @@ except ValueError:
 
 # ---- camera ----
 # Default 0 = Windows ka default camera. Diya ho to wo index.
-CAMERA_INDEX = int(os.getenv("PRABH_VISION_CAM", "0") or 0)
+CAMERA_INDEX = int(os.getenv("JARVIS_VISION_CAM", "0") or 0)
 # Frame width. Chhota = tez + battery; 640 bade chehre ke liye kaafi hai.
-CAMERA_WIDTH = int(os.getenv("PRABH_VISION_WIDTH", "640") or 640)
-CAMERA_HEIGHT = int(os.getenv("PRABH_VISION_HEIGHT", "480") or 480)
+CAMERA_WIDTH = int(os.getenv("JARVIS_VISION_WIDTH", "640") or 640)
+CAMERA_HEIGHT = int(os.getenv("JARVIS_VISION_HEIGHT", "480") or 480)
 
 # Enrollment me kitne frames lene hain. 15 asli bana dete hain (bina dikhne
 # wali explanation se utna hi fayda, aur battery zyada).
-ENROLL_SAMPLES = int(os.getenv("PRABH_VISION_SAMPLES", "15") or 15)
+ENROLL_SAMPLES = int(os.getenv("JARVIS_VISION_SAMPLES", "15") or 15)
 
 # ---- guard ki wajah ----
 # Ye line HUD par aur log me dikhti hai. Chhoti rakhi hai (clip_answer ke saath).

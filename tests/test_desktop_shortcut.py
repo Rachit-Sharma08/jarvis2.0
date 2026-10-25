@@ -89,10 +89,10 @@ def test_wiring():
     check("config me shortcut ka naam", config.HUD_SHORTCUT_NAME, "Jarvis HUD")
     check("config me hotkey", config.HUD_HOTKEY, "ctrl+alt+s")
     check(".env.example me hotkey",
-          "PRABH_HUD_HOTKEY" in (ROOT / ".env.example").read_text(encoding="utf-8"), True)
+          "JARVIS_HUD_HOTKEY" in (ROOT / ".env.example").read_text(encoding="utf-8"), True)
     # .env se badalne wala hona chahiye, matlab .env padha jaata hai
     check("hotkey env se aata hai",
-          "PRABH_HUD_HOTKEY" in (ROOT / "config_desktop.py").read_text(encoding="utf-8"),
+          "JARVIS_HUD_HOTKEY" in (ROOT / "config_desktop.py").read_text(encoding="utf-8"),
           True)
 
 

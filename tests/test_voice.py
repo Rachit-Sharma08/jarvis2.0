@@ -90,7 +90,7 @@ def _stt_fails(audio: bytes) -> bool:
 def test_voice_endpoints():
     print("VOICE ENDPOINTS (security)")
     token = security.token()
-    ok = {"host": GOOD_HOST, "origin": GOOD_ORIGIN, "x-prabh-token": token}
+    ok = {"host": GOOD_HOST, "origin": GOOD_ORIGIN, "x-jarvis-token": token}
     client = TestClient(app)
 
     stt_voice_mod = __import__("server.voice_routes", fromlist=["stt_voice"])

@@ -101,7 +101,7 @@ me provider ki list badlo, engine me kabhi hard-code mat likho.
 - ✅ **Auto-start chalu hai** — `HKCU\...\Run` me `Jarvis` value likhi hai (4 Oct):
   `pythonw.exe D:\prabh\desktop\launcher.py`. Band karna ho:
   `python -m desktop.autostart remove`.
-- ❌ **Prabh mode band** — code maujood hai, `PRABH_SUNDAY_ONLY=1` se off.
+- ❌ **Prabh mode band** — code maujood hai, `JARVIS_SUNDAY_ONLY=1` se off.
 - ❌ Cartesia ki female voice id nahi mili → wo provider skip ho jaati hai.
 - ❌ **Cartesia voice id** (`CARTESIA_VOICE_*`) abhi khaali hai.
 

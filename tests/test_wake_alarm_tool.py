@@ -1,6 +1,6 @@
 """Alarm ke do supporting hisse — **default OFF** aur **locale-safe task**.
 
-1. `tools/alarm.py` — Jarvis ka tool. `PRABH_ALARM_TOOL=0` (default) par
+1. `tools/alarm.py` — Jarvis ka tool. `JARVIS_ALARM_TOOL=0` (default) par
    LLM ko dikhta hi nahi aur `execute()` maneta hai. Time parse **pure** hai.
 2. `tools/alarm_task.py` — Task Scheduler. `ps_when()` **pure** hai aur
    minute **nahi** chhedta (07:10 ka task 07:00 par ban chuka tha).
@@ -79,7 +79,7 @@ class TestParseWhen(unittest.TestCase):
 
 
 class TestDefaultOff(unittest.TestCase):
-    """`PRABH_ALARM_TOOL=0` — LLM ko tool dikhe hi nahi."""
+    """`JARVIS_ALARM_TOOL=0` — LLM ko tool dikhe hi nahi."""
 
     def test_flag_default_off(self):
         check("default OFF", config.ALARM_TOOL_ENABLED, False)

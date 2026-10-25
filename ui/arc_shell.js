@@ -9,7 +9,7 @@
 (function () {
   "use strict";
 
-  const DOM = window.PRABH_ARC_DOM;
+  const DOM = window.JARVIS_ARC_DOM;
   const NAME = DOM.name;
 
   // ---------------- top bar ----------------
@@ -108,5 +108,5 @@
     return root;
   }
 
-  window.PRABH_ARC_SHELL = { shell: shell, name: NAME };
+  window.JARVIS_ARC_SHELL = { shell: shell, name: NAME };
 })();

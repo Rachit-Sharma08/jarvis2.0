@@ -92,7 +92,7 @@
     addRow(text, "", kind === "deny" ? "deny" : "allow");
   }
 
-  window.PRABH_ACTIVITY = {
+  window.JARVIS_ACTIVITY = {
     addActivity: addActivity,
     addNote: addNote,
     addLine: addLine,

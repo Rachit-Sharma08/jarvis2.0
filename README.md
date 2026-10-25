@@ -5,7 +5,7 @@
 
 Ye ek hi AI assistant hai — **Jarvis** (halka professional, chhote aur saaf jawab).
 Ek doosra mode **Prabh** (pyaar se, dostana, khula Hinglish) code me maujood hai par
-**dormant** hai — `.env` ke `PRABH_SUNDAY_ONLY=1` se band, aur jaldi hatega.
+**dormant** hai — `.env` ke `JARVIS_SUNDAY_ONLY=1` se band, aur jaldi hatega.
 
 Browser me chalta hai, Windows 10/11 par, sab kuch free tools se. Mic se baat kar sakta
 hai aur PC ke kaam bhi kar sakta hai (file, folder, app, command) — har kaam ke pehle
@@ -121,7 +121,7 @@ HUD kholne ke **teen** raasta hain, teeno ek hi kaam karte hain:
 | Desktop shortcut | Desktop par **"Jarvis HUD"** par double-click |
 | Global hotkey | **Ctrl + Alt + S** (poore Windows me) |
 
-Hotkey badalna ho to `.env` me `PRABH_HUD_HOTKEY=<ctrl+alt+shift+s>` (ek letter
+Hotkey badalna ho to `.env` me `JARVIS_HUD_HOTKEY=<ctrl+alt+shift+s>` (ek letter
 ya F1–F24). Galat value ho to hotkey chalti hi nahi — app safe rehti hai.
 
 Teeno ka ek hi raasta `desktop/open_hud.py` hai: server chalu hai to HUD khulta
@@ -148,8 +148,8 @@ Jarvis  ->  "Ji, boliye"  ->  aapki baat (2 s chup par band, 30 s max)
   **allow hamesha screen ke button se, awaaz se nahi.**
 - 🔇 Tray ka **MUTE** ya PC lock → command bilkul nahi chalta.
 
-Details `VOICE.md` me. Band karna ho to `.env` me `PRABH_WAKE=0`, ya `.env` me
-`PRABH_CMD_SILENCE=2.0` se chup-hone ka wait badal sakte ho.
+Details `VOICE.md` me. Band karna ho to `.env` me `JARVIS_WAKE=0`, ya `.env` me
+`JARVIS_CMD_SILENCE=2.0` se chup-hone ka wait badal sakte ho.
 
 > Awaaz se **sirf baat** hoti hai — koi tool, koi file delete, koi setting badal
 > nahi. Ye `TOOLS.md` me hai.
@@ -237,7 +237,7 @@ Ye app bahar se bilkul band hai:
 3. **Host header check** — sirf `localhost:8000` / `127.0.0.1:8000`. Isse koi fake
    domain (DNS rebinding) app ko apna nahi dikha sakta.
 4. **Token** — server har baar start hone par ek naya random token banata hai.
-   Token page ke `<meta name="prabh-token">` me daal diya jaata hai, aur UI har request
+   Token page ke `<meta name="jarvis-token">` me daal diya jaata hai, aur UI har request
    ke saath bhejta hai. Token galat ya missing ho to request 401 ho jaati hai.
 5. **CORS band** — koi `access-control-allow-origin` header nahi jaata.
 6. **CSP header** — page par sirf apna hi code chal sakta hai (inline script band).
@@ -252,9 +252,9 @@ chalao aur page dobara kholo — token apne aap refresh ho jaayega.
 ```powershell
 cd D:\prabh
 $page = Invoke-WebRequest http://localhost:8000 -UseBasicParsing
-$token = [regex]::Match($page.Content, 'name="prabh-token" content="([^"]+)"').Groups[1].Value
+$token = [regex]::Match($page.Content, 'name="jarvis-token" content="([^"]+)"').Groups[1].Value
 Invoke-RestMethod http://localhost:8000/chat -Method Post `
-  -Headers @{ Origin = "http://localhost:8000"; "x-prabh-token" = $token } `
+  -Headers @{ Origin = "http://localhost:8000"; "x-jarvis-token" = $token } `
   -ContentType "application/json" -Body '{"text":"Jarvis, hi"}'
 ```
 

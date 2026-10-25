@@ -2,20 +2,20 @@
 <!-- `data-theme` `<html>` par (arc CSS `html[data-theme="arc"]` ke andar
      hai). Server (`fill_html`) ise bhar deta hai — JS nahi, warna pehle frame
      par flash aata. Sirf "neon" (default) ya "arc" maane jaate hain. -->
-<html lang="en" data-theme="__PRABH_HUD_THEME__">
+<html lang="en" data-theme="__JARVIS_HUD_THEME__">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta name="prabh-token" content="__PRABH_TOKEN__" />
-<meta name="prabh-tools" content="__PRABH_TOOLS_ON__" />
+<meta name="jarvis-token" content="__JARVIS_TOKEN__" />
+<meta name="jarvis-tools" content="__JARVIS_TOOLS_ON__" />
 <!-- Naam config se aata hai (config_name.py). JS bhi yahin se padhta hai, is
      liye "Jarvis" app.js / hud_*.js me dobara likha nahi gaya. -->
-<meta name="prabh-name" content="__PRABH_ASSISTANT_NAME__" />
-<meta name="prabh-display" content="__PRABH_DISPLAY_NAME__" />
+<meta name="jarvis-name" content="__JARVIS_ASSISTANT_NAME__" />
+<meta name="jarvis-display" content="__JARVIS_DISPLAY_NAME__" />
 <!-- KAAM B: theme + arc ke constants. Python ka ek hi source (`config_hud.py`);
      JS unhe yahin se meta ke through padhta hai (`arc_config.js`). Content
      JSON hai (numbers/arrays) ya plain text (credit/channel). -->
-<meta name="prabh-theme" content="__PRABH_HUD_THEME__" />
+<meta name="jarvis-theme" content="__JARVIS_HUD_THEME__" />
 <meta name="arc-accent" content="__ARC_ACCENT__" />
 <meta name="arc-accent-2" content="__ARC_ACCENT_2__" />
 <meta name="arc-routing" content="__ARC_ROUTING__" />
@@ -26,7 +26,7 @@
 <meta name="arc-act-max" content="__ARC_ACT_MAX__" />
 <meta name="arc-type-ms" content="__ARC_TYPE_MS__" />
 <meta name="arc-frame-ms" content="__ARC_FRAME_MS__" />
-<title>__PRABH_ASSISTANT_NAME__ HUD</title>
+<title>__JARVIS_ASSISTANT_NAME__ HUD</title>
 <link rel="stylesheet" href="/ui/fonts.css" />
 <link rel="stylesheet" href="/ui/hud_base.css" />
 <link rel="stylesheet" href="/ui/hud_panel.css" />
@@ -46,13 +46,13 @@
 
   <header class="topbar">
     <div class="tb-left">
-      <h1 class="brand" id="brand">__PRABH_DISPLAY_NAME__</h1>
+      <h1 class="brand" id="brand">__JARVIS_DISPLAY_NAME__</h1>
       <span class="pill st-idle" id="status">● IDLE</span>
     </div>
     <div class="tb-mid">
       <div class="ruler" id="ruler" aria-hidden="true"></div>
       <!-- KAAM A: brainwarn ab topbar ke apne flow me hai. -->
-      <p class="brainwarn" id="brainwarn">__PRABH_BRAIN_WARN__</p>
+      <p class="brainwarn" id="brainwarn">__JARVIS_BRAIN_WARN__</p>
     </div>
     <div class="tb-right">
       <span class="pill sys" id="sysstate">SYSTEM …</span>
@@ -115,7 +115,7 @@
         <circle class="core" id="ringCore" cx="160" cy="160" r="58" />
       </svg>
       <div class="orbtext">
-        <p class="orbmode" id="orbMode">__PRABH_DISPLAY_NAME__</p>
+        <p class="orbmode" id="orbMode">__JARVIS_DISPLAY_NAME__</p>
         <p class="orbstate" id="orbState">READY</p>
       </div>
     </div>

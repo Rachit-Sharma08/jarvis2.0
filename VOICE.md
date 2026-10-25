@@ -134,14 +134,14 @@ Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
 | Kaam | App shuru hote hi mic khulta hai. **"Jarvis"** (ya "hello/hey jarvis") bolte hi **HUD khul jaata hai**. |
 | Model | `models/vosk-model-small-en-us-0.15` — **Vosk**, 100% offline, awaaz bahar nahi jaati |
 | Grammar | **Shabd, poori phrase nahi** (5-Oct ka fix): `hello`, `hey`, `jarvis`, `hlo`, `helo`, `hi`, `yo`, `[unk]` — trigger hamesha `jarvis` par hi hota hai, bas Hinglish bhi sahi shabd pe chun sake |
-| Audio | 16 kHz mono, 30 ms chunk, energy VAD (threshold `.env` se `PRABH_VAD`, ab **0.010** — door se/dheere "Hlo Jarvis" par trigger aata hai) |
+| Audio | 16 kHz mono, 30 ms chunk, energy VAD (threshold `.env` se `JARVIS_VAD`, ab **0.010** — door se/dheere "Hlo Jarvis" par trigger aata hai) |
 | Battery | Vosk **sirf awaaz par** chalta hai (`wake/gate.py`) — khamoshi me chunk recognizer tak jaata hi nahi. Napi napa 4.8% → 0.9% core. Mic ka stream phir bhi khula rehta hai, is liye "Jarvis" har waqt sun sakta hai |
-| Gate band | `.env` me `PRABH_VOSK_GATE=0` — purana behaviour (har chunk Vosk ko), debug ke liye |
+| Gate band | `.env` me `JARVIS_VOSK_GATE=0` — purana behaviour (har chunk Vosk ko), debug ke liye |
 | Cooldown | Ek trigger ke baad **1.5 second** dobara nahi pakadta |
 | Mute | Tray ka **Mic Mute** sunna rok deta hai (mic khula rehta hai, sunta nahi) |
-| Band karo | `.env` me `PRABH_WAKE=0` — phir startup me `wake: PRABH_WAKE=0 se band hai` dikhega |
+| Band karo | `.env` me `JARVIS_WAKE=0` — phir startup me `wake: JARVIS_WAKE=0 se band hai` dikhega |
 | Startup line | `wake: sun raha hai (jarvis)` — ya mic band/model missing ho to wajah |
-| Mic busy | Chrome/Teams mic pakde ho to app **3 koshish** karti hai (`PRABH_MIC_ATTEMPTS`, beech me `PRABH_MIC_RETRY` second), phir `wake: nahi chala`. Wajah log me: `MME error 1` = mic kisi aur app ne pakda hua hai |
+| Mic busy | Chrome/Teams mic pakde ho to app **3 koshish** karti hai (`JARVIS_MIC_ATTEMPTS`, beech me `JARVIS_MIC_RETRY` second), phir `wake: nahi chala`. Wajah log me: `MME error 1` = mic kisi aur app ne pakda hua hai |
 
 ### Trigger ke **teen raaste** (5-Oct ka fix — "ek command ke baad doosra nahi")
 
@@ -159,7 +159,7 @@ Ab teeno ka faisla **ek** jagah hai (`wake/trigger.py`), koi bhi ek kaafi hai:
 | **flush** | Gate ne khamoshi par `FinalResult()` se pending text nikaala | Wahi bug ka pakkaura |
 
 Naye `start()` par cooldown saaf hota hai, warna restart ke baad pehla "Jarvis"
-1.5 second tak pakda hi nahi jata. Wake debug line (`PRABH_WAKE_DEBUG=1`) se
+1.5 second tak pakda hi nahi jata. Wake debug line (`JARVIS_WAKE_DEBUG=1`) se
 chunk/Vosk ka hisaab dekha ja sakta hai — **hamesha 0** rakho, warna har 3 second
 ek line log me.
 
@@ -181,13 +181,13 @@ bolega, aap apni baat bolo, aur jawab **awaaz me** aayega:
 
 | Kya | Default | `.env` |
 |---|---|---|
-| Chup ho jaane par band | **0.7 s** | `PRABH_CMD_SILENCE` |
-| Ack se pehle sunna ("Ji, boliye" chhod do) | **0.18 s** | `PRABH_ACK_PEEK` |
-| Jawab ki **awaaz** ki limit | **220** char (HUD par poora jawab) | `PRABH_VOICE_MAX` |
+| Chup ho jaane par band | **0.7 s** | `JARVIS_CMD_SILENCE` |
+| Ack se pehle sunna ("Ji, boliye" chhod do) | **0.18 s** | `JARVIS_ACK_PEEK` |
+| Jawab ki **awaaz** ki limit | **220** char (HUD par poora jawab) | `JARVIS_VOICE_MAX` |
 | Sabse lamba command | **30 s** | (constant) |
 | Turn ka max step | 5 | (constant) |
-| STT ka timeout | **6 s** | `PRABH_STT_TIMEOUT` |
-| STT ki retry | **1** | `PRABH_STT_RETRIES` |
+| STT ka timeout | **6 s** | `JARVIS_STT_TIMEOUT` |
+| STT ki retry | **1** | `JARVIS_STT_RETRIES` |
 
 0.7 s: pehle 2.0 s tha, phir 1.2 s, phir 0.9 s. Beech ka 0.4 s `HANGOVER` alag hai
 aur waise hi hai (warna beech ka vaakya kat jaata). Kam chuppi = tez jawab, par
@@ -312,8 +312,8 @@ hai (HUD/browser/stats). Step 1 ka gate + ye sleep mode = mic+gate ~0.9% core.
 
 TTS ka provider **yahan chuna nahi jaata** — awaaz hamesha `voice/tts.py` se
 aati hai (AGENTS.md ka "TTS provider ka ek hi raasta") aur `say()` sirf use
-bajata hai. `.env` me `PRABH_SPEAKER=<device name>` se speaker badal sakte ho,
-`PRABH_SPEAKER_RATE` se rate (default 32 kHz mono).
+bajata hai. `.env` me `JARVIS_SPEAKER=<device name>` se speaker badal sakte ho,
+`JARVIS_SPEAKER_RATE` se rate (default 32 kHz mono).
 
 ### Abhi kya **nahi** hota
 

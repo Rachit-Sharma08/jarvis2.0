@@ -21,12 +21,12 @@
   "use strict";
 
   function token() {
-    var meta = document.querySelector('meta[name="prabh-token"]');
+    var meta = document.querySelector('meta[name="jarvis-token"]');
     return (meta && meta.content) || "";
   }
 
   function loadOnce(path, render) {
-    fetch(path, { headers: { "x-prabh-token": token() } })
+    fetch(path, { headers: { "x-jarvis-token": token() } })
       .then(function (res) {
         if (!res.ok) throw new Error("http " + res.status);
         return res.json();
@@ -39,12 +39,12 @@
 
   function primePanels() {
     loadOnce("/hud/stats", function (data) {
-      if (window.PRABH_STATS) window.PRABH_STATS.render(data);
+      if (window.JARVIS_STATS) window.JARVIS_STATS.render(data);
     });
   }
 
   // Expose taaki test/app dono isko ek hi jagah se dekh sakein.
-  window.PRABH_PRIME = { prime: primePanels, loadOnce: loadOnce };
+  window.JARVIS_PRIME = { prime: primePanels, loadOnce: loadOnce };
 
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", primePanels);

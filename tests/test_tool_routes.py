@@ -33,7 +33,7 @@ def check(name, got, want):
 
 
 def headers(token):
-    return {"host": GOOD_HOST, "origin": GOOD_ORIGIN, "x-prabh-token": token}
+    return {"host": GOOD_HOST, "origin": GOOD_ORIGIN, "x-jarvis-token": token}
 
 
 def test_security_on_tool_endpoints(client):
@@ -138,10 +138,10 @@ def test_csp_header(client):
     check("nosniff", page.headers.get("x-content-type-options"), "nosniff")
     check(
         "inline script nahi (CSP ke liye)",
-        "<script>window.PRABH_TOKEN" in page.text,
+        "<script>window.JARVIS_TOKEN" in page.text,
         False,
     )
-    check("token meta tag me", 'name="prabh-token"' in page.text, True)
+    check("token meta tag me", 'name="jarvis-token"' in page.text, True)
     check("token page me hai", token in page.text, True)
 
     # Asli LLM (Groq) tak raasta nahi jaana chahiye - fake router patch.

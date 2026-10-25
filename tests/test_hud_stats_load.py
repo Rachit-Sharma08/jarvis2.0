@@ -58,7 +58,7 @@ class TestStatsEndpoint(unittest.TestCase):
         self.headers = {
             "host": f"localhost:{config.SERVER_PORT}",
             "origin": f"http://localhost:{config.SERVER_PORT}",
-            "x-prabh-token": security.token(),
+            "x-jarvis-token": security.token(),
         }
 
     def test_returns_200_with_fields(self):
@@ -104,7 +104,7 @@ class TestLoadPriming(unittest.TestCase):
         src = PRIME_JS.read_text(encoding="utf-8")
         check("primePanels hai", "function primePanels()" in src, True)
         check("/hud/stats maarta hai", 'loadOnce("/hud/stats"' in src, True)
-        check("token bhejta hai", '"x-prabh-token"' in src, True)
+        check("token bhejta hai", '"x-jarvis-token"' in src, True)
         check("load par chalta hai", "DOMContentLoaded" in src, True)
         check("index.html me script tag",
               "hud_prime.js" in (ROOT / "ui" / "index.html").read_text(
@@ -122,7 +122,7 @@ class TestLoadPriming(unittest.TestCase):
         """Purana WS raasta bhi chahiye — `primePanels` sirf shuruaat bharta hai."""
         src = APP_JS.read_text(encoding="utf-8")
         check("WS stats render ab bhi hai",
-              "if (window.PRABH_STATS) window.PRABH_STATS.render(ev.data);" in src,
+              "if (window.JARVIS_STATS) window.JARVIS_STATS.render(ev.data);" in src,
               True)
 
     def test_uses_textcontent_not_innerhtml(self):

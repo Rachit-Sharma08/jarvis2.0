@@ -106,7 +106,7 @@ class AutoGain(RmsGain):
 
 
 class FixedGain:
-    """`PRABH_WAKE_GAIN=4` jaisa fixed gain — debug/compare ke liye."""
+    """`JARVIS_WAKE_GAIN=4` jaisa fixed gain — debug/compare ke liye."""
 
     def __init__(self, factor: float = 1.0):
         self.factor = float(factor)

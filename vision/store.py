@@ -110,7 +110,7 @@ def forget() -> bool:
     """Sab kuch mitao. -> kuch tha ya nahi (pata nahi chala to bhi True).
 
     Privacy: user ka haq hai ki apna data mita sake. Ye command
-    (`PRABH_VISION` off hone par bhi) hamesha chalta rahega."""
+    (`JARVIS_VISION` off hone par bhi) hamesha chalta rahega."""
     p = path()
     if p.is_file():
         try:

@@ -11,10 +11,10 @@
 (function () {
   "use strict";
 
-  const CFG = window.PRABH_ARC_CFG;
-  const SHELL = window.PRABH_ARC_SHELL;
-  const DOM = window.PRABH_ARC_DOM;
-  const LIVE = window.PRABH_ARC_LIVE;
+  const CFG = window.JARVIS_ARC_CFG;
+  const SHELL = window.JARVIS_ARC_SHELL;
+  const DOM = window.JARVIS_ARC_DOM;
+  const LIVE = window.JARVIS_ARC_LIVE;
 
   // DOM abhi bhi na bana ho (ya page unload ho raha ho) tab `null` — is liye
   // har `setText` null-check karta hai. Yehi WS callbacks ko safe rakhta hai.
@@ -69,7 +69,7 @@
 
   // ---------------- bhejna ----------------
   function token() {
-    return (document.querySelector('meta[name="prabh-token"]') || {}).content || "";
+    return (document.querySelector('meta[name="jarvis-token"]') || {}).content || "";
   }
 
   function hhmmss() {
@@ -102,7 +102,7 @@
     // WS band: HTTP par bhejo (app.js ka wahi fallback).
     fetch("/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-prabh-token": token() },
+      headers: { "Content-Type": "application/json", "x-jarvis-token": token() },
       body: JSON.stringify({ text: text, rid: rid }),
     }).then(function (r) {
       if (!r.ok) throw new Error("http " + r.status);
@@ -136,7 +136,7 @@
     }
   }
 
-  window.PRABH_ARC = { handle: handle, send: send, typewriter: typewriter,
+  window.JARVIS_ARC = { handle: handle, send: send, typewriter: typewriter,
                        addMsg: addMsg, hhmmss: hhmmss, token: token,
                        tickClock: tickClock, startClock: startClock };
 })();

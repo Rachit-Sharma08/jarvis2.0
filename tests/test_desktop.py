@@ -153,7 +153,7 @@ def test_hygiene():
     for name in ("data/", "models/", ".cache/", ".tmp/"):
         check(f".gitignore me {name}", name in gitignore, True)
     check("sirf sunday .env.example me",
-          "PRABH_SUNDAY_ONLY" in (ROOT / ".env.example").read_text(encoding="utf-8"), True)
+          "JARVIS_SUNDAY_ONLY" in (ROOT / ".env.example").read_text(encoding="utf-8"), True)
     for path in SOURCE_FILES:
         lines = len((ROOT / path).read_text(encoding="utf-8").splitlines())
         check(f"{path} <=200 lines ({lines})", lines <= 200, True)

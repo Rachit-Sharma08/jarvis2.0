@@ -65,8 +65,8 @@
   function setMode(mode) {
   // Server `label()` ka naam bhejta hai ("JARVIS"). Agar kabhi sirf mode id
   // ("sunday") mile to usse bhi upar jor do - user ko purana naam dikhna
-  // nahi chahiye. Naam `meta[name="prabh-name"]` se aata hai (config-driven).
-  const fallback = ((document.querySelector('meta[name="prabh-name"]') || {}).content
+  // nahi chahiye. Naam `meta[name="jarvis-name"]` se aata hai (config-driven).
+  const fallback = ((document.querySelector('meta[name="jarvis-name"]') || {}).content
     || "Jarvis").toUpperCase();
   const raw = String(mode || "").toLowerCase();
   modeEl.textContent = (raw === "sunday" ? fallback : (mode || fallback)).toUpperCase();
@@ -114,7 +114,7 @@
   setState("idle");
   setProgress(0);
 
-  window.PRABH_ORB = {
+  window.JARVIS_ORB = {
     setState: setState,
     setMode: setMode,
     setProgress: setProgress,

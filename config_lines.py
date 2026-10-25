@@ -13,7 +13,7 @@ tha — to ye usi tarike se nikala gaya hai.
 **Is file me kya NAHI hai (jaan-boojh kar):**
 - Wake ke **constants** (VAD, gain, command window, hot window) — `config_wake.py`
   me. `test_hot_window.py`/`test_hot_window_helpers.py` wahan ke
-  `os.getenv("PRABH_HOT_WINDOW"...)` aur `test_hearing_audit.py` ka
+  `os.getenv("JARVIS_HOT_WINDOW"...)` aur `test_hearing_audit.py` ka
   `PLAYBACK_MUTE_MIC = True` **source-text** se dhoondte hain — hatate to wo
   chup-chaap fail ho jaate.
 - Wake ki **functions** (`model_path`, `model_missing`, `wake_available`) —
@@ -26,13 +26,14 @@ tha — to ye usi tarike se nikala gaya hai.
 Ye sirf constants hai — koi logic nahi, koi API key nahi.
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 
 # ---- ack beep (12-Oct) ------------------------------------------------------
 # "Ji, boliye" ~5 s leti thi (ElevenLabs 401 + edge + speaker), aur uske baad
 # ka 1 s warmup command phenk deta tha. Ab beep + turant capture; `=0` par
 # purana.
-ACK_BEEP = os.getenv("PRABH_WAKE_ACK_BEEP", "1").strip().lower() not in ("0", "false", "no", "off")
+ACK_BEEP = os.getenv("JARVIS_WAKE_ACK_BEEP", "1").strip().lower() not in ("0", "false", "no", "off")
 ACK_BEEP_HZ, ACK_BEEP_MS, ACK_BEEP_DROP_SECONDS = 880, 120, 0.2
 
 # ---- wake ke jawab ---------------------------------------------------------
@@ -63,5 +64,5 @@ SLEEP_FROM_TRAY = "SO JAAO"                # tray ka item
 # bol hi raha hai to ack chhod do — warna hamari awaaz uske upar chadh jaati
 # hai, command ka pehla shabd kat-ta hai aur use lagta hai "sun nahi pa raha".
 # Isi 0.18 s ka kaam hai: mic settle + bolne ki pehli awaaz pakadna. Nahi mila
-# to normal raasta (ack + 1 s warm-up). `.env` ke `PRABH_ACK_PEEK` se.
-COMMAND_ACK_PEEK_SECONDS = float(os.getenv("PRABH_ACK_PEEK", "0.18"))
+# to normal raasta (ack + 1 s warm-up). `.env` ke `JARVIS_ACK_PEEK` se.
+COMMAND_ACK_PEEK_SECONDS = float(os.getenv("JARVIS_ACK_PEEK", "0.18"))

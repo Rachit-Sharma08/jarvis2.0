@@ -7,7 +7,7 @@ request `data/alarm_request.json` me likh deta hai. **Sirf itna.**
 hamesha haath se hota hai — `python tools/wake_alarm.py --install`. Isi liye LLM
 ke text se system badalne ka koi raasta hi nahi banta (NIYAM: system files band).
 
-Turn on karne ke liye `.env` me `PRABH_ALARM_TOOL=1`. Default **0** — tool
+Turn on karne ke liye `.env` me `JARVIS_ALARM_TOOL=1`. Default **0** — tool
 `tools/__init__.py` ka `spec()` me dikhai dega hi nahi, aur `execute()` bhi
 manega.
 
@@ -103,10 +103,10 @@ def read_request() -> dict:
 def set_wake_alarm(at: str, repeat_minutes: str = "15") -> str:
     """Alarm set karo (sirf request file). -> user ko dikhane layak line.
 
-    `PRABH_ALARM_TOOL=0` (default) par kuch nahi likha jaata."""
+    `JARVIS_ALARM_TOOL=0` (default) par kuch nahi likha jaata."""
     if not config.ALARM_TOOL_ENABLED:
         return ("Alarm tool abhi BAND hai. Sath me `tools/wake_alarm.py` se "
-                "alarm chalaya ja sakta hai, ya .env me PRABH_ALARM_TOOL=1 karo.")
+                "alarm chalaya ja sakta hai, ya .env me JARVIS_ALARM_TOOL=1 karo.")
     try:
         when = parse_when(at)
     except ValueError as exc:
@@ -131,7 +131,7 @@ def set_wake_alarm(at: str, repeat_minutes: str = "15") -> str:
 def alarm_status() -> str:
     """Abhi ka alarm request — `''` matlab koi nahi."""
     if not config.ALARM_TOOL_ENABLED:
-        return "Alarm tool BAND hai (PRABH_ALARM_TOOL=1 karo)."
+        return "Alarm tool BAND hai (JARVIS_ALARM_TOOL=1 karo)."
     data = read_request()
     if not data.get("when"):
         return "Koi alarm set nahi hai."

@@ -8,7 +8,7 @@ from tools import alarm, apps, command, files, system, reminders, todo, quick, s
 
 import config
 
-# `PRABH_ALARM_TOOL=0` (default) par alarm tools **bilkul gayab** — na LLM ko
+# `JARVIS_ALARM_TOOL=0` (default) par alarm tools **bilkul gayab** — na LLM ko
 # dikhte hain (spec), na chal sakte hain (execute). Har naye mic/awaaz feature
 # ka yahi niyam hai.
 _ALARM_TOOLS = ("set_wake_alarm", "alarm_status")

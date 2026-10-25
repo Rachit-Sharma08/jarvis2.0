@@ -34,7 +34,7 @@ def test_xss_safety():
     html = read("index.html")
     check("inline <script> nahi", "<script>" in html, False)
     check("onclick attribute nahi", "onclick" in html, False)
-    check("token meta placeholder", '__PRABH_TOKEN__' in html, True)
+    check("token meta placeholder", '__JARVIS_TOKEN__' in html, True)
 
     # Koi external URL html/css me nahi (CSP strict rahe)
     for name in ("index.html",) + UI_CSS:

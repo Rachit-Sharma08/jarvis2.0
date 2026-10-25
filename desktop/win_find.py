@@ -41,7 +41,7 @@ _USER32.SetForegroundWindow.restype = ctypes.c_bool
 
 def hud_title() -> str:
     """Browser window ka title. `--app` me title **page** ka hota hai (URL
-    nahi) - `ui/index.html` ka `<title>__PRABH_ASSISTANT_NAME__ HUD</title>`,
+    nahi) - `ui/index.html` ka `<title>__JARVIS_ASSISTANT_NAME__ HUD</title>`,
     jise `server/app.py` ka `fill_html()` bhar deta hai."""
     return f"{config.ASSISTANT_NAME} HUD"
 

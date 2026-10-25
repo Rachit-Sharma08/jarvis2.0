@@ -139,7 +139,7 @@ BLOCKED. Detail: `TOOLS.md`.
 ## 11. Security
 
 `127.0.0.1` only → Host check → Origin check → token (har start par naya; `/chat`,
-`/stt`, `/tts`, `/brain/status` me header `x-prabh-token`, `/ws` me `?token=`). CORS
+`/stt`, `/tts`, `/brain/status` me header `x-jarvis-token`, `/ws` me `?token=`). CORS
 band. Token browser ko `/` se meta tag se milta hai (`fill_html()` placeholder replace).
 Browser GET par `Origin` nahi bhejta → same-origin GET me `security.verify_request()`
 (Referer ya `Sec-Fetch-Site`) use karo, warna 403. Privacy: file text brain ke through

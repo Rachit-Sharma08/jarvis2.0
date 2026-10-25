@@ -83,7 +83,7 @@ class VoiceUI {
   async transcribe(blob, ms) {
     // Recording ki asli length browser se. Server 600ms se chhoti recording
     // turant rok deta hai — mic chhoone wala dab dab pehle yahin rok jayega.
-    const headers = { "Content-Type": blob.type || "audio/webm", "x-prabh-token": this.opts.TOKEN };
+    const headers = { "Content-Type": blob.type || "audio/webm", "x-jarvis-token": this.opts.TOKEN };
     if (ms) headers["x-audio-ms"] = String(Math.round(ms));
     try {
       const reply = await fetch("/stt", { method: "POST", headers: headers, body: blob });

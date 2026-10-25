@@ -106,7 +106,7 @@ class Watchdog:
 
     def start(self):
         if not config.TRAY_WATCH_ENABLED:
-            log.info("tray watchdog band (PRABH_TRAY_WATCH=0)")
+            log.info("tray watchdog band (JARVIS_TRAY_WATCH=0)")
             return False
         if self._thread is not None:
             return True

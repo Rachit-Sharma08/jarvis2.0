@@ -5,7 +5,7 @@ S-1 audit me isi wajah se mic ka asli level galat nikaala gaya tha
 (`tests/wakehelp.py` ka `loud()` = RMS **exactly 0.129**, aur wahi number
 asli app ke log me bhi aa raha tha).
 
-**Raasta:** `config.py` ka `LOG_DIR` `PRABH_LOG_DIR` env se aata hai;
+**Raasta:** `config.py` ka `LOG_DIR` `JARVIS_LOG_DIR` env se aata hai;
 `tests/logsafe.py` wo env **import ke time** set karta hai. Har test file me
 
 Ye test do baatein pakadta hai:
@@ -63,12 +63,12 @@ class TestLogLocation(unittest.TestCase):
         return needle in app_log.read_text(encoding="ascii", errors="replace")
 
     def test_config_honours_env(self):
-        """`PRABH_LOG_DIR` env se badalta hai (`.env` wale knob jaisa)."""
+        """`JARVIS_LOG_DIR` env se badalta hai (`.env` wale knob jaisa)."""
         import importlib
         import os
-        saved = os.environ.get("PRABH_LOG_DIR")
+        saved = os.environ.get("JARVIS_LOG_DIR")
         want = logsafe.LOG_DIR.parent / "prabh-test-logs-alt"
-        os.environ["PRABH_LOG_DIR"] = str(want)
+        os.environ["JARVIS_LOG_DIR"] = str(want)
         try:
             import config as config_mod
             reloaded = importlib.reload(config_mod)
@@ -76,9 +76,9 @@ class TestLogLocation(unittest.TestCase):
                   want.resolve())
         finally:
             if saved is None:
-                os.environ.pop("PRABH_LOG_DIR", None)
+                os.environ.pop("JARVIS_LOG_DIR", None)
             else:
-                os.environ["PRABH_LOG_DIR"] = saved
+                os.environ["JARVIS_LOG_DIR"] = saved
             importlib.reload(config)
 
     def test_no_test_file_writes_app_log(self):

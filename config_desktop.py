@@ -12,6 +12,7 @@ Rule: is file me koi API key nahi, koi registry likhwat nahi (wo `desktop/`
 me hai, taaki test me aasaani se na mile).
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 import shutil
 from pathlib import Path
@@ -40,8 +41,8 @@ HUD_HEIGHT = 720
 # naya window nahi banata, purane ko focus karke khud exit ho jaata hai.
 HUD_PROFILE_DIR = DATA_DIR / "hud-profile"
 # HUD apne aap sirf wake word par khulta hai. Chalu hote hi khulna ho to
-# `.env` me PRABH_HUD_AT_START=1, ya `python -m desktop.app --hud`.
-HUD_OPEN_AT_START = os.getenv("PRABH_HUD_AT_START", "0") == "1"
+# `.env` me JARVIS_HUD_AT_START=1, ya `python -m desktop.app --hud`.
+HUD_OPEN_AT_START = os.getenv("JARVIS_HUD_AT_START", "0") == "1"
 
 # ---- HUD ke do aur raasta (tray par nirbhar na rahein) ----
 # Tray icon Windows ke overflow `^` me chhup jaata hai (ye Windows ka normal
@@ -51,9 +52,9 @@ HUD_OPEN_AT_START = os.getenv("PRABH_HUD_AT_START", "0") == "1"
 # Dono ka **ek hi kaam** `desktop/open_hud.py` karta hai: server zinda hai to
 # HUD window khol do, warna saaf message. Doosra koi raasta kabhi mat banao.
 HUD_SHORTCUT_NAME = f"{ASSISTANT_NAME} HUD"
-# `.env` me PRABH_HUD_HOTKEY=<ctrl+alt+shift+s> se badal do. Galat ya khali
+# `.env` me JARVIS_HUD_HOTKEY=<ctrl+alt+shift+s> se badal do. Galat ya khali
 # value par hotkey chalti hi nahi — app bilkul safe rehta hai.
-HUD_HOTKEY = os.getenv("PRABH_HUD_HOTKEY", "ctrl+alt+s")
+HUD_HOTKEY = os.getenv("JARVIS_HUD_HOTKEY", "ctrl+alt+s")
 
 # Pehle Edge, phir Chrome. Dono Windows 10/11 ke saath aate hain — inhe
 # install karne ki zarurat nahi.
@@ -129,12 +130,12 @@ STARTUP_HTTP_TIMEOUT = 20.0
 # badal kar `sounddevice` se bajte hain. Mic ki taraf ka rule yahi hai — ek hi
 # jagah (`wake/audio.py`), koi doosra `OutputStream` nahi.
 # Device khali chhodne par Windows ka default speaker chalta hai. Device badalna
-# ho to `.env` me PRABH_SPEAKER=<device name>; list ke liye
+# ho to `.env` me JARVIS_SPEAKER=<device name>; list ke liye
 # `python -m desktop.playback --list`.
-OUTPUT_DEVICE = os.getenv("PRABH_SPEAKER", "").strip() or None
+OUTPUT_DEVICE = os.getenv("JARVIS_SPEAKER", "").strip() or None
 # 32 kHz mono. TTS 22-24 kHz deta hai, is se upar jaane se koi fayda nahi aur
 # resample ka kaam bhi kam hota hai.
-OUTPUT_RATE = int(os.getenv("PRABH_SPEAKER_RATE", "32000"))
+OUTPUT_RATE = int(os.getenv("JARVIS_SPEAKER_RATE", "32000"))
 # TTS + decode + play ka total intezaar. Is se zyada lage to chup kar do —
 # wake thread ko rok na sakte.
 PLAYBACK_TIMEOUT_SECONDS = 45.0

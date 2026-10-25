@@ -52,7 +52,7 @@ class TestDefaultOff(unittest.TestCase):
     def test_flag_is_off_by_default(self):
         check("default 0 hai", self.saved, False)
         check("source me bhi 0",
-              'os.getenv("PRABH_HOT_WINDOW", "0")' in
+              'os.getenv("JARVIS_HOT_WINDOW", "0")' in
               (ROOT / "config_wake.py").read_text(encoding="utf-8"), True)
 
     def test_mark_hot_does_nothing_when_off(self):

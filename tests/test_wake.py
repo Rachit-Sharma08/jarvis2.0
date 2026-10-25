@@ -53,7 +53,7 @@ def test_config():
     config_wake.WAKE_ENABLED = False
     try:
         ok, reason = config_wake.wake_available()
-        check("band karne par wajah", (ok, reason), (False, "PRABH_WAKE=0 se band hai"))
+        check("band karne par wajah", (ok, reason), (False, "JARVIS_WAKE=0 se band hai"))
     finally:
         config_wake.WAKE_ENABLED = saved
     # Dono model path ek saath badlo, aur dono wapas — sirf ek wapas karne se

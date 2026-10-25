@@ -6,7 +6,7 @@ Saath me **auto-off** (optional): TOOLS ON karne ke
 `config.TOOLS_AUTO_OFF_MINUTES` minute baad kill switch apne aap OFF ho jaata
 tha — bhool kar chhod diya to raat bhar PC tools se khula na rahe. 4-Oct ko
 user ne kaha TOOLS **hamesha** ON rahega, is liye ab wo `0` (band) hai. `0`
-ka matlab: timer kabhi nahi chalta. `.env` me `PRABH_TOOLS_AUTOOFF=30` daal
+ka matlab: timer kabhi nahi chalta. `.env` me `JARVIS_TOOLS_AUTOOFF=30` daal
 kar wapas 30-minute wala behaviour aa jaata hai.
 """
 

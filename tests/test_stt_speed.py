@@ -73,8 +73,8 @@ class TestSettings(unittest.TestCase):
         import importlib
         import os
         import config_voice
-        os.environ["PRABH_STT_TIMEOUT"] = "3"
-        os.environ["PRABH_STT_RETRIES"] = "0"
+        os.environ["JARVIS_STT_TIMEOUT"] = "3"
+        os.environ["JARVIS_STT_RETRIES"] = "0"
         try:
             importlib.reload(config_voice)
             check("env se timeout 3", config_voice.STT_TIMEOUT_SECONDS, 3.0)
@@ -82,8 +82,8 @@ class TestSettings(unittest.TestCase):
             check("retries 0 par ceiling = timeout+margin",
                   config_voice.stt_deadline(), 7.0)
         finally:
-            os.environ.pop("PRABH_STT_TIMEOUT", None)
-            os.environ.pop("PRABH_STT_RETRIES", None)
+            os.environ.pop("JARVIS_STT_TIMEOUT", None)
+            os.environ.pop("JARVIS_STT_RETRIES", None)
             importlib.reload(config_voice)
 
     def test_not_brain_timeout(self):

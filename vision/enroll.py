@@ -155,7 +155,7 @@ def enroll() -> int:
     buf = []                      # memory se hata do (privacy)
     if n:
         print("\nHo gaya: %d sample save (data/owner_face.npz)." % n)
-        print("Ab .env me likho:  PRABH_VISION=1")
+        print("Ab .env me likho:  JARVIS_VISION=1")
         print("Phir Jarvis restart. HUD par VISION: ON dikhna chahiye.")
         return 0
     print("Save nahi hua (sample galat size ka tha).")
@@ -177,7 +177,7 @@ def status() -> int:
     print("enrolled : %s (%d sample, dim %s)" % (
         st["enrolled"], st["count"], st["dim"] or "-"))
     print("backend  : %s" % bs.get("backend", "none"))
-    print("PRABH_VISION = %s (default 0 = OFF)" % config_vision.VISION_ENABLED)
+    print("JARVIS_VISION = %s (default 0 = OFF)" % config_vision.VISION_ENABLED)
     return 0
 
 

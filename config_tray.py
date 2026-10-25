@@ -12,10 +12,11 @@ karta hai, yahan sirf timing hai.
 Rule: is file me koi logic nahi, sirf numbers.
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 
-# Watchdog chalu hai ya nahi. Default ON. `.env` me `PRABH_TRAY_WATCH=0` se band.
-TRAY_WATCH_ENABLED = os.getenv("PRABH_TRAY_WATCH", "1") == "1"
+# Watchdog chalu hai ya nahi. Default ON. `.env` me `JARVIS_TRAY_WATCH=0` se band.
+TRAY_WATCH_ENABLED = os.getenv("JARVIS_TRAY_WATCH", "1") == "1"
 
 # Pehle itne second tak tez-dekh (app shuru hote hi Explorer ko taskbar me icon
 # lagane me thoda time lagta hai — is liye 60 s), phir dheere.

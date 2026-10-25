@@ -51,4 +51,4 @@ def read(name):
 
 
 def headers(token):
-    return {"host": GOOD_HOST, "origin": GOOD_ORIGIN, "x-prabh-token": token}
+    return {"host": GOOD_HOST, "origin": GOOD_ORIGIN, "x-jarvis-token": token}

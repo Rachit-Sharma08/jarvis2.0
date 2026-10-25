@@ -24,7 +24,7 @@ BAT = ROOT / "start_prabh.bat"
 # Ye line bat ko nahi chala ke bas apna raasta dikhati hai.
 LAUNCH = '".venv\\Scripts\\python.exe" -m desktop.launcher'
 # Test me ise se badal kar echo daalte hain - asli python kabhi chalta hi nahi.
-MARKER = "PRABH_TEST_LAUNCH_LINE_RAN"
+MARKER = "JARVIS_TEST_LAUNCH_LINE_RAN"
 
 
 def _lines():

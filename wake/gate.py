@@ -17,7 +17,7 @@ Gate ye karta hai:
 Mic ka stream kabhi band nahi hota (AGENTS ka duty-cycle niyam) - sirf
 inference ruk jaati hai. Is liye "Hlo Jarvis" har waqt kaam karta hai.
 
-`WAKE_VOSK_GATE = 0` (`.env` ke `PRABH_VOSK_GATE=0`) se gate band ho jaata hai
+`WAKE_VOSK_GATE = 0` (`.env` ke `JARVIS_VOSK_GATE=0`) se gate band ho jaata hai
 — phir purana behaviour (har chunk Vosk ko), taaki debug me saaf dikh sake.
 
 Pure hai: mic, thread, Vosk — teeno chahiye hi nahi. Test me seedha ye chalta
@@ -109,7 +109,7 @@ class Gate:
         return True
 
     def _debug(self, listener) -> None:
-        """`PRABH_WAKE_DEBUG=1` par periodic hisaab — bug pakadne ke liye.
+        """`JARVIS_WAKE_DEBUG=1` par periodic hisaab — bug pakadne ke liye.
 
         Do alag galtiyan dono se ek jaisi dikhti hain (kuch nahi sunai deta):
         (a) chunk **aate hi nahi** — `pushes` nahi badhta, (b) chunk aate hain

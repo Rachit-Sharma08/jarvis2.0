@@ -22,7 +22,7 @@ from server import security
 def test_same_origin_get(client):
     print("SAME-ORIGIN GET (Referer / Sec-Fetch-Site)")
     token = security.token()
-    host = {"host": GOOD_HOST, "x-prabh-token": token}
+    host = {"host": GOOD_HOST, "x-jarvis-token": token}
 
     # 1. bilkul kuch nahi -> 403 (purana strict rule)
     check("koi proof nahi -> 403",

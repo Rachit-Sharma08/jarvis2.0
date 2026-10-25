@@ -10,13 +10,14 @@ Naya tool banate waqt `TOOL_BASE_RISK` me uska risk likhna zaroori hai —
 Rule: is file me koi API key nahi.
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 from pathlib import Path
 
 SAFE, ASK, BLOCKED = "SAFE", "ASK", "BLOCKED"
 
 HOME = Path(os.path.expanduser("~"))
-WORKSPACE = Path(os.getenv("PRABH_WORKSPACE", r"D:\prabh_workspace"))
+WORKSPACE = Path(os.getenv("JARVIS_WORKSPACE", r"D:\prabh_workspace"))
 READ_FOLDERS = (HOME / "Desktop", HOME / "Downloads", HOME / "Documents", WORKSPACE)
 
 # Har tool ka base risk. Gatekeeper args dekh ke ise aage badha sakta hai.
@@ -55,7 +56,7 @@ TOOL_BASE_RISK = {
 
 # Jarvis ke andar wala alarm tool — **DEFAULT OFF**. Sirf is par tool LLM ko
 # dikhai deta hai; task scheduler par iska koi asar nahi.
-ALARM_TOOL_ENABLED = os.getenv("PRABH_ALARM_TOOL", "0").strip().lower() in (
+ALARM_TOOL_ENABLED = os.getenv("JARVIS_ALARM_TOOL", "0").strip().lower() in (
     "1", "true", "yes", "on")
 
 # open_app sirf inhi me SAFE hai. Baaki sab poochhega.
@@ -159,24 +160,24 @@ SECRET_FILE_NAMES = (".env", ".env.local", "credentials", "secrets.json", "id_rs
                      "owner_face.npz")
 
 # Kill switch. Default **ON** (user ka faisla, 4-Oct) — app start hote hi tools
-# khule. `.env` me `PRABH_TOOLS_ON=0` se wapas default OFF kar sakta hai.
-TOOLS_ENABLED_DEFAULT = os.getenv("PRABH_TOOLS_ON", "1") == "1"
+# khule. `.env` me `JARVIS_TOOLS_ON=0` se wapas default OFF kar sakta hai.
+TOOLS_ENABLED_DEFAULT = os.getenv("JARVIS_TOOLS_ON", "1") == "1"
 # Auto-off band (0 = "kabhi apne aap OFF nahi"). User ne 4-Oct ko decide
 # kiya TOOLS hamesha ON rahega jab tak khud OFF na kare — pehle 30 min tha.
-# `.env` me PRABH_TOOLS_AUTOOFF=30 daal kar wapas timer laaya ja sakta hai.
-TOOLS_AUTO_OFF_MINUTES = int(os.getenv("PRABH_TOOLS_AUTOOFF", "0") or 0)
+# `.env` me JARVIS_TOOLS_AUTOOFF=30 daal kar wapas timer laaya ja sakta hai.
+TOOLS_AUTO_OFF_MINUTES = int(os.getenv("JARVIS_TOOLS_AUTOOFF", "0") or 0)
 # ALLOW/DENY card ki jagah code ka faisla (`gatekeeper/nocards.py`).
 # 1 (default) = card band: ASK par bhi screen par kuch nahi aata — workspace ke
 # andar ka safe kaam chupchaap chalta hai, baaki chupchaap DENY + ek line wajah.
 # 0 = purana raasta (screen par card + ALLOW/DENY button, 60 second timeout).
-NO_CARDS = os.getenv("PRABH_NO_CARDS", "1") == "1"
+NO_CARDS = os.getenv("JARVIS_NO_CARDS", "1") == "1"
 TOOL_MAX_STEPS = 5
 TOOL_MAX_CALLS_PER_MINUTE = 20
 TOOL_CONFIRM_TIMEOUT = 60
 # Simple tool ka jawab seedha (E-2): pehla tool call + single-step command ->
 # tool-result hi final jawab, LLM dobara nahi bulaya (~2s bachta hai, aur LLM
 # ka jhooth bhi nahi bolta). 0 = purana raasta (har tool ke baad LLM call).
-DIRECT_REPLY = os.getenv("PRABH_DIRECT_REPLY", "1") == "1"
+DIRECT_REPLY = os.getenv("JARVIS_DIRECT_REPLY", "1") == "1"
 TOOL_OUTPUT_LIMIT = 2000
 TOOL_ARG_LIMIT = 2000
 COMMAND_TIMEOUT_SECONDS = 30

@@ -51,7 +51,7 @@ def allowed() -> tuple:
     **Teen** pakkaure, is hi tarah se: **mic MUTE**, **PC lock**, aur
     **vision (owner ki shakal)**. Pehle do me na recording hoti hai na koi
     awaaz. Teesra camera se ek frame leta hai — par sirf tab jab
-    `PRABH_VISION=1`, jo **default 0** hai. Default par ye ek dict lookup
+    `JARVIS_VISION=1`, jo **default 0** hai. Default par ye ek dict lookup
     karke wapas aa jaata hai: camera kabhi initialize hi nahi hota.
 
     Vision ka apna guard `vision/gate.py` me hai (fail-safe = DENY, sahi

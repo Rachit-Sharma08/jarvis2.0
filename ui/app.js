@@ -5,9 +5,9 @@
 // Is file me koi panel ka DOM nahi banaya jaata — sab `#id` se uthaya jaata
 // hai jo index.html me pehle se hai. Ye chhota rakhne ka reason yahi hai.
 
-const TOKEN = (document.querySelector('meta[name="prabh-token"]') || {}).content || "";
+const TOKEN = (document.querySelector('meta[name="jarvis-token"]') || {}).content || "";
 // Naam config se (config_name.py) — `prabh-name` meta se padho, fallback rakho.
-const NAME = (document.querySelector('meta[name="prabh-name"]') || {}).content || "Jarvis";
+const NAME = (document.querySelector('meta[name="jarvis-name"]') || {}).content || "Jarvis";
 const LABEL = NAME.toUpperCase();
 const logEl = document.getElementById("messages");
 const inputEl = document.getElementById("cmd");
@@ -16,8 +16,8 @@ const muteBtn = document.getElementById("mute");
 const stopBtn = document.getElementById("stop");
 const micFlag = document.getElementById("micflag");
 const noticeEl = document.getElementById("notice");
-const status = window.PRABH_STATUS;
-const orb = window.PRABH_ORB;
+const status = window.JARVIS_STATUS;
+const orb = window.JARVIS_ORB;
 
 let currentMode = "sunday";
 let busy = false;
@@ -57,7 +57,7 @@ let brainTimer = null;
 async function loadBrain() {
   try {
     const reply = await fetch("/brain/status", {
-      headers: { "x-prabh-token": TOKEN },
+      headers: { "x-jarvis-token": TOKEN },
       cache: "no-store"
     });
     if (!reply.ok) throw new Error("http " + reply.status);
@@ -100,9 +100,9 @@ function handleEvent(ev) {
   } else if (ev.type === "confirm" || ev.type === "activity") {
     tools.handle(ev);
   } else if (ev.type === "stats") {
-    if (window.PRABH_STATS) window.PRABH_STATS.render(ev.data);
+    if (window.JARVIS_STATS) window.JARVIS_STATS.render(ev.data);
   } else if (ev.type === "desktop") {
-    if (window.PRABH_DESKTOP) window.PRABH_DESKTOP.render(ev.data);
+    if (window.JARVIS_DESKTOP) window.JARVIS_DESKTOP.render(ev.data);
   } else if (ev.type === "reminders") {
     const pill = document.getElementById('remindPill');
     if (pill) {
@@ -149,7 +149,7 @@ async function sendText(text) {
   try {
     const reply = await fetch("/chat", {
       method: "POST",
-      headers: { "Content-Type": "application/json", "x-prabh-token": TOKEN },
+      headers: { "Content-Type": "application/json", "x-jarvis-token": TOKEN },
       body: JSON.stringify({ text, rid }),
     });
     if (!reply.ok) throw new Error("http " + reply.status);

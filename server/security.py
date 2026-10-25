@@ -5,8 +5,8 @@ from log_setup import get_logger
 
 log = get_logger("security")
 
-TOKEN_PLACEHOLDER = "__PRABH_TOKEN__"
-TOKEN_HEADER = "x-prabh-token"
+TOKEN_PLACEHOLDER = "__JARVIS_TOKEN__"
+TOKEN_HEADER = "x-jarvis-token"
 
 TOKEN = secrets.token_urlsafe(config.TOKEN_BYTES)
 

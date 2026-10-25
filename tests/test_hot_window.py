@@ -1,6 +1,6 @@
 """KAAM 5: hot window — jawab ke baad "Jarvis" na bole follow-up.
 
-**DEFAULT OFF** (`PRABH_HOT_WINDOW=0`) — is suite ka sabse bada check yahi hai:
+**DEFAULT OFF** (`JARVIS_HOT_WINDOW=0`) — is suite ka sabse bada check yahi hai:
 flag band par **purana raasta** chalta hai, yaani follow-up ke liye "jarvis"
 shabd zaroori hai.
 
@@ -150,10 +150,10 @@ class TestWiring(unittest.TestCase):
 
     def test_env_override(self):
         check("env key ka naam",
-              'os.getenv("PRABH_HOT_WINDOW"' in
+              'os.getenv("JARVIS_HOT_WINDOW"' in
               (ROOT / "config_wake.py").read_text(encoding="utf-8"), True)
         check("seconds bhi env se",
-              'os.getenv("PRABH_HOT_WINDOW_SECONDS"' in
+              'os.getenv("JARVIS_HOT_WINDOW_SECONDS"' in
               (ROOT / "config_wake.py").read_text(encoding="utf-8"), True)
 
     def test_describe_includes_flag(self):

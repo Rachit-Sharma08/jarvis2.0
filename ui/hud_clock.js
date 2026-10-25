@@ -40,5 +40,5 @@
 
   tick();
   setInterval(tick, 1000);
-  window.PRABH_CLOCK = { tick: tick };
+  window.JARVIS_CLOCK = { tick: tick };
 })();

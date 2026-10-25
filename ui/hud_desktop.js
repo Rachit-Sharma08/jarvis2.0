@@ -35,5 +35,5 @@
     el.className = "pill desk " + mic;
   }
 
-  window.PRABH_DESKTOP = { render: render };
+  window.JARVIS_DESKTOP = { render: render };
 })();

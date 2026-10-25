@@ -8,6 +8,7 @@ config_wake bhi isi file se re-export karta hai, is liye `config_wake.describe`
 aur `config.describe` dono pehle jaise chalte hain.
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 from pathlib import Path
 
@@ -22,7 +23,7 @@ def _tools_flag(name: str) -> bool:
 def config_stt_name() -> str:
     """Command ke liye kaunsa STT - yahan `config_brain` se utha rahe hain taaki
     cycle na bane (`config.py` yahan se import karta hai, wahan se nahi)."""
-    return os.getenv("PRABH_STT_MODEL", "groq-whisper")
+    return os.getenv("JARVIS_STT_MODEL", "groq-whisper")
 
 
 def describe() -> str:

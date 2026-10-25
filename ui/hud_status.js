@@ -24,12 +24,12 @@
     speaking: "● SPEAKING"
   };
 
-  // Naam `meta[name="prabh-display"]` se (config-driven, config_name.py).
+  // Naam `meta[name="jarvis-display"]` se (config-driven, config_name.py).
   // Server `label()` bhejta hai ("J.A.R.V.I.S"); agar kabhi sirf mode id
   // ("sunday") mile to display-name wapas use karo, purana naam nahi dikhe.
   const META = (n) => ((document.querySelector('meta[name="' + n + '"]') || {}).content || "");
-  const DISPLAY = META("prabh-display") || "J.A.R.V.I.S";
-  const NAME = META("prabh-name") || "Jarvis";
+  const DISPLAY = META("jarvis-display") || "J.A.R.V.I.S";
+  const NAME = META("jarvis-name") || "Jarvis";
 
   // mode -> title. Spaced letters reference photo jaisa.
   function brandFor(mode) {
@@ -93,7 +93,7 @@
     sysEl.className = "pill sys";
   }
 
-  window.PRABH_STATUS = {
+  window.JARVIS_STATUS = {
     setStatus: setStatus,
     setMode: setMode,
     render: render,

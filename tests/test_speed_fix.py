@@ -11,7 +11,7 @@ Log me kya tha (3 Oct):
    `settled_by` deta hai aur jitna poora hua utna hi wait hota hai.
 2. **Chuppi 2.0 s -> 1.2 s** (`config_wake.COMMAND_END_SILENCE_SECONDS`). 2.0 s
    sirf ek intezaar me jaata tha. 1.2 s abhi bhi ek natural sentence-gap se
-   lamba hai. `.env` ke `PRABH_CMD_SILENCE` se badal sakte ho — Step 2 (STT)
+   lamba hai. `.env` ke `JARVIS_CMD_SILENCE` se badal sakte ho — Step 2 (STT)
    isi knob ko tune karega (zyada chuppi = thoda sa slow par pakka text).
 
 Ack ka cache alag suite me hai (`tests/test_tts_cache.py`) — ye dono
@@ -95,14 +95,14 @@ class TestSilenceWindow(unittest.TestCase):
     def test_env_can_override(self):
         """`.env` se badal sakte ho — Step 2 is knob ko tune karega."""
         import os
-        os.environ["PRABH_CMD_SILENCE"] = "1.6"
+        os.environ["JARVIS_CMD_SILENCE"] = "1.6"
         try:
             import importlib
             import config_wake
             importlib.reload(config_wake)
             check("env se 1.6", config_wake.COMMAND_END_SILENCE_SECONDS, 1.6)
         finally:
-            os.environ.pop("PRABH_CMD_SILENCE", None)
+            os.environ.pop("JARVIS_CMD_SILENCE", None)
             import importlib
             import config_wake
             importlib.reload(config_wake)

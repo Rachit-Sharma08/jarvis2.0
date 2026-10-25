@@ -91,7 +91,7 @@ def test_pick_device_prefers_wasapi():
 
 
 def test_pick_device_respects_env():
-    """`PRABH_WAKE_MIC` diya ho to user ka device - host api se pehle."""
+    """`JARVIS_WAKE_MIC` diya ho to user ka device - host api se pehle."""
     sd = FakeSd([api("Windows WASAPI", 9)])
     check("number 3", audio_mod.pick_input_device(sd, 3), 3)
     check("naam", audio_mod.pick_input_device(sd, "Microphone Array"), "Microphone Array")

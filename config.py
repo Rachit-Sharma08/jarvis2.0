@@ -22,14 +22,22 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent
 PERSONAS_DIR = BASE_DIR / "personas"
 UI_DIR = BASE_DIR / "ui"
-# Log ka folder. `PRABH_LOG_DIR` se badal sakte ho — **test isi ka istemaal
+
+# `.env` pehle load hota hai — neeche har `os.getenv` isi par depend karta hai.
+# Pehle ye LOG_DIR ke *baad* tha, is liye `.env` me rakha `JARVIS_LOG_DIR`
+# chalta hi nahi tha (sirf asli environment variable chalta tha).
+load_dotenv(BASE_DIR / ".env")
+
+# Purane env naam yahan se naye naam me badal jaate hain — LOG_DIR usi par
+# depend karta hai, is liye ye import neeche ke kisi bhi getenv se pehle.
+import config_env  # noqa: E402,F401
+
+# Log ka folder. `JARVIS_LOG_DIR` se badal sakte ho — **test isi ka istemaal
 # karte hain** (`tests/logsafe.py`): test bhi yehi `logs/prabh.log` me likhte
 # the, jisse asli app ka log nakli entry se bhar jaata tha (S-1 me RMS 0.129
 # wahi galti thi). Test ka apna temp folder = analysis saaf.
-LOG_DIR = Path(os.getenv("PRABH_LOG_DIR") or (BASE_DIR / "logs"))
+LOG_DIR = Path(os.getenv("JARVIS_LOG_DIR") or (BASE_DIR / "logs"))
 LOG_FILE = LOG_DIR / "prabh.log"
-
-load_dotenv(BASE_DIR / ".env")
 
 # ---- Brain + voice constants yahan se aate hain ----
 
@@ -113,7 +121,7 @@ DEFAULT_MODE = "sunday"   # Andar ka id — dikhne wala naam `ASSISTANT_NAME` ha
 # Phase 5: sirf ek hi mode (Sunday-only flag). PRABH mode ka code **hataya nahi
 # gaya** — bas band kar diya gaya hai, taaki baad me bina kuch badle wapas on
 # kar sakein. `core/modes.py` yahi flag dekhta hai.
-SUNDAY_ONLY = os.getenv("PRABH_SUNDAY_ONLY", "1") == "1"
+SUNDAY_ONLY = os.getenv("JARVIS_SUNDAY_ONLY", "1") == "1"
 
 # Ye app sirf is PC par chalti hai. 0.0.0.0 kabhi allowed nahi.
 SERVER_HOST = "127.0.0.1"

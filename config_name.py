@@ -6,7 +6,7 @@ Step 1 me app ka naam **Sunday → Jarvis** kiya gaya. Do hisse alag-alag:
    se: HUD title, orb ka beech, tray tooltip, Edge window title, persona,
    spoken lines, Desktop shortcut, README/docs.
 2. **Jo sirf andar hai → bilkul nahi badla.** Mode id `"sunday"`,
-   `PRABH_*` env names, `DEFAULT_MODE`, `data/` ka lock — ye sab jaane
+   `JARVIS_*` env names, `DEFAULT_MODE`, `data/` ka lock — ye sab jaane
    chahiye taaki purana profile/lock na toote. Mode `"sunday"` ka **dikhne
    wala** naam ab `Jarvis` hai (`core/modes.display_name()`), isliye jawab ke
    upar "SUNDAY" nahi, "JARVIS" aata hai.
@@ -17,14 +17,15 @@ Vosk grammar sirf active shabd banata hai — `[unk]` hamesha uske end me
 """
 
 import json
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 
 # ---- naam ----
 # Jahan bhi app ka naam chahiye, yahan se lo. `.env` se badalna ho to
-# PRABH_ASSISTANT_NAME; par persona/wake shabd tab bhi yahi ke shabd hain.
-ASSISTANT_NAME = os.getenv("PRABH_ASSISTANT_NAME", "Jarvis").strip() or "Jarvis"
+# JARVIS_ASSISTANT_NAME; par persona/wake shabd tab bhi yahi ke shabd hain.
+ASSISTANT_NAME = os.getenv("JARVIS_ASSISTANT_NAME", "Jarvis").strip() or "Jarvis"
 # Bade akshar wala brand: "Jarvis" -> "J.A.R.V.I.S"
-DISPLAY_NAME = os.getenv("PRABH_DISPLAY_NAME", "J.A.R.V.I.S").strip() or "J.A.R.V.I.S"
+DISPLAY_NAME = os.getenv("JARVIS_DISPLAY_NAME", "J.A.R.V.I.S").strip() or "J.A.R.V.I.S"
 
 # ---- wake shabd (Step 1: "Jarvis") ----
 # Grammar me sirf ye shabd — isse galat trigger kam aur CPU halka.
@@ -38,7 +39,7 @@ WAKE_PHRASES = (
     "hi jarvis", "yo jarvis", "jarvis",
 )
 # Purane "sunday" shabd alag list me, **default band**. Ek din wapas chahiye
-# hon to `.env` me PRABH_WAKE_LEGACY=1 — dono saath chalte hain.
+# hon to `.env` me JARVIS_WAKE_LEGACY=1 — dono saath chalte hain.
 LEGACY_WAKE_PHRASES = (
     "hello sunday", "hey sunday", "hi sunday", "okay sunday", "sunday",
 )
@@ -51,7 +52,7 @@ FILLER_WORD = "[unk]"
 def legacy_enabled() -> bool:
     """Legacy wake shabd chalu hain? Env **har call** par padha jaata hai (test
     me `os.environ` badal kar turant dekh sakte hain)."""
-    value = os.getenv("PRABH_WAKE_LEGACY", "0").strip().lower()
+    value = os.getenv("JARVIS_WAKE_LEGACY", "0").strip().lower()
     return value not in ("0", "false", "no", "")
 
 

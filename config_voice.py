@@ -5,6 +5,7 @@ likhna hai. Gender rule: DONO mode female-only — male id ya male default
 fallback kabhi nahi. Female id ki allowlist `voice/tts_female.py` me hai.
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY", "").strip()
@@ -16,11 +17,11 @@ TTS_MAX_CHARS = 500
 # hai — sirf awaaz chhoti. 500 char bolne me ~4.3 s lagta tha (sirf playback),
 # is liye user ko jawab "late" lagta tha; ~220 char ≈ 2 s. Vaakya ke end par
 # kat-ta hai (beech se nahi) — `voice/tts.py` ka `clip_answer()`.
-VOICE_ANSWER_MAX_CHARS = int(os.getenv("PRABH_VOICE_MAX", "220") or 220)
+VOICE_ANSWER_MAX_CHARS = int(os.getenv("JARVIS_VOICE_MAX", "220") or 220)
 # Awaaz me **pehle itne poore vaakya** bolne hain (KAAM 4). 220 char par kaatne
 # se beech ka tukda sunai deta tha; 1-2 vaakya poore bolne se jawab samajh aata
 # hai aur turant shuru hota hai. HUD par poora jawab waise hi rehta hai.
-VOICE_SENTENCES = int(os.getenv("PRABH_VOICE_SENTENCES", "2") or 2)
+VOICE_SENTENCES = int(os.getenv("JARVIS_VOICE_SENTENCES", "2") or 2)
 AUDIO_MAX_BYTES = 10 * 1024 * 1024
 RECORD_MAX_SECONDS = 30
 
@@ -29,8 +30,8 @@ RECORD_MAX_SECONDS = 30
 # aur Groq SDK apne aap 2 baar retry karta tha. 3.5 s ki audio par call 43 s tak
 # atak sakta tha (log: `stt failed (43503ms)`), aur 5-6 Oct ko 165-295 s bhi.
 # Is liye STT ka apna chhota timeout + kam retry. `.env` se badal sakte ho.
-STT_TIMEOUT_SECONDS = float(os.getenv("PRABH_STT_TIMEOUT", "6") or 6)
-STT_MAX_RETRIES = int(os.getenv("PRABH_STT_RETRIES", "1") or 1)
+STT_TIMEOUT_SECONDS = float(os.getenv("JARVIS_STT_TIMEOUT", "6") or 6)
+STT_MAX_RETRIES = int(os.getenv("JARVIS_STT_RETRIES", "1") or 1)
 # SDK ke timeout/retry ke upar app ka ceiling — is se zyada matlab hamara thread
 # atak gaya hai (network ya SDK ka apna bug). `voice/stt.py` yahin lagata hai.
 STT_HARD_MARGIN_SECONDS = 4.0

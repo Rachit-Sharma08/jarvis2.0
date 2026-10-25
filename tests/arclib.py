@@ -47,12 +47,12 @@ def wait_ready(page):
     """Arc tab POORA boot ho jaaye.
 
     `arc_load.js` `<head>` me hai aur CSS/JS DOMContentLoaded par lagata hai,
-    is liye `load` ke turant baad `window.PRABH_ARC` shayad na bana ho. Ek
+    is liye `load` ke turant baad `window.JARVIS_ARC` shayad na bana ho. Ek
     fixed `wait_for_timeout` guess tha aur 1920x1080 par boot miss ho gaya —
     is liye ab hum **condition** ka intezaar karte hain, time ka nahi.
     """
     page.wait_for_function(
-        "() => !!window.PRABH_ARC && !!document.querySelector('.a-reactor')",
+        "() => !!window.JARVIS_ARC && !!document.querySelector('.a-reactor')",
         timeout=15000)
     page.wait_for_timeout(250)      # ek frame CSS/animation ke liye
 
@@ -64,7 +64,7 @@ def set_state(page, state):
     par UI ka label badle. DOM se `textContent` likhna sahi cheez nahi hai —
     wo sirf ye prove karega ki `textContent` kaam karta hai.
     """
-    page.evaluate("(s) => window.PRABH_ARC_LIVE.setState(s)", state)
+    page.evaluate("(s) => window.JARVIS_ARC_LIVE.setState(s)", state)
 
 
 def visible_css(page, sel):

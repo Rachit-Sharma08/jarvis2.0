@@ -13,7 +13,7 @@ class ToolsPanel {
     this.toolsOn = false;
     this.ticker = null;
     this.left = 0;
-    const initial = (document.querySelector('meta[name="prabh-tools"]') || {}).content;
+    const initial = (document.querySelector('meta[name="jarvis-tools"]') || {}).content;
     this.setKill(initial === "1");
 
     this.allowBtn.addEventListener("click", (e) => this.decide(true, e));
@@ -23,18 +23,18 @@ class ToolsPanel {
 
   // ACTIVITY list ab hud_activity.js me hai (Phase 4) — yahan se bhi wahi use karo.
   addLine(text, kind) {
-    if (window.PRABH_ACTIVITY) window.PRABH_ACTIVITY.addLine(text, kind);
+    if (window.JARVIS_ACTIVITY) window.JARVIS_ACTIVITY.addLine(text, kind);
   }
 
   addNote(text, kind) {
-    if (window.PRABH_ACTIVITY) window.PRABH_ACTIVITY.addNote(text, kind);
+    if (window.JARVIS_ACTIVITY) window.JARVIS_ACTIVITY.addNote(text, kind);
   }
 
   handle(ev) {
     if (ev.type === "activity") {
       // Quick buttons aur normal tool dono yahin se activity me aate hain.
-      if (window.PRABH_ACTIVITY) {
-        window.PRABH_ACTIVITY.addActivity({
+      if (window.JARVIS_ACTIVITY) {
+        window.JARVIS_ACTIVITY.addActivity({
           tool: ev.tool, decision: ev.decision, text: ev.text
         });
       }
@@ -80,7 +80,7 @@ class ToolsPanel {
     try {
       const reply = await fetch("/tool/confirm", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-prabh-token": this.token },
+        headers: { "Content-Type": "application/json", "x-jarvis-token": this.token },
         body: JSON.stringify({ id: card.id, hash: card.hash, allow: allow }),
       });
       if (!reply.ok) {
@@ -100,7 +100,7 @@ class ToolsPanel {
     this.killBtn.classList.toggle("on", on);
     this.killBtn.textContent = on ? "TOOLS ON" : "TOOLS OFF";
     // Quick buttons bhi usi switch ke saath enable/disable honge.
-    if (window.PRABH_QUICK) window.PRABH_QUICK.setTools(on);
+    if (window.JARVIS_QUICK) window.JARVIS_QUICK.setTools(on);
   }
 
   async toggleKill(event) {
@@ -109,7 +109,7 @@ class ToolsPanel {
     try {
       const reply = await fetch("/tools/toggle", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-prabh-token": this.token },
+        headers: { "Content-Type": "application/json", "x-jarvis-token": this.token },
         body: JSON.stringify({ on: next }),
       });
       if (!reply.ok) throw new Error("toggle fail");
@@ -131,7 +131,7 @@ class ToolsPanel {
     try {
       await fetch("/tools/cancel", {
         method: "POST",
-        headers: { "x-prabh-token": this.token },
+        headers: { "x-jarvis-token": this.token },
       });
       this.addLine("STOP — pending tool rok diya", "deny");
     } catch (err) {

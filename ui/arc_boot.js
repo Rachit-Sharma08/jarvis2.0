@@ -13,10 +13,10 @@
 (function () {
   "use strict";
 
-  const CFG = window.PRABH_ARC_CFG;
-  const SHELL = window.PRABH_ARC_SHELL;
-  const ARC = window.PRABH_ARC;          // typewriter/send/handle (arc_wire.js)
-  const LIVE = window.PRABH_ARC_LIVE;
+  const CFG = window.JARVIS_ARC_CFG;
+  const SHELL = window.JARVIS_ARC_SHELL;
+  const ARC = window.JARVIS_ARC;          // typewriter/send/handle (arc_wire.js)
+  const LIVE = window.JARVIS_ARC_LIVE;
   const byId = (id) => document.getElementById(id);
 
   // ---------------- boot ----------------
@@ -51,7 +51,7 @@
     // karta hai. `isTrusted` click-handler wala rule yahan nahi lagta (key
     // se aaya hai), par dono raaste band karte hain.
     if (window.JarvisTools && window.JarvisTools.cancel) window.JarvisTools.cancel();
-    if (window.PRABH_VOICE && window.PRABH_VOICE.stop) window.PRABH_VOICE.stop();
+    if (window.JARVIS_VOICE && window.JARVIS_VOICE.stop) window.JARVIS_VOICE.stop();
   }
 
   function keyboard() {
@@ -78,8 +78,8 @@
     const mute = byId("a-mute");
     if (mute) mute.addEventListener("click", function (e) {
       if (!e.isTrusted) return;
-      if (window.PRABH_VOICE && window.PRABH_VOICE.toggleMute) {
-        window.PRABH_VOICE.toggleMute();
+      if (window.JARVIS_VOICE && window.JARVIS_VOICE.toggleMute) {
+        window.JARVIS_VOICE.toggleMute();
       }
       LIVE.setState(mute.classList.contains("on") ? "muted" : "idle");
     });
@@ -94,7 +94,7 @@
   }
 
   function talk(on) {
-    const v = window.PRABH_VOICE;
+    const v = window.JARVIS_VOICE;
     if (!v) return;
     if (on && v.start) v.start();
     if (!on && v.stop) v.stop();
@@ -115,7 +115,7 @@
   function prime() {
     // Same-origin GET par `Origin` header nahi jaata — `Referer` chalta hai
     // (server/security.py ka wahi rule). Token meta se.
-    fetch("/hud/stats", { headers: { "x-prabh-token": ARC.token() },
+    fetch("/hud/stats", { headers: { "x-jarvis-token": ARC.token() },
                           cache: "no-store" })
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (d) { if (d) LIVE.setStats(d); })
@@ -128,7 +128,7 @@
     ws.onmessage = function (e) {
       let ev = null;
       try { ev = JSON.parse(e.data); } catch (err) { return; }
-      window.PRABH_ARC.handle(ev);
+      window.JARVIS_ARC.handle(ev);
     };
     // WS ke callback DOM ke BAAD bhi chal sakte hain (unload, ya tab
     // background me band) — is liye null-check zaroori.
@@ -152,7 +152,7 @@
 
   // Sirf arc theme par. Default "neon" me ye teeno file chup-chaap load hoti
   // hain par kuch nahi karte.
-  const theme = (document.querySelector('meta[name="prabh-theme"]') || {}).content;
+  const theme = (document.querySelector('meta[name="jarvis-theme"]') || {}).content;
   if (theme === "arc") {
     if (document.readyState === "loading") {
       document.addEventListener("DOMContentLoaded", boot);

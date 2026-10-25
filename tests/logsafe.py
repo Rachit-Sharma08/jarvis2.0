@@ -6,7 +6,7 @@ likhte hain. Test suite chalti to usme bhi entries aa jaati hain (`wake_command
 mic ka asli level galat nikaala gaya tha: `tests/wakehelp.py` ka `loud()` **exactly
 0.129** deta hai, aur wo number log me bhi aa raha tha.
 
-**Raasta:** `config.py` ka `LOG_DIR` `PRABH_LOG_DIR` env se aata hai. Ye file
+**Raasta:** `config.py` ka `LOG_DIR` `JARVIS_LOG_DIR` env se aata hai. Ye file
 `os.environ` **import ke time** set karti hai — is liye har test file me `import
 config` se **pehle** `from tests import logsafe` honi chahiye (yahi import
 `config` ko trigger karta hai).
@@ -34,7 +34,7 @@ LOG_DIR = Path(tempfile.gettempdir()) / "prabh-test-logs"
 
 # `config` se pehle set hona zaroori hai — `config.LOG_FILE` module load par hi
 # pakda jaata hai.
-os.environ["PRABH_LOG_DIR"] = str(LOG_DIR)
+os.environ["JARVIS_LOG_DIR"] = str(LOG_DIR)
 
 
 def clear() -> None:

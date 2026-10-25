@@ -14,7 +14,7 @@
   const rightEl = document.getElementById("qRight");
   if (!leftEl || !rightEl) return;
 
-  const TOKEN = (document.querySelector('meta[name="prabh-token"]') || {}).content || "";
+  const TOKEN = (document.querySelector('meta[name="jarvis-token"]') || {}).content || "";
   const SVG_NS = "http://www.w3.org/2000/svg";
 
   // Sirf 3 buttons har taraf. Config (config_hud.QUICK_BUTTONS) se order
@@ -38,7 +38,7 @@
     music: "MUSIC", files: "FILES", scan: "SCAN"
   };
 
-  let toolsOn = ((document.querySelector('meta[name="prabh-tools"]') || {}).content) === "1";
+  let toolsOn = ((document.querySelector('meta[name="jarvis-tools"]') || {}).content) === "1";
   const buttons = {};
 
   function makeIcon(id) {
@@ -80,27 +80,27 @@
   async function onClick(id, event) {
     if (!event.isTrusted) return;
     if (!toolsOn) {
-      if (window.PRABH_ACTIVITY) {
-        window.PRABH_ACTIVITY.addNote("TOOLS OFF hai — quick button band", "deny");
+      if (window.JARVIS_ACTIVITY) {
+        window.JARVIS_ACTIVITY.addNote("TOOLS OFF hai — quick button band", "deny");
       }
       return;
     }
     try {
       const reply = await fetch("/hud/quick", {
         method: "POST",
-        headers: { "Content-Type": "application/json", "x-prabh-token": TOKEN },
+        headers: { "Content-Type": "application/json", "x-jarvis-token": TOKEN },
         body: JSON.stringify({ id: id })
       });
       if (!reply.ok) {
         const data = await reply.json().catch(() => ({}));
-        if (window.PRABH_ACTIVITY) {
-          window.PRABH_ACTIVITY.addNote(
+        if (window.JARVIS_ACTIVITY) {
+          window.JARVIS_ACTIVITY.addNote(
             "Quick fail: " + (data.detail || reply.status), "deny");
         }
       }
     } catch (err) {
-      if (window.PRABH_ACTIVITY) {
-        window.PRABH_ACTIVITY.addNote("Quick: server se baat nahi hui", "deny");
+      if (window.JARVIS_ACTIVITY) {
+        window.JARVIS_ACTIVITY.addNote("Quick: server se baat nahi hui", "deny");
       }
     }
   }
@@ -114,5 +114,5 @@
   }
 
   setTools(toolsOn);
-  window.PRABH_QUICK = { setTools: setTools, isOn: () => toolsOn };
+  window.JARVIS_QUICK = { setTools: setTools, isOn: () => toolsOn };
 })();

@@ -64,18 +64,18 @@ def fill_html(html: str, theme: str = "") -> str:
     yahin se naam aata hai, is liye UI me "Jarvis" hard-code nahi hai.
 
     `theme` (KAAM B): `"neon"` ya `"arc"`. Route `?theme=` se deta hai, warna
-    `config.hud_theme()` (`PRABH_HUD_THEME`). **Sirf yehi do** maane jaate
+    `config.hud_theme()` (`JARVIS_HUD_THEME`). **Sirf yehi do** maane jaate
     hain — koi bhi adhoori value ya query string seedha `<html data-theme>`
     me nahi jaati (warna ek `?theme=<script>` se attribute injection hota).
     `resolve_theme()` wo whitelist hai; is function me dobara check nahi.
     """
     html = html.replace(security.TOKEN_PLACEHOLDER, security.token())
-    html = html.replace("__PRABH_TOOLS_ON__", "1" if keeper.tools_on() else "0")
+    html = html.replace("__JARVIS_TOOLS_ON__", "1" if keeper.tools_on() else "0")
     # Naam config se (config_name.ASSISTANT_NAME / DISPLAY_NAME). UI, tray aur
     # shortcut — sab ek hi jagah se badalte hain.
-    html = html.replace("__PRABH_ASSISTANT_NAME__", escape(config.ASSISTANT_NAME))
-    html = html.replace("__PRABH_DISPLAY_NAME__", escape(config.DISPLAY_NAME))
-    html = html.replace("__PRABH_HUD_THEME__", theme or config.hud_theme())
+    html = html.replace("__JARVIS_ASSISTANT_NAME__", escape(config.ASSISTANT_NAME))
+    html = html.replace("__JARVIS_DISPLAY_NAME__", escape(config.DISPLAY_NAME))
+    html = html.replace("__JARVIS_HUD_THEME__", theme or config.hud_theme())
     # Arc ke constants — Python ka ek hi source (`config_hud.py`), JS me dobara
     # nahi likhe. `json.dumps` safe hai (sirf humare numbers/strings) aur
     # `escape` har value ko HTML-attribute safe banata hai.
@@ -92,7 +92,7 @@ def fill_html(html: str, theme: str = "") -> str:
     html = html.replace("__ARC_TYPE_MS__", str(config.ARC_TYPE_MS))
     html = html.replace("__ARC_FRAME_MS__", str(config.ARC_FRAME_MS))
     # Startup warning plain text hai — ise HTML me escape karke hi daalte hain.
-    return html.replace("__PRABH_BRAIN_WARN__", escape(checkup.banner()))
+    return html.replace("__JARVIS_BRAIN_WARN__", escape(checkup.banner()))
 
 
 def resolve_theme(raw: str) -> str:

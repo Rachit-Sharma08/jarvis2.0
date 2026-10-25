@@ -16,6 +16,7 @@ dono cheezein pehle se maujood hain.
 Rule: is file me koi API key nahi. Wake ka model path `BASE_DIR/models` me hai.
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 from pathlib import Path
 
@@ -29,7 +30,7 @@ MODEL_DIR = BASE_DIR / "models"
 # ---- kholna / band karna ----
 # Default ON. Mic band karne ka ek hi raasta hai `desktop/micperm.py` +
 # tray ka MUTE — `.env` se alag koi davaa nahi.
-WAKE_ENABLED = os.getenv("PRABH_WAKE", "1").strip() not in ("0", "false", "no")
+WAKE_ENABLED = os.getenv("JARVIS_WAKE", "1").strip() not in ("0", "false", "no")
 
 # ---- model ----
 WAKE_MODEL_DIR = str(MODEL_DIR / "vosk-model-small-en-us-0.15")
@@ -46,8 +47,8 @@ WAKE_GRAMMAR = wake_grammar()
 # Vosk ko **har** chunk dena = 3.9% CPU chalu, chahe koi na bol (battery jaati
 # hai). Is liye chunk tabhi dena jab VAD bol raha ho — `wake/session.py` ka gate.
 # Mic ka stream khula rehta hai (band nahi hota, crash ka raasta bhi nahi);
-# sirf sunna band hota hai. `.env` ke `PRABH_VOSK_GATE=0` se gate band.
-WAKE_VOSK_GATE = os.getenv("PRABH_VOSK_GATE", "1").strip() not in ("0", "false", "no")
+# sirf sunna band hota hai. `.env` ke `JARVIS_VOSK_GATE=0` se gate band.
+WAKE_VOSK_GATE = os.getenv("JARVIS_VOSK_GATE", "1").strip() not in ("0", "false", "no")
 
 # Ek hi "jarvis" me do trigger na ho. Wake hit ke baad itni der queue khaali
 # karte hue aawaaz fenk-te hain (recognition nahi) - taaki TTS/bijli ka shor
@@ -58,17 +59,17 @@ WAKE_COOLDOWN_SECONDS = 1.5
 # Ek koshish me app hamesha "wake: nahi chala" ho jati thi, jabki MicUnavailable
 # (PortAudio `MME error 1`) ka matlab hota hai device **busy** hai - Chrome/Teams
 # ka mic tab. Ab 3 koshish, beech me chhota intezaar. `.env` se badal sakte ho.
-MIC_OPEN_ATTEMPTS = int(os.getenv("PRABH_MIC_ATTEMPTS", "3"))
-MIC_OPEN_RETRY_SECONDS = float(os.getenv("PRABH_MIC_RETRY", "1.2"))
+MIC_OPEN_ATTEMPTS = int(os.getenv("JARVIS_MIC_ATTEMPTS", "3"))
+MIC_OPEN_RETRY_SECONDS = float(os.getenv("JARVIS_MIC_RETRY", "1.2"))
 
 # ---- command window ----
 # Chuppi pehle 2.0 s -> 1.2 s -> 0.9 s -> ab **0.7 s** (13-Oct). Har 0.1 s yahan
 # seedha wake ke total me judta hai. 0.7 s ek normal sentence-gap se ab bhi
-# lamba hai, is liye beech ka vaakya kat-ta nahi. `.env` ke `PRABH_CMD_SILENCE`
+# lamba hai, is liye beech ka vaakya kat-ta nahi. `.env` ke `JARVIS_CMD_SILENCE`
 # se badalte ho — **wo raasta bilkul waisa hi hai.**
 COMMAND_MAX_SECONDS = 30           # wake ke baad itni der suno (safety limit)
 COMMAND_MIN_SECONDS = 0.6    # itni ASLI awaaz chahiye, khamoshi ginti nahi
-COMMAND_END_SILENCE_SECONDS = float(os.getenv("PRABH_CMD_SILENCE", "0.7"))
+COMMAND_END_SILENCE_SECONDS = float(os.getenv("JARVIS_CMD_SILENCE", "0.7"))
 COMMAND_HANGOVER_SECONDS = 0.4     # beech ka chhota ruk na kaato (wake se chhota)
 # Pre-roll 0.4 -> **0.6** (4-Oct): "Hlo Jarvis, WhatsApp kholo" me pehle shabd
 # "WhatsApp" ka 'a' kat-ta tha, kyunki wake shabd ke aakhri chunk ke saath hi
@@ -81,14 +82,14 @@ COMMAND_WARMUP_SECONDS = 1.0       # mic settle hone do, warna pehla shabd kat-t
 # Jawab ke baad **"Jarvis" na bole** follow-up puchh sakte ho. Us window me
 # sirf bolna sunna kaafi hai.
 #
-# **DEFAULT OFF** (`PRABH_HOT_WINDOW=0`). Naye mic/awaaz wale feature ka yahi
+# **DEFAULT OFF** (`JARVIS_HOT_WINDOW=0`). Naye mic/awaaz wale feature ka yahi
 # niyam hai - jab tak Rachit on na kare, `Trigger.hot_active()` hamesha False
 # rahega aur raasta purane waise hi chalega.
-HOT_WINDOW_ENABLED = os.getenv("PRABH_HOT_WINDOW", "0").strip().lower() in (
+HOT_WINDOW_ENABLED = os.getenv("JARVIS_HOT_WINDOW", "0").strip().lower() in (
     "1", "true", "yes", "on")
 # Kitni der. Follow-up par window **dobara** lag jaata hai, is liye teen
 # follow-up chain kar sakte ho (test me wahi hai).
-HOT_WINDOW_SECONDS = float(os.getenv("PRABH_HOT_WINDOW_SECONDS", "12") or 12)
+HOT_WINDOW_SECONDS = float(os.getenv("JARVIS_HOT_WINDOW_SECONDS", "12") or 12)
 
 # Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye — is liye
 # "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
@@ -112,15 +113,15 @@ PLAYBACK_MUTE_MIC = True
 # Is liye: hold chhodte hi `TAIL_GUARD_SECONDS` tak **koi bhi chunk** trigger
 # nahi kar sakta. Raasta `wake/trigger.py` ka `suppressing()` hai, aur
 # `Session._loop` wahi check karta hai.
-PLAYBACK_TAIL_GUARD_SECONDS = float(os.getenv("PRABH_TAIL_GUARD", "0.4") or 0.4)
+PLAYBACK_TAIL_GUARD_SECONDS = float(os.getenv("JARVIS_TAIL_GUARD", "0.4") or 0.4)
 
 
 # ---- wake debug (4-Oct, doosra command nahi sunta tha) ----------------------
-# `PRABH_WAKE_DEBUG=1` se har 3 second ek line: kitne chunk aaye, kitne Vosk
+# `JARVIS_WAKE_DEBUG=1` se har 3 second ek line: kitne chunk aaye, kitne Vosk
 # ko gaye, kitne chhode, RMS kya tha. Isi se pata chala ki command ke baad
 # chunk **aate hi nahi** (mic/pump), ya aate hain par VAD "khamoshi" bolta hai.
 # Hamesha band — sirf bug pakadne ke liye.
-WAKE_DEBUG = os.getenv("PRABH_WAKE_DEBUG", "0") not in ("0", "", "no", "false")
+WAKE_DEBUG = os.getenv("JARVIS_WAKE_DEBUG", "0") not in ("0", "", "no", "false")
 WAKE_DEBUG_SECONDS = 3.0
 
 
@@ -148,7 +149,7 @@ def model_missing() -> str:
 def wake_available() -> bool:
     """Worker chal sakta hai? -> (bool, reason)."""
     if not WAKE_ENABLED:
-        return False, "PRABH_WAKE=0 se band hai"
+        return False, "JARVIS_WAKE=0 se band hai"
     if not model_path():
         return False, model_missing()
     return True, ""

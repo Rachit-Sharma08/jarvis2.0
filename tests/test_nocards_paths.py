@@ -1,4 +1,4 @@
-"""Path-hardening ke tests (PRABH_NO_CARDS / gatekeeper/nocards.py).
+"""Path-hardening ke tests (JARVIS_NO_CARDS / gatekeeper/nocards.py).
 
 Sirf fakes + temp folder. Asli delete/app close nahi. Junction admin ke bina
 ban sakta hai (`mklink /J`); fail ho to test skip.

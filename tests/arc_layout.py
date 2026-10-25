@@ -58,7 +58,7 @@ def run_theme(page, url, out):
                 "document.getElementById('a-corestate').textContent"), label)
 
         # Hindi text — typewriter line par (Devanagari width kaat-te nahi).
-        page.evaluate("(t) => window.PRABH_ARC.typewriter(t)", arc_probe.HINDI)
+        page.evaluate("(t) => window.JARVIS_ARC.typewriter(t)", arc_probe.HINDI)
         page.wait_for_timeout(1400)
         check(f"{tag} Hindi typewriter", page.evaluate(
             "document.getElementById('a-line').textContent"), arc_probe.HINDI)

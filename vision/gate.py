@@ -9,7 +9,7 @@ interface hai — `(bool, reason)` — taaki `allowed()` me sirf do line lage.
 
 | Halaat | Verdict | Command |
 |---|---|---|
-| `PRABH_VISION=0` (default) | — | **CHALTI** (pehle jaisa) |
+| `JARVIS_VISION=0` (default) | — | **CHALTI** (pehle jaisa) |
 | Vision ON + camera khuli + owner match | `OWNER` | **CHALTI** |
 | Vision ON + chehra hi nahi dikha | `NO_FACE` | ruk (`TOO_FAST`) |
 | Vision ON + koi aur chehra | `UNKNOWN` | ruk (`NOT_OWNER`) |

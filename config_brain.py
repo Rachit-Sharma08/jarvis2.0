@@ -4,6 +4,7 @@
 hi likhna hai (seedha is file ka import mat karo).
 """
 
+import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 
 # ---- Keys (asli values sirf .env se, kabhi code me nahi) ----

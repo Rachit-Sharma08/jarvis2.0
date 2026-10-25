@@ -165,7 +165,7 @@ def main():
     out("")
     out("d) chup-hone ka wait (config se padha)")
     w = wait_config()
-    out(f"  PRABH_CMD_SILENCE end_silence={config.COMMAND_END_SILENCE_SECONDS}s"
+    out(f"  JARVIS_CMD_SILENCE end_silence={config.COMMAND_END_SILENCE_SECONDS}s"
         f" ({w['blocks'][1]} block) + hangover={config.COMMAND_HANGOVER_SECONDS}s"
         f" ({w['blocks'][0]} block) = {w['ms']} ms")
     out(f"  baaki: pre_roll={config.COMMAND_PRE_ROLL_SECONDS}s"

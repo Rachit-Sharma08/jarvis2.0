@@ -86,12 +86,12 @@ def test_http_rules():
     token = security.token()
     client = TestClient(__import__("server.app", fromlist=["app"]).app)
 
-    ok = {"host": GOOD_HOST, "origin": GOOD_ORIGIN, "x-prabh-token": token}
+    ok = {"host": GOOD_HOST, "origin": GOOD_ORIGIN, "x-jarvis-token": token}
 
     page = client.get("/", headers={"host": GOOD_HOST})
     check("page khuli", page.status_code, 200)
     check("page me token hai", token in page.text, True)
-    check("placeholder gaya", "__PRABH_TOKEN__" in page.text, False)
+    check("placeholder gaya", "__JARVIS_TOKEN__" in page.text, False)
 
     check("page: host check", client.get("/", headers={"host": "evil.com"}).status_code, 400)
 
@@ -106,9 +106,9 @@ def test_http_rules():
 
     no_token = {"host": GOOD_HOST, "origin": GOOD_ORIGIN}
     check("/chat bina token", client.post("/chat", json={"text": "hi"}, headers=no_token).status_code, 401)
-    check("/chat galat token", client.post("/chat", json={"text": "hi"}, headers={**ok, "x-prabh-token": "abc"}).status_code, 401)
+    check("/chat galat token", client.post("/chat", json={"text": "hi"}, headers={**ok, "x-jarvis-token": "abc"}).status_code, 401)
     check("/chat bahar se", client.post("/chat", json={"text": "hi"}, headers={**ok, "origin": "https://evil.com"}).status_code, 403)
-    check("/chat bina origin", client.post("/chat", json={"text": "hi"}, headers={"host": GOOD_HOST, "x-prabh-token": token}).status_code, 403)
+    check("/chat bina origin", client.post("/chat", json={"text": "hi"}, headers={"host": GOOD_HOST, "x-jarvis-token": token}).status_code, 403)
     check("/chat fake host", client.post("/chat", json={"text": "hi"}, headers={**ok, "host": "evil.com"}).status_code, 400)
     return client
 

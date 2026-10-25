@@ -1,4 +1,4 @@
-"""Card ki jagah code ka faisla - `PRABH_NO_CARDS=1` (default).
+"""Card ki jagah code ka faisla - `JARVIS_NO_CARDS=1` (default).
 
 Jab `gatekeeper/rules.py` ne ASK kaha aur card band hai, `keeper.review()`
 yahan se faisla leta hai: ("ALLOW", None) ya ("DENY", "ek line Hinglish wajah").

@@ -7,8 +7,8 @@
 (function () {
   "use strict";
 
-  const NAME = (document.querySelector('meta[name="prabh-name"]') || {}).content || "Jarvis";
-  const CFG = window.PRABH_ARC_CFG;
+  const NAME = (document.querySelector('meta[name="jarvis-name"]') || {}).content || "Jarvis";
+  const CFG = window.JARVIS_ARC_CFG;
 
   function mk(tag, cls, text) {
     const e = document.createElement(tag);
@@ -113,7 +113,7 @@
     svg.setAttribute("class", "a-reactor");
     svg.setAttribute("role", "img");
     svg.setAttribute("aria-label", NAME + " arc reactor");
-    window.PRABH_ARC_REACTOR.build(svg, {
+    window.JARVIS_ARC_REACTOR.build(svg, {
       accent: CFG.accent, accent2: CFG.accent2,
       ticks: CFG.ticks, hex: CFG.hex,
     });
@@ -136,7 +136,7 @@
     return d;
   }
 
-  window.PRABH_ARC_DOM = {
+  window.JARVIS_ARC_DOM = {
     systemPanel: systemPanel,
     uplinkPanel: uplinkPanel,
     routingPanel: routingPanel,

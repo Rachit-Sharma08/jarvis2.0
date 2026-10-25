@@ -137,5 +137,5 @@
   bars.net.val.textContent = down.toFixed(1) + "/" + up.toFixed(1) + " MB/s";
   }
 
-  window.PRABH_STATS = { render: render };
+  window.JARVIS_STATS = { render: render };
 })();

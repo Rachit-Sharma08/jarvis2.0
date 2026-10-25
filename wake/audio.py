@@ -144,7 +144,7 @@ class MicSource:
 
 
 def _make_gain():
-    """`PRABH_WAKE_GAIN` se gain: `auto` (default) | number | `off`.
+    """`JARVIS_WAKE_GAIN` se gain: `auto` (default) | number | `off`.
 
     `auto` = `wake/pcm.py` ka `AutoGain` (khamoshi nahi chhedta). Number = fixed
     gain. `off` = `None` — mic jaisa hai waisa jaata hai. Baaki hisse
@@ -162,7 +162,7 @@ def _make_gain():
 def pick_input_device(sd, wanted=None):
     """WASAPI ka mic chuno — MME se sirf kachra aata hai (5-Oct ka pehla bug).
 
-    `wanted` (`PRABH_WAKE_MIC`) diya ho to use-as-is (user ka faisla). warna
+    `wanted` (`JARVIS_WAKE_MIC`) diya ho to use-as-is (user ka faisla). warna
     WASAPI host API ka default capture device. Kuch na mile to `None` (PortAudio
     apna default lega) — crash nahi karenge.
     """

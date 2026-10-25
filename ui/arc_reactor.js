@@ -152,5 +152,5 @@
     { r: 122, at: [70, 200, 320], size: 2.4, rev: true },
   ];
 
-  window.PRABH_ARC_REACTOR = { build: build };
+  window.JARVIS_ARC_REACTOR = { build: build };
 })();

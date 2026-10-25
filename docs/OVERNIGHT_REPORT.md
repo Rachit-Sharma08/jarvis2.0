@@ -161,7 +161,7 @@ me isi wajah se **mic ka asli level galat** nikaala gaya tha: `tests/wakehelp.py
 ka `loud()` **exactly 0.129** deta hai, aur wahi number asli app ke log me bhi
 aa raha tha.
 
-**Kya badla:** `config.py` me `LOG_DIR` ab `PRABH_LOG_DIR` env se (default
+**Kya badla:** `config.py` me `LOG_DIR` ab `JARVIS_LOG_DIR` env se (default
 bilkul waisa) · naya `tests/logsafe.py` · **64 test file** me import ·
 naya `tests/test_logsafe.py`.
 
@@ -212,7 +212,7 @@ SABOOT: `tests/test_hearing_audit.py`.
 | 5 | Purana `take_fresh()` | sirf **1 chunk** bachata tha |
 | 6 | `cooling()` | sirf **1.5 s** — is liye koi faida nahi |
 
-**Fix:** `PLAYBACK_TAIL_GUARD_SECONDS = 0.4` (`.env`: `PRABH_TAIL_GUARD`) —
+**Fix:** `PLAYBACK_TAIL_GUARD_SECONDS = 0.4` (`.env`: `JARVIS_TAIL_GUARD`) —
 hold chhodte hi itni der **koi** chunk trigger nahi kar sakta.
 
 **Ek aur asli path bug-injection me pakda:** `gate.on_flush()` gate **thread**
@@ -269,11 +269,11 @@ refactor bina asli speaker sune likhna **self-hearing wapas la sakta** tha
 
 ### KAAM 5 — follow-up bina "Jarvis" (`fix/hot-window` @ `1f970eb`)
 
-**DEFAULT OFF** (`PRABH_HOT_WINDOW=0`). Band par `hot_active()` hamesha
+**DEFAULT OFF** (`JARVIS_HOT_WINDOW=0`). Band par `hot_active()` hamesha
 `False` aur follow-up ke liye wake shabd zaroori — **yaani app purane jaise**.
 
 On karne par: jawab ke baad **12 s** tak sirf bolna sunna kaafi
-(`PRABH_HOT_WINDOW_SECONDS`). Follow-up par window **dobara** lagta hai — is
+(`JARVIS_HOT_WINDOW_SECONDS`). Follow-up par window **dobara** lagta hai — is
 liye ek wake ke baad **teen** follow-up chain ho sakte hain (test me wahi).
 
 Do guard hamesha pehle: **tail guard** (KAAM 2 — apni awaaz follow-up nahi
@@ -326,7 +326,7 @@ usse achha se karne ka mauka hai.
 
 **Kya zaroori hai (tera kaam, ek baar):** section 2.3 ke 2 command. Uske
 baad main (ya koi agla session) `feat/hud-arc` branch par ye kar sakta hai:
-`ui/hud_arc.css` + `ui/hud_arc.js` + `PRABH_HUD_THEME` flag (default purana
+`ui/hud_arc.css` + `ui/hud_arc.js` + `JARVIS_HUD_THEME` flag (default purana
 neela) + `?theme=arc` switch + 1366x768 aur 1920x1080 screenshot.
 
 **Reference:** <https://jarvis.mukh1.com> — sirf **LOOK** dekhna, unka code/CSS
@@ -358,17 +358,17 @@ Sab **DEFAULT OFF** hain (koi abhi on nahi). `.env` me likhna:
 
 ```
 # KAAM 1 — Jarvis ke andar alarm tool ("kal subah 7 baje utha dena")
-PRABH_ALARM_TOOL=1
+JARVIS_ALARM_TOOL=1
 
 # KAAM 5 — jawab ke baad 12 s follow-up, "Jarvis" na bola tab bhi
-PRABH_HOT_WINDOW=1
-PRABH_HOT_WINDOW_SECONDS=12
+JARVIS_HOT_WINDOW=1
+JARVIS_HOT_WINDOW_SECONDS=12
 
 # KAAM 2 — apni awaaz ke liye guard (default 0.4 s)
-PRABH_TAIL_GUARD=0.4
+JARVIS_TAIL_GUARD=0.4
 
 # KAAM 4 — awaaz me kitne vaakya bolne hain (default 2)
-PRABH_VOICE_SENTENCES=2
+JARVIS_VOICE_SENTENCES=2
 ```
 
 Flag on karne ke baad `.env` change hone par Jarvis **restart** karna padta
@@ -395,7 +395,7 @@ D:\prabh\.venv\Scripts\python.exe D:\prabh\main.py --wake-info
 | 7 | Permissions | "WhatsApp kholo" | app khula (brave/whatsapp allowed) |
 | 8 | Permissions card | "git push kar do" | **card/poochh** (public post → ASK) |
 | 9 | HUD `--` | HUD kholo, WS band karke | SYSTEM panel **foran** bhar jaana chahiye (pehle `--` rehta) |
-| 10 | Hot window | `.env` me `PRABH_HOT_WINDOW=1` + restart → wake, phir bina "Jarvis" follow-up | **kaam kare** (abhi band hai) |
+| 10 | Hot window | `.env` me `JARVIS_HOT_WINDOW=1` + restart → wake, phir bina "Jarvis" follow-up | **kaam kare** (abhi band hai) |
 
 ---
 
@@ -515,7 +515,7 @@ wapas kharab karne par **5 check fail** hue — test sach me bug pakadta hai.
 ## 3. KAAM B — Arc Reactor / sunset theme (branch `feat/hud-arc`, commit `5a2587f`)
 
 Default abhi bhi **purana neela** (`neon`) — uska ek pixel nahi hila. Naya
-theme `?theme=arc` ya `PRABH_HUD_THEME=arc`.
+theme `?theme=arc` ya `JARVIS_HUD_THEME=arc`.
 
 ### Reference
 
@@ -600,7 +600,7 @@ maang, credential/account kabhi mat badal.
 | # | Kya | Kaise | Expected |
 |---|---|---|---|
 | 1 | **Neela HUD** (default) | `.env` me kuch nahi, HUD kholo | **bilkul purana** dikhe |
-| 2 | **Arc theme** | `.env`: `PRABH_HUD_THEME=arc` + restart | orange reactor + panels |
+| 2 | **Arc theme** | `.env`: `JARVIS_HUD_THEME=arc` + restart | orange reactor + panels |
 | 3 | Theme sirf URL se | `http://127.0.0.1:8000/?theme=arc` | arc khule |
 | 4 | Adhoori theme | `/?theme=<script>` | **default** (neon) |
 | 5 | **Bottom bar** | Reminder ON karo (`?"kal shaam ko gym"`) | BROWSER label **dikh** rahe |

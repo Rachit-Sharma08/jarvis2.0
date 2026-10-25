@@ -10,7 +10,7 @@ Yahan teen baatein pakdi hain:
    phir `sun liya: 'yo'` alag finals aaye the (trigger nahi hua); ab grammar
    me har shabd alag hai (`config_name.grammar_words()`).
 3. **Legacy "sunday" default band** — list me maujood, grammar me nahi;
-   `PRABH_WAKE_LEGACY=1` par aa jaata hai.
+   `JARVIS_WAKE_LEGACY=1` par aa jaata hai.
 
 Koi asli Vosk/mic nahi — `config_name` aur `wake.phrase` pure functions hain.
 """
@@ -64,7 +64,7 @@ class TestWakePhrases(unittest.TestCase):
     def test_legacy_can_be_switched_on(self):
         # `legacy_enabled()` env har call par padhta hai, is liye test me
         # `os.environ` badal kar turant dekh sakte hain.
-        os.environ["PRABH_WAKE_LEGACY"] = "1"
+        os.environ["JARVIS_WAKE_LEGACY"] = "1"
         try:
             words = json.loads(config_name.wake_grammar())
             self.assertIn("sunday", words)
@@ -72,7 +72,7 @@ class TestWakePhrases(unittest.TestCase):
             self.assertNotIn("hey sunday", words)     # shabd alag-alag
             self.assertEqual(config_name.wake_words(), ("jarvis", "sunday"))
         finally:
-            os.environ.pop("PRABH_WAKE_LEGACY", None)
+            os.environ.pop("JARVIS_WAKE_LEGACY", None)
 
 
 if __name__ == "__main__":
