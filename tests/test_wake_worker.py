@@ -16,6 +16,9 @@ from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 import config
 from desktophelp import check, finish
 from wake import worker as wake_worker
+from wakehelp import use_fake_model
+
+use_fake_model()   # `wake_available()` ke liye - asli Vosk model ki zarurat nahi
 
 
 def test_worker_wiring():

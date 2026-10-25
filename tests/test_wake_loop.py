@@ -20,7 +20,8 @@ import config
 from wake import model as model_mod
 from wake import session as session_mod
 from wake import worker
-from wakehelp import FakeListener, FakeMic, check, finish, loud, quiet, truthy, wait
+from wakehelp import FakeListener, FakeMic, check, finish, loud, quiet, truthy, wait, use_fake_model
+use_fake_model()
 
 
 def test_worker_loop():

@@ -31,7 +31,8 @@ from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 import config
 from wake import session as session_mod
 from wake import worker
-from wakehelp import FakeListener, FakeMic, check, finish, loud, quiet, wait
+from wakehelp import FakeListener, FakeMic, check, finish, loud, quiet, wait, use_fake_model
+use_fake_model()
 
 heard_all = []          # module level (AGENTS: helper module level par rakho)
 

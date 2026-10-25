@@ -36,6 +36,21 @@ LOG_DIR = Path(tempfile.gettempdir()) / "prabh-test-logs"
 # pakda jaata hai.
 os.environ["JARVIS_LOG_DIR"] = str(LOG_DIR)
 
+# ---- Test keys -------------------------------------------------------------
+# Suite **hermetic** honi chahiye: developer ke `.env` me key ho ya na ho,
+# natija wahi. Pehle 7 suite chupchaap `.env` par depend karti thin (key nahi to
+# fail). Ye sab **nakli** hain aur `config` import se pehle set hote hain.
+# Shape jaan-boojh kar asli jaisi rakhi hai, taaki `gatekeeper/audit.mask()`
+# inhe pehchan kar chhupa sake (`len >= 12` wala niyam bhi).
+_TEST_KEYS = {
+    "GROQ_API_KEY": "gsk_test0000000000000000000000000000000000",
+    "GEMINI_API_KEY": "AIzaSyTEST000000000000000000000000000",
+    "NVIDIA_API_KEY": "nvapi-TEST0000000000000000000000000000000000",
+    "ELEVENLABS_API_KEY": "sk_test000000000000000000000000000000",
+    "CARTESIA_API_KEY": "sk_car_test000000000000000000000000000",
+}
+os.environ.update(_TEST_KEYS)
+
 
 def clear() -> None:
     """Test log saaf karo (assert me file ka content dekhna ho to)."""

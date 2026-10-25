@@ -16,6 +16,7 @@ Do rule yahan pakde ja rahe hain:
 """
 
 import asyncio
+import os
 import sys
 import unittest
 from pathlib import Path
@@ -88,6 +89,10 @@ class TestSessionSkip(unittest.TestCase):
 
     def setUp(self):
         health.reset_all()
+        # Key ke alawa voice id bhi chahiye - id na ho to `tts.py` provider ko
+        # skip kar deta hai (aur test ka "ek hi call" wala dava bekaar ho jaata).
+        self._voice = os.environ.get("ELEVENLABS_VOICE_SUNDAY")
+        os.environ["ELEVENLABS_VOICE_SUNDAY"] = "JBFqnCBsd6RMkjVDRZzb"
         self.eleven = FakeProvider(fail=RuntimeError(AUTH_401))
         self.edge = FakeProvider()
         self.cartesia = FakeProvider(fail=RuntimeError("cartesia voice id nahi"))
@@ -96,6 +101,10 @@ class TestSessionSkip(unittest.TestCase):
 
     def tearDown(self):
         health.reset_all()
+        if self._voice is None:
+            os.environ.pop("ELEVENLABS_VOICE_SUNDAY", None)
+        else:
+            os.environ["ELEVENLABS_VOICE_SUNDAY"] = self._voice
 
     def test_first_call_fails_then_band(self):
         health.classify_and_skip("elevenlabs", AUTH_401)

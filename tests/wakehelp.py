@@ -40,6 +40,19 @@ def finish(title):
     sys.exit(0)
 
 
+def use_fake_model() -> None:
+    """`wake_available()` sirf folder ka **hona** dekhta hai - asli 40 MB Vosk
+    model ki zarurat nahi. Test ke shuru me dono model path ek temp folder par
+    point kar do, warna suite machine par depend karti hai (model ho to pass)."""
+    import tempfile
+
+    import config_wake
+
+    folder = Path(tempfile.gettempdir()) / "jarvis-fake-vosk"
+    folder.mkdir(parents=True, exist_ok=True)
+    config_wake.WAKE_MODEL_DIR = config_wake.WAKE_MODEL_ALT_DIR = str(folder)
+
+
 def wait(until, seconds: float = 2.0) -> bool:
     """Chhota intezaar — worker thread ke kaam ka (jaise `listener.reset()`)."""
     import time

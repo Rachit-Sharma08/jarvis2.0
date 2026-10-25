@@ -18,7 +18,8 @@ from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 import config
 import config_wake
 from wake import audio, model as model_mod, phrase, worker
-from wakehelp import check, finish, loud, make_listener, quiet, show, truthy
+from wakehelp import check, finish, loud, make_listener, quiet, show, truthy, use_fake_model
+use_fake_model()
 
 
 def test_config():
@@ -135,6 +136,11 @@ def test_phrase():
 
 def test_model_errors():
     print("MODEL (error raaste, load nahi)")
+    # `use_fake_model()` ne model path ko maujood folder par point kiya hai -
+    # "model nahi mila" wala raasta test karne ke liye wapas missing karo.
+    saved = (config_wake.WAKE_MODEL_DIR, config_wake.WAKE_MODEL_ALT_DIR)
+    config_wake.WAKE_MODEL_DIR = config_wake.WAKE_MODEL_ALT_DIR = str(
+        config.BASE_DIR / "models" / "__nahi__")
     model_mod.clear()
     check("cache khaali", model_mod.cached(), False)
     try:
@@ -148,6 +154,7 @@ def test_model_errors():
     except model_mod.ModelMissing:
         print("  OK   galat folder par ModelMissing")
     model_mod.clear()
+    config_wake.WAKE_MODEL_DIR, config_wake.WAKE_MODEL_ALT_DIR = saved
 
 
 for fn in (test_config, test_audio, test_detect, test_phrase, test_model_errors):
