@@ -11,4 +11,5 @@ sounddevice>=0.5.6   # Python me mic (wake word) + speaker playback (PortAudio D
 numpy>=2.0           # energy gate (RMS), resample, chime
 vosk>=0.3.45         # offline wake word ("hello sunday")
 miniaudio>=1.71      # TTS ke MP3 bytes ko PCM me tod kar sunane ke liye (ffmpeg nahi)
-pystray>=0.19.5      # tray icon + menu (Pillow already upar hai)
+pillow>=10           # tray icon (desktop/trayicon.py: from PIL import Image, ImageDraw)
+pystray>=0.19.5      # tray icon + menu
