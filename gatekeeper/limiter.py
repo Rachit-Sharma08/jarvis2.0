@@ -78,7 +78,8 @@ class Limiter:
                 return "TOOLS OFF hai. Upar ka TOOLS toggle dabao."
             self._prune()
             if len(self._calls) >= self._per_minute:
-                return "ek minute me 20 tool ki limit poori ho gayi. Thodi der baad."
+                return (f"ek minute me {self._per_minute} tool ki limit poori ho gayi. "
+                        "Thodi der baad.")
             return ""
 
     def record(self) -> None:
