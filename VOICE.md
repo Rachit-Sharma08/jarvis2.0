@@ -339,12 +339,21 @@ stt / brain / speak`) ek line me dikhta hai.
 ### Model kahan hai / kya hua to
 
 Model `D:\prabh\models\` me hona chahiye. Ho to startup par khud load ho jaata hai.
-Na ho to ek hi baar download karo (ya `VOICE.md` me command dekho):
+Na ho to ek hi baar download karo (~40 MB, 100% offline chalta hai):
 
 ```powershell
-# Model ka folder check (app band ho to)
-cd D:\prabh; .\.venv\Scripts\python.exe -c "import config; print(config.describe())"
+# 1. Download + unzip (ek hi baar). Folder ka naam bilkul yahi hona chahiye.
+cd D:\prabh
+New-Item -ItemType Directory -Force models | Out-Null
+Invoke-WebRequest -Uri https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip -OutFile "$env:TEMP\vosk.zip"
+Expand-Archive "$env:TEMP\vosk.zip" -DestinationPath models -Force
+
+# 2. Model ka folder check (app band ho to)
+.\.venv\Scripts\python.exe -c "import config; print(config.describe())"
 ```
+
+`models\vosk-model-small-en-us-0.15\` ke andar `am\`, `conf\`, `graph\` dikhne chahiye —
+agar zip ne ek extra folder banaya ho to andar wala folder hi `models\` me rakho.
 
 `model=MISSING` aaye to app chalega, par wake nahi. Wajah log me:
 `logs/prabh.log` me `wake chalu nahi:` ya `Vosk model nahi mila`.

@@ -72,6 +72,20 @@ Cartesia https://cartesia.ai/dashboard
 
 > Key kabhi code ya chat me mat likho. `.env` git-ignore hai, wo kabhi commit nahi hoga.
 
+### Wake word ka model (ek hi baar, ~40 MB)
+
+"Jarvis" bolne par sunne ke liye Vosk ka chhota English model chahiye. `models/` git me
+nahi hai (40 MB), is liye ek hi baar download karna padta hai:
+
+```powershell
+New-Item -ItemType Directory -Force models | Out-Null
+Invoke-WebRequest -Uri https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip -OutFile "$env:TEMP\vosk.zip"
+Expand-Archive "$env:TEMP\vosk.zip" -DestinationPath models -Force
+```
+
+Na ho to app chalega par wake word band rahega — startup line me wajah dikhegi.
+Detail → [VOICE.md](VOICE.md).
+
 ---
 
 ## 2. Chalao
@@ -191,7 +205,7 @@ Band karne ke liye terminal me `Ctrl + C`.
 
 ## 3. Test
 
-Saare 52 suites ek loop me:
+Saare 81 suites ek loop me:
 
 ```powershell
 cd D:\prabh

@@ -142,7 +142,7 @@ def model_missing() -> str:
     if model_path():
         return ""
     return ("Vosk model nahi mila: %s me folder nahi hai. "
-            "README VOICE.md me command hai." % MODEL_DIR)
+            "VOICE.md ke 'Model kahan hai' section me download command hai." % MODEL_DIR)
 
 
 def wake_available() -> bool:
