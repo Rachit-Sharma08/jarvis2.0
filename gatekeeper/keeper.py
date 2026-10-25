@@ -39,12 +39,14 @@ def review(tool: str, args: dict, mode: str) -> tuple:
         audit.log_action(mode, tool, args, DENY, blocked_by)
         return DENY, blocked_by
 
-    LIMITER.record()
     risk, reason = rules.decide(tool, args)
 
     if risk == config.BLOCKED:
         audit.log_action(mode, tool, args, DENY, reason)
         return DENY, reason
+
+    # BLOCKED budget nahi khata - warna injection loop apni hi limit kha jaata.
+    LIMITER.record()
 
     if risk == config.ASK:
         if config.NO_CARDS:

@@ -30,6 +30,7 @@ class Pending:
         self.expires = self.started + self.timeout
         self.used = False
         self.allow = False
+        self.reason = ""          # supersede/cancel/expire ki wajah (wait() isi ko lauta ta hai)
         self.event = threading.Event()
 
     def remaining(self) -> int:
@@ -45,8 +46,14 @@ class Registry:
         self._current = None
 
     def open(self, tool: str, args: dict, timeout: int = None) -> Pending:
-        """Naya pending card. Purana hai to naya ban jaata hai (ek waqt me ek)."""
+        """Naya pending card. Purana pending ho to wo **cancel** ho jaata hai (ek waqt me ek)."""
         with self._lock:
+            old = self._current
+            if old is not None and not old.used:
+                old.used = True
+                old.allow = False
+                old.reason = "naya card aa gaya - purana cancel"
+                old.event.set()
             self._current = Pending(tool, args, timeout=timeout)
             return self._current
 
@@ -68,6 +75,7 @@ class Registry:
             if current.used:
                 return False, "ye card pehle hi use ho chuka hai"
             if current.expired():
+                current.reason = "60 second nikal gaye - Deny"
                 current.event.set()
                 return False, "60 second nikal gaye — Deny"
             if req_hash != current.hash:
@@ -80,6 +88,8 @@ class Registry:
     def wait(self, pending: Pending) -> tuple:
         """UI ka jawab ya timeout. -> (allowed, reason)"""
         if pending.event.wait(timeout=max(0.1, pending.remaining() + 0.05)):
+            if pending.reason:
+                return pending.allow, pending.reason
             return (pending.allow, "user ne allow kiya" if pending.allow else "user ne deny kiya")
         with self._lock:
             if self._current is pending:
@@ -94,5 +104,6 @@ class Registry:
                 return False, "koi pending card nahi"
             current.used = True
             current.allow = False
+            current.reason = "STOP — card cancel"
             current.event.set()
             return True, "STOP — card cancel"

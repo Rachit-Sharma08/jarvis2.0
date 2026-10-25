@@ -61,6 +61,17 @@ class ApprovalTest(unittest.TestCase):
         registry.decide(first.id, first.hash, True)
         self.assertFalse(registry.busy(), "use hone ke baad nahi rehna chahiye")
 
+    def test_naya_card_purana_cancel(self):
+        """Naya card purane ko cancel kare - warna purana waiter 60s tak atka rehta."""
+        registry = Registry()
+        first = registry.open("run_command", {"command": "echo 1"})
+        second = registry.open("run_command", {"command": "echo 2"})
+        self.assertTrue(first.event.is_set(), "purana card cancel hona chahiye")
+        allowed, reason = registry.wait(first)
+        self.assertFalse(allowed)
+        self.assertIn("naya card", reason)
+        self.assertEqual(second, registry.current())
+
 
 class LimiterTest(unittest.TestCase):
     def test_kill_switch(self):
@@ -78,6 +89,35 @@ class LimiterTest(unittest.TestCase):
             limiter.record()
         self.assertIn("limit", limiter.check())
         self.assertEqual(20, limiter.used())
+
+    def test_auto_off_hook_lock_ke_bahar(self):
+        """Hook lock ke andar chale to limiter ko padhne wala hook deadlock kar dega."""
+        limiter = Limiter(enabled=True, auto_off_minutes=0.0004)   # ~24 ms
+        free = []
+
+        def hook(_on):
+            got = limiter._lock.acquire(blocking=False)
+            free.append(got)
+            if got:
+                limiter._lock.release()
+
+        limiter.set_on_change(hook)
+        time.sleep(0.06)
+        self.assertFalse(limiter.enabled)
+        self.assertEqual([True], free, "hook lock ke bahar chalna chahiye")
+
+    def test_blocked_tool_budget_nahi_khata(self):
+        """DENY par rate-limit slot na jaye - warna injection loop apni limit kha jaata."""
+        saved = keeper.LIMITER
+        keeper.LIMITER = Limiter(enabled=True, per_minute=3)
+        try:
+            for _ in range(5):
+                decision, _ = keeper.review(
+                    "run_command", {"command": "Remove-Item gatekeeper/keeper.py"}, "sunday")
+                self.assertEqual(keeper.DENY, decision)
+            self.assertEqual(0, keeper.LIMITER.used())
+        finally:
+            keeper.LIMITER = saved
 
 
 class MaskTest(unittest.TestCase):

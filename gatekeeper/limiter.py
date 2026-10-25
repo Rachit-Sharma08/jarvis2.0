@@ -39,16 +39,18 @@ class Limiter:
         TOOLS toggle UI se, tray se, lock se ya timer se kahan se bhi kiya ho —
         sab ka ek hi raasta rahe (`gatekeeper` me `desktop` ka import nahi).
 
-        **Hook dobara `Limiter` me call nahi karega** (auto-off ke andar lock
-        pakda hota hai) — sirf haalat update kare.
+        Hook **lock ke bahar** chalta hai, is liye wo `Limiter` ko padh sakta
+        hai (jaise tray refresh `tools_on()` bulaye). Sirf haalat update kare.
         """
         self._on_change = func
 
     @property
     def enabled(self) -> bool:
         with self._lock:
-            self._expire()
-            return self._enabled
+            changed = self._expire()
+            value = self._enabled
+        self._notify(changed)
+        return value
 
     def set_enabled(self, on: bool) -> bool:
         with self._lock:
@@ -73,14 +75,19 @@ class Limiter:
     def check(self) -> str:
         """-> '' (chal sakta hai) ya wajah."""
         with self._lock:
-            self._expire()
-            if not self._enabled:
-                return "TOOLS OFF hai. Upar ka TOOLS toggle dabao."
-            self._prune()
-            if len(self._calls) >= self._per_minute:
-                return (f"ek minute me {self._per_minute} tool ki limit poori ho gayi. "
-                        "Thodi der baad.")
-            return ""
+            changed = self._expire()
+            reason = self._check_locked()
+        self._notify(changed)
+        return reason
+
+    def _check_locked(self) -> str:
+        if not self._enabled:
+            return "TOOLS OFF hai. Upar ka TOOLS toggle dabao."
+        self._prune()
+        if len(self._calls) >= self._per_minute:
+            return (f"ek minute me {self._per_minute} tool ki limit poori ho gayi. "
+                    "Thodi der baad.")
+        return ""
 
     def record(self) -> None:
         with self._lock:
@@ -91,20 +98,22 @@ class Limiter:
             self._prune()
             return len(self._calls)
 
-    def _expire(self) -> None:
-        """30 minute ho gaye to OFF. Ye har read par chalta hai — alag timer
-        thread nahi, is liye band karne par bhi koi thread na atke."""
+    def _expire(self) -> bool:
+        """30 minute ho gaye to OFF. Ye har read par chalta hai - alag timer
+        thread nahi, is liye band karne par bhi koi thread na atke.
+
+        -> haalat badli? Hook `_notify` lock ke **bahar** chalta hai."""
         if not self._enabled or self._auto_off <= 0:
-            return
+            return False
         if time.monotonic() - self._since < self._auto_off * 60:
-            return
+            return False
         self._enabled = False
         self._calls.clear()
         log.warning(
             "TOOLS auto-OFF: %d minute ho gaye. Dobara ON karne ke liye toggle dabao.",
             self._auto_off,
         )
-        self._notify(True)
+        return True
 
     def _notify(self, changed: bool) -> None:
         """Hook ko batao. Hook crash kare to gatekeeper kabhi na fute."""
