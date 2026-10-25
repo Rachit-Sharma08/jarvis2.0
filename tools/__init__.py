@@ -1,7 +1,7 @@
 ﻿"""Tools ka registry. Yehi ek jagah se tool chalta hai.
 
 `TOOL_ARGS` strict hai: har tool ke sirf ye args, aur sab string. LLM ka JSON
-bhi isi ke hisaab se validate hota hai â€” koi extra field ya non-string chalega hi nahi.
+bhi isi ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
 """
 
 from tools import alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, rss, notes, pomodoro, webhook
@@ -139,7 +139,7 @@ def disabled() -> list:
 
 
 def execute(name: str, args: dict) -> str:
-    """Tool chalao. Galti ho to text return karo â€” crash kabhi nahi."""
+    """Tool chalao. Galti ho to text return karo — crash kabhi nahi."""
     func = TOOLS.get(name)
     if func is None:
         return f"'{name}' naam ka koi tool nahi hai."

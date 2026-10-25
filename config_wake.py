@@ -2,15 +2,15 @@
 
 Ye Step 1 ka hissa hai. Do alag STT jaan-boojh kar:
 
-1. **Wake word ("Jarvis")** â€” local Vosk, `models/vosk-model-small-en-us-0.15`.
+1. **Wake word ("Jarvis")** — local Vosk, `models/vosk-model-small-en-us-0.15`.
    English model hi sahi hai kyunki "Jarvis" ek English shabd hai. Awaaz kabhi
-   bahar nahi jaati, 100% offline. Shabd `config_name.py` se aate hain â€”
+   bahar nahi jaati, 100% offline. Shabd `config_name.py` se aate hain —
    purane "sunday" shabd wahan alag list me, default band.
 
-2. **Command ("whatsapp kholo", "Ramesh ko phone karo")** â€” `voice/stt.py` ka
+2. **Command ("whatsapp kholo", "Ramesh ko phone karo")** — `voice/stt.py` ka
    Groq Whisper (`whisper-large-v3-turbo`). Ye Hinglish ka asli expert hai.
 
-Is liye Hinglish ke liye koi 470 MB model download karne ki zarurat nahi â€”
+Is liye Hinglish ke liye koi 470 MB model download karne ki zarurat nahi —
 dono cheezein pehle se maujood hain.
 
 Rule: is file me koi API key nahi. Wake ka model path `BASE_DIR/models` me hai.
@@ -28,14 +28,14 @@ MODEL_DIR = BASE_DIR / "models"
 
 # ---- kholna / band karna ----
 # Default ON. Mic band karne ka ek hi raasta hai `desktop/micperm.py` +
-# tray ka MUTE â€” `.env` se alag koi davaa nahi.
+# tray ka MUTE — `.env` se alag koi davaa nahi.
 WAKE_ENABLED = os.getenv("PRABH_WAKE", "1").strip() not in ("0", "false", "no")
 
 # ---- model ----
 WAKE_MODEL_DIR = str(MODEL_DIR / "vosk-model-small-en-us-0.15")
 WAKE_MODEL_ALT_DIR = str(MODEL_DIR / "vosk-model-small-hi-0.22")
 
-# Vosk ke saath grammar: sirf ye shabd hi pehchanega. Isse do fayde â€”
+# Vosk ke saath grammar: sirf ye shabd hi pehchanega. Isse do fayde —
 # galat trigger kam, aur CPU halka. Asli list `config_name.py` me hai
 # (Step 1: "jarvis"; purane "sunday" shabd `LEGACY_WAKE_PHRASES` me, band).
 WAKE_WORDS = wake_words()
@@ -44,7 +44,7 @@ WAKE_GRAMMAR = wake_grammar()
 
 # ---- battery ka pakkaura ----
 # Vosk ko **har** chunk dena = 3.9% CPU chalu, chahe koi na bol (battery jaati
-# hai). Is liye chunk tabhi dena jab VAD bol raha ho â€” `wake/session.py` ka gate.
+# hai). Is liye chunk tabhi dena jab VAD bol raha ho — `wake/session.py` ka gate.
 # Mic ka stream khula rehta hai (band nahi hota, crash ka raasta bhi nahi);
 # sirf sunna band hota hai. `.env` ke `PRABH_VOSK_GATE=0` se gate band.
 WAKE_VOSK_GATE = os.getenv("PRABH_VOSK_GATE", "1").strip() not in ("0", "false", "no")
@@ -90,7 +90,7 @@ HOT_WINDOW_ENABLED = os.getenv("PRABH_HOT_WINDOW", "0").strip().lower() in (
 # follow-up chain kar sakte ho (test me wahi hai).
 HOT_WINDOW_SECONDS = float(os.getenv("PRABH_HOT_WINDOW_SECONDS", "12") or 12)
 
-# Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye â€” is liye
+# Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye — is liye
 # "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
 #
 # â„ `PLAYBACK_MUTE_MIC` **kahin use nahi hota** (13-Oct ka audit: sirf define
@@ -119,13 +119,13 @@ PLAYBACK_TAIL_GUARD_SECONDS = float(os.getenv("PRABH_TAIL_GUARD", "0.4") or 0.4)
 # `PRABH_WAKE_DEBUG=1` se har 3 second ek line: kitne chunk aaye, kitne Vosk
 # ko gaye, kitne chhode, RMS kya tha. Isi se pata chala ki command ke baad
 # chunk **aate hi nahi** (mic/pump), ya aate hain par VAD "khamoshi" bolta hai.
-# Hamesha band â€” sirf bug pakadne ke liye.
+# Hamesha band — sirf bug pakadne ke liye.
 WAKE_DEBUG = os.getenv("PRABH_WAKE_DEBUG", "0") not in ("0", "", "no", "false")
 WAKE_DEBUG_SECONDS = 3.0
 
 
 # ---- WhatsApp call (Step 2, Option A) ----------------------------------------
-# Ye char constant ab `config_tools.py` me hain (WhatsApp Web ek tool hai) â€”
+# Ye char constant ab `config_tools.py` me hain (WhatsApp Web ek tool hai) —
 # `config.py` waise bhi re-export karta hai. 5-Oct: file 200 cross thi.
 
 

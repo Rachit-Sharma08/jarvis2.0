@@ -1,4 +1,4 @@
-﻿"""Fix round 1 â€” brain side: models, permanent 404, 10 min skip, tools-OFF
+"""Fix round 1 — brain side: models, permanent 404, 10 min skip, tools-OFF
 prompt, ek combined message, router rest, stage timing."""
 
 import sys

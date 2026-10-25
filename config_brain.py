@@ -1,4 +1,4 @@
-﻿"""Brain ke provider constants â€” keys, models, tokens, timeouts.
+"""Brain ke provider constants — keys, models, tokens, timeouts.
 
 `config.py` inhe re-export karta hai, isliye code me `config.GROQ_API_KEY`
 hi likhna hai (seedha is file ka import mat karo).
@@ -11,7 +11,7 @@ import os
 GROQ_API_KEY = os.getenv("GROQ_API_KEY", "").strip()
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "").strip()
 
-# NVIDIA NIM â€” OpenAI-compatible. Key 'nvapi-' se shuru hoti hai.
+# NVIDIA NIM — OpenAI-compatible. Key 'nvapi-' se shuru hoti hai.
 # Free trial: 1000 credits (5000 business email se). Per-key 40 RPM.
 # Credits khatam -> HTTP 402 "Cloud credits expired" (balance endpoint public nahi).
 NVIDIA_API_KEY = os.getenv("NVIDIA_API_KEY", "").strip()
@@ -24,7 +24,7 @@ NVIDIA_MAX_CALLS_PER_MINUTE = 30
 
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "").strip()
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-# Sirf :free. qwen/gemma aksar 429 dete hain â€” backup list rakhi hai.
+# Sirf :free. qwen/gemma aksar 429 dete hain — backup list rakhi hai.
 OPENROUTER_MODELS = (
     "nvidia/nemotron-3-super-120b-a12b:free",
     "qwen/qwen3.8-27b:free",

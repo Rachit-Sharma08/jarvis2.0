@@ -1,10 +1,10 @@
-﻿"""WASAPI + resample ka pure test â€” 5-Oct ka mic fix. Asli mic/model kabhi nahi.
+"""WASAPI + resample ka pure test — 5-Oct ka mic fix. Asli mic/model kabhi nahi.
 
 Do baatein pakdi jaati hain:
 1. `wake/resample.py` 48k -> 16k sahi todta hai (blocks + bacha hua sample).
 2. `wake/audio.py` WASAPI device chunta hai aur MME par nahi jaata.
 
-Bina `sounddevice` ke chal jaata hai â€” `pick_input_device` ko ek nakli `sd`
+Bina `sounddevice` ke chal jaata hai — `pick_input_device` ko ek nakli `sd`
 deta hoon (`FakeSd`). Isi PC par live proof: MME par Vosk `"hey"` sunta tha
 (0 jarvis), WASAPI par `"hello jarvis"`.
 """

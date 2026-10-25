@@ -1,7 +1,7 @@
-"""Wake ke baad ka poora command â€” "Ji, boliye" se le kar jawab ki awaaz tak.
+"""Wake ke baad ka poora command — "Ji, boliye" se le kar jawab ki awaaz tak.
 
 Ye Phase 5 **Step 2c** hai. Step 2a (`wake/utterance.py`) ne mic se audio
-uthaya, Step 2b (`desktop/playback.py`) ne awaaz banayi â€” is file me dono ko
+uthaya, Step 2b (`desktop/playback.py`) ne awaaz banayi — is file me dono ko
 ek flow me jod diya gaya hai:
 
     wake -> mic drain + 0.18 s peek -> ("Ji, boliye" | pehle se bol raha hai)
@@ -11,17 +11,17 @@ ek flow me jod diya gaya hai:
 Char zaroori baatein:
 
 1. **Wake word poori tarah local hai** (Vosk, 100% offline). Sirf command ki
-   recording, memory me bante hi, Groq ke STT par network par jaati hai â€”
+   recording, memory me bante hi, Groq ke STT par network par jaati hai —
    **disk par kabhi save nahi hoti**, koi file likhi jaati hi nahi.
 2. Ye `wake/session.py` ke `_fire()` se **wake thread par, synchronous** chalta
    hai. Is liye poore flow me sunna ruka rehta hai aur "Jarvis" dobara trigger
-   nahi hota. TTS ke waqt mic `worker.hold_for_command()` se band rehta hai â€”
+   nahi hota. TTS ke waqt mic `worker.hold_for_command()` se band rehta hai —
    warna apni hi awaaz sun kar phir uth jaata.
 3. **Gatekeeper bilkul waisa hi hai.** Is file me approve/deny ka koi raasta
-   nahi â€” tool sirf `ENGINE.handle()` ke andar chalta hai. ALLOW hamesha screen
+   nahi — tool sirf `ENGINE.handle()` ke andar chalta hai. ALLOW hamesha screen
    ke button se hota hai, awaaz se kabhi nahi. ASK card aaye to sirf HUD khol
    kar "Screen par confirm kijiye" bolte hain.
-4. **Mute ya PC lock par kuch nahi hota** â€” na record, na awaaz. Faisla
+4. **Mute ya PC lock par kuch nahi hota** — na record, na awaaz. Faisla
    `allowed()` callback deta hai (`desktop/callbacks.py` bhejta hai), taaki
    `wake/` ko `desktop/` ka import na karna pade.
 
@@ -61,10 +61,10 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
         on_sleep=None) -> str:
     """Wake ke baad ka poora command. -> kya hua (log + test ke liye).
 
-    `mic` aur `stop` `wake/session.py` ke `_fire()` se aate hain â€” kahin aur se
+    `mic` aur `stop` `wake/session.py` ke `_fire()` se aate hain — kahin aur se
     mic nahi milta (mic ka ek hi owner `wake/audio.py` hai). Baaki chaar callback
     `desktop/callbacks.py` deta hai: `allowed` (mute/lock), `on_confirm` (HUD
-    kholo), `on_busy` (HUD ka WAKE pill) aur `on_sleep` ("so jao" â€” battery)."""
+    kholo), `on_busy` (HUD ka WAKE pill) aur `on_sleep` ("so jao" — battery)."""
     from wake import worker as wake_worker
 
     stop = stop or listen._STOP
@@ -83,7 +83,7 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
     HUB.publish({"type": "status", "value": "listening"})
     try:
         # 1. Purana audio phenko (wake shabd ki goonj + pichli TTS), phir 0.18 s
-        #    suno â€” kya user bol hi raha hai? Agar haan to "Ji, boliye" **nahi**
+        #    suno — kya user bol hi raha hai? Agar haan to "Ji, boliye" **nahi**
         #    bolte (pehle hamari awaaz uske upar chadh jaati thi), aur usi chhote
         #    intezaar ne mic ka kaam bhi kar diya. Nahi to normal raasta: ack +
         #    1 s warm-up, jiska waqt `settled_by` se overlap hota hai.
@@ -116,7 +116,7 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
             ask.speak(ack, stop)
             watch.stage("ack", at)
             # 2. Mic baithne do, phir queue khaali karo. Jitna warm-up ack me
-            #    poora ho chuka hai utna hi wait â€” pehle har baar 1 s dead tha.
+            #    poora ho chuka hai utna hi wait — pehle har baar 1 s dead tha.
             at = stage()
             settled_by = stage() + float(config.COMMAND_WARMUP_SECONDS)
             listen.warmup(mic, stop, deadline=settled_by)
@@ -140,7 +140,7 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
             return "no-text"
         watch.stage("stt", at)
 
-        # 4b. "So jao" â€” battery. Brain nahi, tool nahi: sirf haalat badal do.
+        # 4b. "So jao" — battery. Brain nahi, tool nahi: sirf haalat badal do.
         # Text chhota hona zaroori hai (`desktop/sleep.py` ka guard), warna
         # "band ho jao kya matlab hai" jaisa vaakya galti se so jaa dega.
         if config.SLEEP_WORDS and _is_sleep(text):
@@ -149,16 +149,16 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
             watch.stage("speak", at)
             return "sleep"
 
-        # 5. Shared ENGINE â€” wahi object jo /chat aur /hud/quick use karte hain.
+        # 5. Shared ENGINE — wahi object jo /chat aur /hud/quick use karte hain.
         at = stage()
         answer, asked, failed = ask.ask(
             text, "voice%d" % int(time.time() * 1000), on_confirm, stop)
         watch.stage("brain", at)
 
         # 6. Jawab ki awaaz. (ASK card ki "confirm kijiye" `ask.ask` ne andar
-        #    bol di â€” yahan sirf brain ka jawab.) Awaaz **chhoti** boli jaati
+        #    bol di — yahan sirf brain ka jawab.) Awaaz **chhoti** boli jaati
         #    hai: HUD par poora jawab dikhta hi hai, par 500 char bolne me 4.3 s
-        #    lagta tha sirf playback me â€” is liye user ko "late" lagta tha.
+        #    lagta tha sirf playback me — is liye user ko "late" lagta tha.
         at = stage()
         # `voice_answer()` pehle 1-2 **poore** vaakya leta hai (KAAM 4); pehle
         # `clip_answer()` 220 char par beech se kaat raha tha. HUD par poora
@@ -169,7 +169,7 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
         watch.stage("speak", at)
         return "asked" if asked else "ok"
     finally:
-        # TTS ka shor queue me pada hai â€” phenk do, warna `Session._loop` use
+        # TTS ka shor queue me pada hai — phenk do, warna `Session._loop` use
         # wake shabd samajh kar dobara trigger kar dega.
         listen.drain(mic, stop)
         if held:
