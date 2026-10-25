@@ -10,7 +10,7 @@ API hai, par lock/switch par uska behaviour ek **heuristic** hai. Is liye:
   nahi karte**. Galat pakad kar baat-cheet band karna bura hoga.
 
 `python -m desktop.lockwatch` chala kar PC lock karke dekh sakte ho ki
-is laptop par kaam karta hai ya nahi — `logs/prabh.log` me `locked=True/False`
+is laptop par kaam karta hai ya nahi — `logs/jarvis.log` me `locked=True/False`
 likha hoga. Jo bhi sach nikle, wahi AGENTS.md me likha jayega.
 """
 

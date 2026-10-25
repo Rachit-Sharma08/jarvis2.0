@@ -79,7 +79,7 @@ class TestAckFile(unittest.TestCase):
               alarm_loop.ack_file().parent.resolve(), config.DATA_DIR.resolve())
 
     def test_clear_ack_removes(self):
-        tmp = Path("D:/prabh-test-ack-clear.txt")
+        tmp = Path("D:/jarvis-test-ack-clear.txt")
         tmp.parent.mkdir(parents=True, exist_ok=True)
         tmp.write_text("purana", encoding="utf-8")
         check("tha hata diya", alarm_loop.clear_ack(tmp), True)
@@ -88,7 +88,7 @@ class TestAckFile(unittest.TestCase):
 
     def test_main_clears_stale_ack(self):
         """Purana ack bana ho to shuru me hat jaata hai (alarm na ruke)."""
-        tmp = Path("D:/prabh-test-ack-stale.txt")
+        tmp = Path("D:/jarvis-test-ack-stale.txt")
         tmp.write_text("purana", encoding="utf-8")
         try:
             with patch(alarm_loop, "ack_file", lambda: tmp), \
@@ -100,7 +100,7 @@ class TestAckFile(unittest.TestCase):
             tmp.unlink(missing_ok=True)
 
     def test_keep_ack_flag(self):
-        tmp = Path("D:/prabh-test-ack-keep.txt")
+        tmp = Path("D:/jarvis-test-ack-keep.txt")
         tmp.write_text("purana", encoding="utf-8")
         try:
             with patch(alarm_loop, "ack_file", lambda: tmp), \

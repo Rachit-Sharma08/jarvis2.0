@@ -1,7 +1,7 @@
 r"""Windows login par auto-start — `HKCU\\...\\Run` me ek value (Phase 5 Step 3).
 
-Value: `pythonw.exe D:\prabh\desktop\launcher.py` — supervisor wahi hai jo
-`start_prabh.bat` chalaata hai, bas pythonw se. Is liye login par koi black
+Value: `pythonw.exe D:\Projects\jarvis\jarvis2.0\desktop\launcher.py` — supervisor wahi hai jo
+`start_jarvis.bat` chalaata hai, bas pythonw se. Is liye login par koi black
 console nahi aata, aur crash `logs/desktop.out` me padha jaata hai
 (`desktop/launcher.py` ka `_tee`). Haath se chalane ka raasta waise hi hai.
 

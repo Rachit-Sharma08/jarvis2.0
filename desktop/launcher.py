@@ -1,6 +1,6 @@
 """Supervisor — crash par app ko dobara chalata hai.
 
-Startup par `start_prabh.bat` isko chala dete hain (ya Windows login par
+Startup par `start_jarvis.bat` isko chala dete hain (ya Windows login par
 `pythonw -m desktop.launcher`). Ye ek child process banata hai
 (`python -m desktop.app`) aur uska intezaar karta hai.
 
@@ -157,7 +157,7 @@ def supervise(max_restarts: int = None, window: int = None) -> int:
             _console("%s BAND: %d crash %d second me. Aage chhod diya."
                      % (config.ASSISTANT_NAME, len(crashes), span))
             _console("Crash ki wajah (logs\\desktop.out): %s" % (_log_tail() or "khaali"))
-            _console("Detail: logs\\prabh.log")
+            _console("Detail: logs\\jarvis.log")
             return code or 1
 
         _console("CRASH #%d/%d (exit code %s). %d second baad dobara chalega."

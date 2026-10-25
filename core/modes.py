@@ -11,7 +11,7 @@ PREFIX_RE = re.compile(
 
 ALIASES = {a.lower(): m for m, names in config.MODE_ALIASES.items() for a in names}
 
-NAMES = {"sunday": "Sunday", "prabh": "Prabh"}
+NAMES = {"sunday": "Jarvis", "prabh": "Prabh"}
 
 
 def detect_mode(text: str, current_mode: str) -> tuple:

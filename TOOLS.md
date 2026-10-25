@@ -37,7 +37,7 @@ OFF nahi hota (awaaz se sirf ALLOW nahi hota, tools bhi nahi).
 
 | Kaam | Kahan |
 |---|---|
-| Sirf workspace | `D:\prabh_workspace` (config me badal sakta hai) |
+| Sirf workspace | `D:\jarvis_workspace` (config me badal sakta hai) |
 | Padhna (bina card) | workspace + Desktop + Downloads + Documents |
 | Workspace ke bahar | **Card aayega** (ASK) |
 

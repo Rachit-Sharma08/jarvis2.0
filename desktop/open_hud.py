@@ -7,7 +7,7 @@ Sirf ek kaam: **server zinda hai to HUD window khol do.**
   jaata hai - is liye shortcut aur hotkey dono safe hain.
 - Server nahi hai -> kuch nahi khulta, magar user ko pata chal jaata hai.
   `pythonw.exe` se chalta hai (console nahi dikhta), is liye message
-  **message box** me jaata hai + `logs/prabh.log`.
+  **message box** me jaata hai + `logs/jarvis.log`.
 
 Ye alag process hai, is liye app ke `STATE` ko chhua nahi - DESKTOP pill
 app wale process me hi rehta hai.
@@ -28,8 +28,8 @@ EXIT_SERVER_DOWN = 2
 
 DOWN_MESSAGE = (
     "%s abhi chal nahi raha.\n\n"
-    "Pehle D:\\prabh\\start_prabh.bat chalao (wahi rakha hai), phir ye "
-    "shortcut dobara dabao." % config.ASSISTANT_NAME
+    "Pehle %s\\start_jarvis.bat chalao (wahi rakha hai), phir ye "
+    "shortcut dobara dabao." % (config.ASSISTANT_NAME, config.BASE_DIR)
 )
 NO_BROWSER_MESSAGE = (
     "HUD kholne ke liye Edge ya Chrome nahi mila.\n\n"

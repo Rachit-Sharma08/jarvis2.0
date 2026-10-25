@@ -1,6 +1,6 @@
 """Single instance — ek hi app.
 
-Do baar `start_prabh.bat` chala do to dono baar mic aur port 8000 ek saath
+Do baar `start_jarvis.bat` chala do to dono baar mic aur port 8000 ek saath
 kholne ki koshish karenge. Is liye ek lock file pakdi jati hai.
 
 Kaam Windows ka apna `msvcrt.locking` karta hai — iska fayda: lock file

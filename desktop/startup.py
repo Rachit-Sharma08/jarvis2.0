@@ -7,8 +7,8 @@ har line ek hi jagah se aati hai. `say_hud()` / `say_wake()` bhi yahi hain —
 app sirf faisla deta hai (ok / reason), line yahan banti hai.
 
 Line do jagah jaati hain:
-  - `logs/prabh.log` me (ASCII, `log_setup.AsciiFormatter`)
-  - seedha console par - app `start_prabh.bat` se chalta hai, to crash me
+  - `logs/jarvis.log` me (ASCII, `log_setup.AsciiFormatter`)
+  - seedha console par - app `start_jarvis.bat` se chalta hai, to crash me
     user ko turant dikhe. Sirf log me rakhne se wo kuch nahi jaanta.
 """
 

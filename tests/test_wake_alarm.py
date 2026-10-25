@@ -33,7 +33,7 @@ from tests.wakehelp import check, finish
 from tests.wakecmdhelp import patch
 from tools import alarm_audio, alarm_loop, wake_alarm
 
-NEVER = "D:/prabh-test-ack-never"
+NEVER = "D:/jarvis-test-ack-never"
 
 
 class FakeClock:
@@ -128,7 +128,7 @@ class TestStopRules(unittest.TestCase):
     """Rukne ke teen tareeke + do safety."""
 
     def test_flag_file_stops_immediately(self):
-        ack = Path("D:/prabh-test-ack-a.txt")
+        ack = Path("D:/jarvis-test-ack-a.txt")
         ack.write_text("x", encoding="utf-8")
         try:
             alarm, calls = build(FakeClock(), ack=ack)
@@ -139,7 +139,7 @@ class TestStopRules(unittest.TestCase):
 
     def test_flag_file_mid_loop(self):
         """Chalu hote hue flag bane to agle check par ruka (2 bol ke baad)."""
-        ack = Path("D:/prabh-test-ack-b.txt")
+        ack = Path("D:/jarvis-test-ack-b.txt")
         ack.unlink(missing_ok=True)                 # shuru me flag NAHI hona chahiye
         clock = FakeClock()
         alarm, calls = build(clock, ack=ack)

@@ -33,11 +33,11 @@ load_dotenv(BASE_DIR / ".env")
 import config_env  # noqa: E402,F401
 
 # Log ka folder. `JARVIS_LOG_DIR` se badal sakte ho — **test isi ka istemaal
-# karte hain** (`tests/logsafe.py`): test bhi yehi `logs/prabh.log` me likhte
+# karte hain** (`tests/logsafe.py`): test bhi yehi `logs/jarvis.log` me likhte
 # the, jisse asli app ka log nakli entry se bhar jaata tha (S-1 me RMS 0.129
 # wahi galti thi). Test ka apna temp folder = analysis saaf.
 LOG_DIR = Path(os.getenv("JARVIS_LOG_DIR") or (BASE_DIR / "logs"))
-LOG_FILE = LOG_DIR / "prabh.log"
+LOG_FILE = LOG_DIR / "jarvis.log"
 
 # ---- Brain + voice constants yahan se aate hain ----
 

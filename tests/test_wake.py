@@ -59,7 +59,8 @@ def test_config():
     # Dono model path ek saath badlo, aur dono wapas — sirf ek wapas karne se
     # `WAKE_MODEL_ALT_DIR` is process me hamesha ke liye galat reh jaata.
     saved_dirs = (config_wake.WAKE_MODEL_DIR, config_wake.WAKE_MODEL_ALT_DIR)
-    config_wake.WAKE_MODEL_DIR = config_wake.WAKE_MODEL_ALT_DIR = r"D:\prabh\models\__nahi__"
+    config_wake.WAKE_MODEL_DIR = config_wake.WAKE_MODEL_ALT_DIR = str(
+        config.BASE_DIR / "models" / "__nahi__")
     try:
         check("model na ho to path khaali", config_wake.model_path(), "")
         truthy("model_missing ne bataya", "Vosk model nahi mila" in config_wake.model_missing())
@@ -142,7 +143,7 @@ def test_model_errors():
     except model_mod.ModelMissing as exc:
         truthy(f"ModelMissing: {str(exc)[:40]}", "Vosk model nahi mila" in str(exc))
     try:
-        model_mod.load(r"D:\prabh\models\__nahi__")
+        model_mod.load(str(config.BASE_DIR / "models" / "__nahi__"))
         check("galat folder", "raise", "raise")
     except model_mod.ModelMissing:
         print("  OK   galat folder par ModelMissing")

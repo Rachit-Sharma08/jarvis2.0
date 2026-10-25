@@ -99,7 +99,7 @@ class TestDefaultOff(unittest.TestCase):
             check(f"{bad} alarm.py me nahi", bad in src, False)
 
     def test_when_enabled_it_writes(self):
-        tmp = Path("D:/prabh-test-alarm-req.json")
+        tmp = Path("D:/jarvis-test-alarm-req.json")
         try:
             with patch(config, "ALARM_TOOL_ENABLED", True), \
                     patch(alarm_tool, "request_path", lambda: tmp):

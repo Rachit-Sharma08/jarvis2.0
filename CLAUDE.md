@@ -10,7 +10,7 @@ Detail ke liye: `AGENTS.md` (poore niyam) · `CHANGELOG.md` (kaam ka record) ·
 
 ## 1. Ye project kya hai
 
-`D:\prabh` me ek **local personal app** hai — sirf usi PC par (`127.0.0.1`), web app
+`D:\Projects\jarvis\jarvis2.0` me ek **local personal app** hai — sirf usi PC par (`127.0.0.1`), web app
 nahi. Naam **Jarvis** (pehle "Prabh" tha, wo mode ab band hai). Ek brain hai
 (sirf **free** providers), awaaz hai, aur 10 PC tools hain jinse Jarvis computer par
 kaam kar sakta hai.
@@ -30,7 +30,7 @@ kaam kar sakta hai.
 
 | Kya | Kaise |
 |---|---|
-| App chalao | `start_prabh.bat` par double-click (supervisor crash par dobara chalata hai) |
+| App chalao | `start_jarvis.bat` par double-click (supervisor crash par dobara chalata hai) |
 | HUD kholo | tray menu · Desktop ka `Jarvis HUD.lnk` · **Ctrl+Alt+S** |
 | Browser me | `http://127.0.0.1:8000` |
 | Band karo | tray me **Quit** (window band karna app nahi rokta) |
@@ -42,7 +42,7 @@ kaam kar sakta hai.
 ## 4. Test kaise chalate hain
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 $fail = @()
 Get-ChildItem tests\test_*.py | ForEach-Object {
   .\.venv\Scripts\python.exe $_.FullName
@@ -99,7 +99,7 @@ me provider ki list badlo, engine me kabhi hard-code mat likho.
 - ❌ **Awaaz se tool nahi chalta** — tool sirf chat se. Aur ALLOW hamesha screen par
   button se hoga, awaaz se kabhi nahi.
 - ✅ **Auto-start chalu hai** — `HKCU\...\Run` me `Jarvis` value likhi hai (4 Oct):
-  `pythonw.exe D:\prabh\desktop\launcher.py`. Band karna ho:
+  `pythonw.exe D:\Projects\jarvis\jarvis2.0\desktop\launcher.py`. Band karna ho:
   `python -m desktop.autostart remove`.
 - ❌ **Prabh mode band** — code maujood hai, `JARVIS_SUNDAY_ONLY=1` se off.
 - ❌ Cartesia ki female voice id nahi mili → wo provider skip ho jaati hai.

@@ -24,7 +24,7 @@ def test_open_hud():
     print("OPEN HUD (shortcut + hotkey ka ek hi raasta)")
     check("server up -> kholo", open_hud.plan(True), ("open", ""))
     check("server down -> mat kholo", open_hud.plan(False)[0], "down")
-    check("  message Start.bat bataye", "start_prabh.bat" in open_hud.plan(False)[1], True)
+    check("  message Start.bat bataye", "start_jarvis.bat" in open_hud.plan(False)[1], True)
     check("koi side effect nahi", callable(open_hud.main), True)
     check("exit codes alag-alag", len({open_hud.EXIT_OK, open_hud.EXIT_NO_BROWSER,
                                        open_hud.EXIT_SERVER_DOWN}), 3)

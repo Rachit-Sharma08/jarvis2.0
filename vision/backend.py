@@ -21,7 +21,7 @@ Ye jaan-boojh kar hai: "package nahi hai" ka matlab "sab chhod do" nahi, balki
 **"kuch bhi allow mat karo"**. Warna ek laptop par camera nahi hone se feature
 chalta hua dikhta aur security andar se khaali rehti.
 
-Install (admin nahi chahiye, `D:\prabh\.venv` me):
+Install (admin nahi chahiye, `D:\Projects\jarvis\jarvis2.0\.venv` me):
     .\\.venv\\Scripts\\python.exe -m pip install opencv-python insightface onnxruntime
 `insightface` + `onnxruntime` asli recognition dete hain; sirf `opencv` se
 sirf **detection** hoti hai (koi hai ya nahi), "**WOHI** hai kya" — nahi.

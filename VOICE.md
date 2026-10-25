@@ -325,7 +325,7 @@ bajata hai. `.env` me `JARVIS_SPEAKER=<device name>` se speaker badal sakte ho,
 ### Awaaz app ke bina test karo
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 # 1. Kaunse speaker hain
 .\.venv\Scripts\python.exe -m desktop.playback_cli --list
 # 2. Asli awaaz (ek baar "Ji, boliye" bolega)
@@ -333,17 +333,17 @@ cd D:\prabh
 ```
 
 Poora voice flow (mic + STT + brain + awaaz) test karne ke liye app chala kar
-"Jarvis" bolo — `logs/prabh.log` me har stage ka time (`ack / warmup / capture /
+"Jarvis" bolo — `logs/jarvis.log` me har stage ka time (`ack / warmup / capture /
 stt / brain / speak`) ek line me dikhta hai.
 
 ### Model kahan hai / kya hua to
 
-Model `D:\prabh\models\` me hona chahiye. Ho to startup par khud load ho jaata hai.
+Model `D:\Projects\jarvis\jarvis2.0\models\` me hona chahiye. Ho to startup par khud load ho jaata hai.
 Na ho to ek hi baar download karo (~40 MB, 100% offline chalta hai):
 
 ```powershell
 # 1. Download + unzip (ek hi baar). Folder ka naam bilkul yahi hona chahiye.
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 New-Item -ItemType Directory -Force models | Out-Null
 Invoke-WebRequest -Uri https://alphacephei.com/vosk/models/vosk-model-small-en-us-0.15.zip -OutFile "$env:TEMP\vosk.zip"
 Expand-Archive "$env:TEMP\vosk.zip" -DestinationPath models -Force
@@ -356,7 +356,7 @@ Expand-Archive "$env:TEMP\vosk.zip" -DestinationPath models -Force
 agar zip ne ek extra folder banaya ho to andar wala folder hi `models\` me rakho.
 
 `model=MISSING` aaye to app chalega, par wake nahi. Wajah log me:
-`logs/prabh.log` me `wake chalu nahi:` ya `Vosk model nahi mila`.
+`logs/jarvis.log` me `wake chalu nahi:` ya `Vosk model nahi mila`.
 
 ### Test me kya hota hai
 

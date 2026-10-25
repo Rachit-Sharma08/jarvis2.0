@@ -39,7 +39,7 @@ def _read_value(path: str, name: str = "Value") -> str:
 
 
 def _nonpackaged_key(exe: str = "") -> str:
-    """NonPackaged ki key ka naam: `C:#D#prabh#.venv#Scripts#python.exe`."""
+    """NonPackaged ki key ka naam: `D##jarvis#.venv#Scripts#python.exe`."""
     if not exe:
         return ""
     return f"{config.MIC_CONSENT_KEY}\\NonPackaged\\" + exe.replace("\\", "#").replace(":", "#")

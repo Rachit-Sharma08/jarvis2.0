@@ -17,7 +17,7 @@ from pathlib import Path
 SAFE, ASK, BLOCKED = "SAFE", "ASK", "BLOCKED"
 
 HOME = Path(os.path.expanduser("~"))
-WORKSPACE = Path(os.getenv("JARVIS_WORKSPACE", r"D:\prabh_workspace"))
+WORKSPACE = Path(os.getenv("JARVIS_WORKSPACE", r"D:\jarvis_workspace"))
 READ_FOLDERS = (HOME / "Desktop", HOME / "Downloads", HOME / "Documents", WORKSPACE)
 
 # Har tool ka base risk. Gatekeeper args dekh ke ise aage badha sakta hai.

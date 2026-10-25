@@ -61,7 +61,7 @@ me sirf `:free` model hain; runtime par bhi check hota hai.
   koi call nahi jayegi.
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 .\.venv\Scripts\python.exe -m brain.probe nvidia
 .\.venv\Scripts\python.exe -m brain.probe openrouter --limit 3 --force
 ```
@@ -125,7 +125,7 @@ chhoti line — token bachta hai. Server par `/tools/status` se badalta hai.
 
 ## Timing log
 
-Har call `logs/prabh.log` me:
+Har call `logs/jarvis.log` me:
 
 ```
 TIME groq: openai/gpt-oss-120b 1402ms | 412 chars

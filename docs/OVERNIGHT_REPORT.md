@@ -12,7 +12,7 @@ sirf ise padhna kaafi hai. Baaki har kaam ka detail neeche hai.
 
 | # | Kaam | Status | Branch | Commit |
 |---|---|---|---|---|
-| 0 | Test ka log `logs/prabh.log` se alag | **ho gaya** | `fix/stt-speed` | `695e5c5` |
+| 0 | Test ka log `logs/jarvis.log` se alag | **ho gaya** | `fix/stt-speed` | `695e5c5` |
 | 1 | **Subah 7 baje ka alarm** (sabse zaroori) | **ho gaya + task bana** | `feat/wake-alarm` | `84842a0` |
 | 2 | Apni awaaz se wake (tail guard) | **ho gaya** | `fix/self-hearing` | `5bb76cc` |
 | 3 | Permissions v2 + injection | **ho gaya** | `fix/permissions-v2` | `f6e28f8` |
@@ -156,7 +156,7 @@ baad apne aap. System volume **chheda nahi** jaata.
 
 ### KAAM 0 — test ka log alag (`fix/stt-speed` @ `695e5c5`)
 
-**Kyua:** `logs/prabh.log` ek hi file — app aur dono test likhte the. S-1 audit
+**Kyua:** `logs/jarvis.log` ek hi file — app aur dono test likhte the. S-1 audit
 me isi wajah se **mic ka asli level galat** nikaala gaya tha: `tests/wakehelp.py`
 ka `loud()` **exactly 0.129** deta hai, aur wahi number asli app ke log me bhi
 aa raha tha.
@@ -339,7 +339,7 @@ copy nahi. Chhota footer credit: "Interface style inspired by Mukh.1".
 Maine verify karte waqt `python tools\wake_alarm.py --if-no-ack` **bina
 `--no-audio`** chala diya. Flag file nahi thi, to **asli alarm 2 round chala** —
 edge-tts + `C:\Windows\Media\Alarm01.wav`, ~37 second (03:28:14 → 03:28:51,
-`logs/prabh.log` me entry hai). Shell timeout par process apne aap band hua;
+`logs/jarvis.log` me entry hai). Shell timeout par process apne aap band hua;
 koi alarm process nahi bacha. **Raat me awaaz — sorry.** Har manual run me ab
 `--no-audio` ya `--dry-run` hi use karna hai.
 
@@ -423,7 +423,7 @@ D:\prabh\.venv\Scripts\python.exe D:\prabh\main.py --wake-info
 - `.env` **kabhi nahi khuli**. Koi key/token print, log ya commit nahi hua.
   Har commit se pehle staged diff me `sk-`, `gsk_`, `AIza`, `Bearer`,
   `api_key=`, `ELEVEN`, `GROQ` scan kiya — **har baar saaf**.
-- Jarvis (`start_prabh.bat`) **chala nahi**. Koi process **kill nahi** kiya.
+- Jarvis (`start_jarvis.bat`) **chala nahi**. Koi process **kill nahi** kiya.
   Port 8000 par kuch nahi chala. Asli mic/speaker se awaaz nahi (sirf meri
   galti — section 6).
 - **Koi naya package nahi** lagaya. Playwright nahi mila to KAAM 7 chhod di.
@@ -627,7 +627,7 @@ maang, credential/account kabhi mat badal.
 ## 8. Safety ka record
 
 - `.env` **kabhi nahi khuli**. Koi key/token print, log ya commit nahi hua.
-- Jarvis (`start_prabh.bat`) **chala nahi**. Koi process **kill nahi** kiya.
+- Jarvis (`start_jarvis.bat`) **chala nahi**. Koi process **kill nahi** kiya.
   Port 8000 par kuch nahi chala — sab test 8731+ par.
 - Asli mic/speaker se awaaz nahi. **Sirf nakli.**
 - **Koi naya package nahi.** Playwright pehle se install tha.

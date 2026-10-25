@@ -86,7 +86,7 @@ def engine_say(confirm=False):
     """Ek engine jo sawal ka jawab deta hai (aur chahe to ek ASK card)."""
     out = [events.status("thinking")]
     if confirm:
-        out.append(events.confirm("cid1", "write_file", "D:/prabh/test.txt", 60, "h1"))
+        out.append(events.confirm("cid1", "write_file", "D:/jarvis/test.txt", 60, "h1"))
     out.append(events.message("assistant", "Aaj ka din kya hai?", "JARVIS"))
     out.append(events.status("idle"))
     return out

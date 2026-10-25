@@ -11,7 +11,7 @@ code se lena, text se nahi.
 ## Sab ek saath
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 $fail = @()
 Get-ChildItem tests\test_*.py | ForEach-Object {
   .\.venv\Scripts\python.exe $_.FullName
@@ -25,8 +25,8 @@ if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 >
 > ```powershell
 > $r = "$env:TEMP\prabh_suite.txt"; Remove-Item $r -ErrorAction SilentlyContinue
-> Start-Job { $f=@(); Get-ChildItem D:\prabh\tests\test_*.py | ForEach-Object {
->     & D:\prabh\.venv\Scripts\python.exe $_.FullName *> $null
+> Start-Job { $f=@(); Get-ChildItem D:\Projects\jarvis\jarvis2.0\tests\test_*.py | ForEach-Object {
+>     & D:\Projects\jarvis\jarvis2.0\.venv\Scripts\python.exe $_.FullName *> $null
 >     if ($LASTEXITCODE -ne 0) { $f += $_.Name } }
 >   if ($f) { "FAILED: $($f -join ', ')" } else { "SUITE GREEN" } } | Tee-Object -FilePath $r
 > ```
@@ -94,12 +94,12 @@ Ek-ek karke:
 | `test_wake_listen.py` | `listen.py` ke chaar kaam + pause: drain/warmup; **stop par to_text aur speak dono ruke**; command me hold aur baad me chhod; **MUTE hold absorb kare** (MUTE haar nahi maarta) |
 | `test_desktop_sleep.py` | **Battery: 'so jao'** - `desktop/sleep.py` ka pure guard (chhota text hi), `enter`/`wake_up`/`toggle` (`STATE.asleep` + HUD band, band na ho to bhi so jana), wake par **jaag jaana** (`callbacks.on_wake` pehle flag hatata hai), `command.run` par brain/ASK **chalta hi nahi**, tray ka item, aur do guard ki ek jaisi list |
 | `test_wake_ack.py` | **Speed fix 2** - `listen.peek_speech` (awaaz pakdi/khamoshi/khaali queue/stop par ruka; chunks **wapas** queue me), user bol raha hai to **ack skip** (drain sirf goonj phenke), khamoshi me ack boli jaaye, brain ka poora jawab HUD par + awaaz me `tts.clip_answer` (vaakya ke end par kata) |
-| `test_bat.py` | `start_prabh.bat`: CRLF + ASCII + raw-bracket rule, aur asli `cmd` par launch line sach me chalti hai ya nahi |
+| `test_bat.py` | `start_jarvis.bat`: CRLF + ASCII + raw-bracket rule, aur asli `cmd` par launch line sach me chalti hai ya nahi |
 | `test_stt_speed.py` | **S-2 STT tez + pakka** — apna timeout 6 s (brain wala nahi), `max_retries=1`, `stt_deadline()` ceiling 16 s, `.env` override; **daemon thread + `join(timeout)`** par caller turant lautta hai (ye `asyncio.run` ke shutdown-join ka nuksan rokta hai), tez jawab wapas milta hai, provider error ka message shape |
 | `test_tts_auth.py` | **S-2 ElevenLabs 401 = ek baar** — 401/403/unauthorized/invalid_api_key → `auth` → is session me BAND → do jawab me ElevenLabs sirf **1** baar, Edge dono baar; purane category (429/503/402/404/timeout) nahi bigde; `missing_key()` pure (key khaali par provider 0 baar, voice id set hone par bhi) |
 | `test_wake_levels.py` | **S-2 chuppi 0.7 s + level log** — `pcm.quality()` pure (None/khaali/sine RMS 0.129/peak=max/clip pakda/square ~100%/normal level 0 clip), `capture()` ki **log line** me `peak_rms` + `clip` dono (success aur chhote dono par), raw audio log me nahi; default 0.7 + `.env` override + baaki windows (hangover/min/max/pre-roll) nahi badle |
 | `test_tray_watch.py` | **T-01 tray icon** - `desktop/tray_watch.py`: `status()` ke teen haal (`IsPromoted=1` = visible / missing = hidden `^` / entry hi nahi = missing), apni entry tooltip se pehchan (`MyJarvis.Desktop` jaisa purana entry chhoda), tez→dheere timing, **sirf haal badne par** message, registry fail par chup, aur `start`/`stop` (ek hi watchdog, env `JARVIS_TRAY_WATCH=0` par thread nahi). **Asli registry kabhi nahi** — fake `entries_fn` |
-| `test_logsafe.py` | **KAAM 0 — test ka log alag** — `config.LOG_DIR` asli `logs/` nahi, `JARVIS_LOG_DIR` env se aata hai, ek line temp log me likhi jaati hai + `logs/prabh.log` **bilkul** nahi chhoota, ASCII rule, aur **har** `tests/test_*.py` me `logsafe` import hai |
+| `test_logsafe.py` | **KAAM 0 — test ka log alag** — `config.LOG_DIR` asli `logs/` nahi, `JARVIS_LOG_DIR` env se aata hai, ek line temp log me likhi jaati hai + `logs/jarvis.log` **bilkul** nahi chhoota, ASCII rule, aur **har** `tests/test_*.py` me `logsafe` import hai |
 | `test_wake_alarm.py` | **KAAM 1 — alarm ka loop** (awaaz nahi) — `--dry-run` plan me 07:00/07:10/15 min; `alarm_ack` flag (shuru me + beech me) se ruka; console key par ruka; **15 min** cap (~45 round, 45 sleep); `max_rounds` safety; `--no-audio` par `alarm_audio.speak/play_wav/edge_tts` **0 baar** |
 | `test_wake_alarm_audio.py` | **KAAM 1 — awaaz + flag file** (PowerShell/wav/speaker sab fake) — edge-tts pehle → khaali audio par **SAPI** → dono fail par `'none'`; koi crash bubble na kare; wav sirf path check; `clear_ack()`/`--keep-ack`; system volume code se nahi chheda |
 | `test_wake_alarm_tool.py` | **KAAM 1 — tool (DEFAULT OFF) + Task Scheduler** — `parse_when()` pure (7/7:30 am/9 pm/12 am/kal/galat/ValueError), `clamp_minutes`, `ALARM_TOOL_ENABLED=0` par tool LLM ko dikhta hi nahi + `execute()` mana + koi file nahi, on par request file; `gatekeeper` risk **ASK**; `ps_when()` **minute rakhta hai** (07:10 ka task 07:00 na bane) + locale-safe + `[datetime]::new` nahi; `install()` ke do task 10 min door + `--if-no-ack` sirf backup par; `register()` bina `OK` ke `NAHI BANA` bolta hai. **Asla PowerShell kabhi nahi** |

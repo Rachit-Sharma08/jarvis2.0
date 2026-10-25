@@ -117,7 +117,7 @@ def chat(provider: dict, history: list, persona: str, model: str,
     url = provider["base_url"].rstrip("/") + "/chat/completions"
     extra = {}
     if provider["name"] == "openrouter":
-        extra = {"HTTP-Referer": "http://localhost", "X-Title": "Prabh"}
+        extra = {"HTTP-Referer": "http://localhost", "X-Title": "Jarvis"}
     start = time.perf_counter()
     data, _ = _post(url, provider["key"], payload, extra, provider["timeout"])
     took = int((time.perf_counter() - start) * 1000)

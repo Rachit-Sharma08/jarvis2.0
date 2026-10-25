@@ -25,7 +25,7 @@ from server.ws_routes import router as ws_router
 
 log = get_logger("server")
 
-app = FastAPI(title="Prabh")
+app = FastAPI(title=config.ASSISTANT_NAME)
 # Ek hi Engine poore server me (server/state.py) — /chat, /ws aur /hud/quick
 # teono ka mode aur gatekeeper state ek jaisa rahe.
 engine = shared_engine()

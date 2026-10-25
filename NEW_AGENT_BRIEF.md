@@ -1,4 +1,4 @@
-# NAYI SESSION KA BRIEF — `D:\prabh` (Jarvis)
+# NAYI SESSION KA BRIEF — `D:\Projects\jarvis\jarvis2.0` (Jarvis)
 
 > **Ye prompt nayi Claude/agent session me seedha paste karo.** Uske baad sirf itna
 > likhna hai: "Project ka `AGENTS.md` aur ye file poori padh le, phir mera kaam kar."
@@ -42,7 +42,7 @@ band). Mode id `"sunday"` **jaan-boojh kar mat badalna** — env keys usi se ban
 
 ## 3. Tech stack (kya use ho raha hai)
 
-- **Python 3.12.10** (venv: `D:\prabh\.venv`; base python `D:\Python312`)
+- **Python 3.12.10** (venv: `D:\Projects\jarvis\jarvis2.0\.venv`; base python `D:\Python312`)
 - `fastapi` + `uvicorn` (server), `httpx`, `python-dotenv`
 - Brain: `groq`, `google-genai`, `httpx` se OpenAI-compatible (OpenRouter/NVIDIA)
 - Voice: `vosk` (offline wake word, model `models/vosk-model-small-en-us-0.15`),
@@ -56,7 +56,7 @@ band). Mode id `"sunday"` **jaan-boojh kar mat badalna** — env keys usi se ban
 |---|---|
 | `main.py` | server chalu, local-only check |
 | `config.py` + `config_*.py` | saari settings; `.py` me 8 config file (tools/brain/voice/hud/desktop/wake/name) |
-| `log_setup.py` | `logs/prabh.log` (ASCII) |
+| `log_setup.py` | `logs/jarvis.log` (ASCII) |
 | `core/` | `engine` (message→mode→brain→tool loop→events), `events`, `modes`, `timing`, `sysstats` |
 | `brain/` | `pool` + `pool_config` (order yahin), `openai_pool` (adapter), `health`/`health_words`, `limiter`, `probe`, `checkup`, `prompt` |
 | `gatekeeper/` | `keeper`(orchestrator), `rules`(risk), `patterns`, `paths`, `approvals`, `limiter`, `audit`(mask) |
@@ -148,7 +148,7 @@ Browser GET par `Origin` nahi bhejta → same-origin GET me `security.verify_req
 ## 12. Tests (52 suite, ~3–5 min)
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 $fail = @(); Get-ChildItem tests\test_*.py | ForEach-Object {
   .\.venv\Scripts\python.exe $_.FullName; if ($LASTEXITCODE -ne 0) { $fail += $_.Name } }
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
@@ -162,7 +162,7 @@ Exit code 0 hi asli pass. Test file bhi `<=200` lines (hygiene check). Suite ka 
 
 - Supervisor **sirf** `desktop/launcher.py`; crash ka faisla pure `next_step()`; tray
   na bane to `EXIT_NO_TRAY`. Ek hi `DesktopState` (`desktop/state.py`).
-- Auto-start: `HKCU\...\Run` me `pythonw.exe D:\prabh\desktop\launcher.py` —
+- Auto-start: `HKCU\...\Run` me `pythonw.exe D:\Projects\jarvis\jarvis2.0\desktop\launcher.py` —
   **`-m` kabhi nahi** (Run key ka cwd `System32` hota hai). Value sirf
   `python -m desktop.autostart install` se, user ke "haan" par.
 - Tray list me **EXE ka naam** dikhta hai (venv python.exe redirector hai). Tray entry

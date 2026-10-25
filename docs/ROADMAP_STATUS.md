@@ -1,4 +1,4 @@
-# JARVIS (D:\prabh) - Roadmap vs Reality, Mistakes, Free-Only Fix Plan
+# JARVIS (D:\Projects\jarvis\jarvis2.0) - Roadmap vs Reality, Mistakes, Free-Only Fix Plan
 
 **Ye file owner (Rachit) ka brief hai — 2026-10-04 | Reader: opencode coding agent.**
 Project ke andar hamesha ke liye yahin rehti hai. Iske baad ka plan isi file me
@@ -35,7 +35,7 @@ Status words: DONE = brief me saaf likha hai. PARTIAL = kuch hissa hai. VERIFY =
 
 ## S2. Reality check: roadmap Mac smart-room hai, project Windows PC hai
 
-Roadmap (Stage 01 ke baad) ek **Mac** par chalne wale **smart room** ke liye likha hai: Broadlink IR se AC/projector, smart plugs/bulbs, launchd, macOS Keychain. Tumhara project **D:\prabh Windows PC par chalne wala local assistant** hai: PC tools, HUD, voice, tray, HKCU Run auto-start.
+Roadmap (Stage 01 ke baad) ek **Mac** par chalne wale **smart room** ke liye likha hai: Broadlink IR se AC/projector, smart plugs/bulbs, launchd, macOS Keychain. Tumhara project **D:\Projects\jarvis\jarvis2.0 Windows PC par chalne wala local assistant** hai: PC tools, HUD, voice, tray, HKCU Run auto-start.
 
 Isliye comparison 'idea ke hisaab se' hai, device ke hisaab se nahi: roadmap ka 'tool layer' = tumhare 10 PC tools; 'room' = tumhara PC; 'launchd' = HKCU Run + launcher.py; 'menu-bar app' = tray; 'Keychain' = .env. Room-device wale hisse (AC, projector, plugs) is repo me nahi hain - woh D-1 decision par rukte hain.
 
@@ -110,7 +110,7 @@ Stage 01: codebase DONE, dev loop DONE (opencode), runtime = Windows PC, smart r
 | 6.1 | One orchestrator for voice, text, phone | DONE | Shared server/state.ENGINE; events tagged via=voice / text. | Keep. A phone entry needs a VPN (see 6.7). |
 | 6.2 | Memory I can read and edit (plain files) | TODO | personas/ exists; no long-term preferences file noted. | memory/preferences.md (plain text) loaded into persona; owner can edit. (T-16) |
 | 6.3 | Dashboard: success rate, latency, errors | TODO | HUD (3 columns) and /brain/status exist; no metrics view. | Needs T-06 first, then a HUD panel with textContent only. (T-17) |
-| 6.4 | Always on with auto-restart | DONE | HKCU Run -> pythonw.exe D:\prabh\desktop\launcher.py; supervisor next_step(). | Keep. Never use -m in the Run key (bug #12). |
+| 6.4 | Always on with auto-restart | DONE | HKCU Run -> pythonw.exe D:\Projects\jarvis\jarvis2.0\desktop\launcher.py; supervisor next_step(). | Keep. Never use -m in the Run key (bug #12). |
 | 6.5 | Survives sleep / reboot unattended | VERIFY | Auto-start done. Sleep prevention + reboot soak test not mentioned. | (T-18) |
 | 6.6 | Secure by default | DONE | 127.0.0.1 only; Host/Origin/token; CORS off; mask(); .env git-ignored; CSP script-src 'self'. | Keep. Optional later: Windows Credential Manager. |
 | 6.7 | Many faces (tray, phone page, tablet) | PARTIAL | Tray + HUD + Desktop shortcut + Ctrl+Alt+S exist. Tray icon not visible (open bug). No phone page. | Fix tray first (section 6). Phone page only via a free VPN, never open ports. |
@@ -120,7 +120,7 @@ Stage 01: codebase DONE, dev loop DONE (opencode), runtime = Windows PC, smart r
 
 | # | What went wrong | Right way |
 |---|---|---|
-| M-1 | Roadmap aur project alag-alag raaste par chal pade. Roadmap = Mac + Broadlink smart room. Project = Windows PC assistant (D:\prabh). | Ek page ka scope decision likho (D-1). Roadmap ko 'concept map' maano, copy-paste plan nahi. PLAN.md me ek line likho kaunsa hissa lagu hai. |
+| M-1 | Roadmap aur project alag-alag raaste par chal pade. Roadmap = Mac + Broadlink smart room. Project = Windows PC assistant (D:\Projects\jarvis\jarvis2.0). | Ek page ka scope decision likho (D-1). Roadmap ko 'concept map' maano, copy-paste plan nahi. PLAN.md me ek line likho kaunsa hissa lagu hai. |
 | M-2 | Numbers 'feel' se tune hue (peek 0.18 s, chuppi 0.9 s, VAD 0.010) - koi log nahi jo saabit kare ki sahi hain. (Battery fix 4.8% -> 0.9% measured tha - wahi style baaki jagah bhi chahiye.) | T-06: har stage ka latency + wake score + false trigger JSONL me. Fir numbers data se badlo. |
 | M-3 | Reliability ka saboot adhoora: 52 tests hain par sab fakes par; 20x hammer aur real-world smoke nahi. | Fakes suite me rakho (rule 10). Alag se tests/hammer (fakes) + owner ka manual live checklist (suite ke bahar). |
 | M-4 | Bahar ke single points of failure: edge-tts (unofficial Microsoft endpoint, no SLA), Groq STT daily quota, free LLM tiers ghat rahe hain. | Har cloud hisse ka ek fallback: TTS -> Piper/Kokoro, STT -> faster-whisper, LLM -> local Ollama (last). |
@@ -156,7 +156,7 @@ Stage 01: codebase DONE, dev loop DONE (opencode), runtime = Windows PC, smart r
 | 1 | Pehle dekho, guess mat karo | Taskbar ke ^ (hidden icons) me icon dhundo. Windows 11 me naye exe path ka icon aksar ^ ke andar chhup jaata hai. Mil jaye to drag karke taskbar par daalo (ek baar). Bug closed. |
 | 2 | Read-only check (registry badalna nahi) | PowerShell: Get-ChildItem 'HKCU:\Control Panel\NotifyIconSettings' / ForEach-Object { Get-ItemProperty $_.PSPath } / Select-Object ExecutablePath, IsPromoted . Dekho pythonw.exe ki entry hai ya nahi. |
 | 3 | Icon add hua ya nahi - code me check | pystray NIM_ADD ek baar bhejta hai aur result check nahi karta. Ek chhota watchdog: Explorer se pucho icon hai ya nahi (Shell_NotifyIconGetRect, ctypes) - nahi hai to icon dobara add karo. Pehle 1 min har 3 s, fir har 30 s. Ye pattern community project ai-quota-tray (PR #19, 2026-09-30) me dikha - copy mat karo, idea lo. |
-| 4 | Ek hi interpreter pin karo | Launcher hamesha D:\prabh\.venv ka pythonw.exe chalaye (Store/py launcher wala nahi). Wrong interpreter se tray silently headless ho jaata hai (clawdmeter-daemon v1.0.1 ka sabak). |
+| 4 | Ek hi interpreter pin karo | Launcher hamesha D:\Projects\jarvis\jarvis2.0\.venv ka pythonw.exe chalaye (Store/py launcher wala nahi). Wrong interpreter se tray silently headless ho jaata hai (clawdmeter-daemon v1.0.1 ka sabak). |
 | 5 | Tab hi registry (rule 13 ke hisaab se) | Entry bani ho to hi IsPromoted=1 us ek entry par. Pehle: reg export 'HKCU\Control Panel\NotifyIconSettings' backup\notify_before.reg -> ek value -> count compare -> proof. Entry nahi bani to registry me nayi entry khud mat likho. |
 | 6 | Aakhri raasta (brief ka option b) | Launcher ka child python.exe + CREATE_NO_WINDOW. Sirf step 1-5 fail hone par. |
 
@@ -178,7 +178,7 @@ Stage 01: codebase DONE, dev loop DONE (opencode), runtime = Windows PC, smart r
 
 | Item | Free alternative | Note |
 |---|---|---|
-| Dev agent (Claude Code, paid) | opencode - open source, apni key lao (BYOK). Already use ho raha hai. | OpenCode Zen free models ki list badalti rehti hai; 2026-10-03 se kuch users ko 'free tier can only be used from within OpenCode' error (GitHub issue #52907). Isliye opencode me apni Groq/OpenRouter key main provider rakho, Zen ko bonus maano. Docs Windows par WSL recommend karte hain, par Jarvis ko native Windows chahiye (tray, registry, mic) - D:\prabh me PowerShell se chalao. |
+| Dev agent (Claude Code, paid) | opencode - open source, apni key lao (BYOK). Already use ho raha hai. | OpenCode Zen free models ki list badalti rehti hai; 2026-10-03 se kuch users ko 'free tier can only be used from within OpenCode' error (GitHub issue #52907). Isliye opencode me apni Groq/OpenRouter key main provider rakho, Zen ko bonus maano. Docs Windows par WSL recommend karte hain, par Jarvis ko native Windows chahiye (tray, registry, mic) - D:\Projects\jarvis\jarvis2.0 me PowerShell se chalao. |
 | Brain (Claude API, paid) | Groq / OpenRouter free / Gemini Flash-Lite / Cerebras / Ollama local - table 7.1. | Free limits tezi se badalte hain. Dated limits pool_config.py me. |
 | Speech to text | Groq Whisper (free, 2,000 req/day) abhi; fallback faster-whisper (local, CPU int8, built-in Silero VAD filter). | faster-whisper naya package - owner se poochho. |
 | Text to speech (cloud voice, paid) | edge-tts abhi (free). Offline fallback: Piper (tez, CPU) ya Kokoro-82M (Apache 2.0, behtar quality, CPU par near real-time). | edge-tts Microsoft endpoint par nirbhar hai, no SLA; pehle kabhi hafton tak block hua tha (community mention). Hindi voice ki availability fallback chunne se pehle check karo. |

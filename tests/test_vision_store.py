@@ -91,7 +91,7 @@ def main():
         check("DATA_DIR ke andar hai",
               str(store.path().parent) == str(Path(config.DATA_DIR)), True)
         check("asli data/ chhua nahi",
-              "D:\\prabh\\data" not in str(store.path()), True)
+              str(config.BASE_DIR / "data") not in str(store.path()), True)
 
         # --- 6. forget() ---
         check("forget ne mita", store.forget(), True)

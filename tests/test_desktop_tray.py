@@ -135,9 +135,9 @@ def test_mic_permission():
     allowed, reason = micperm.status(sys.executable)
     check("tuple mila", isinstance(allowed, bool) and isinstance(reason, str), True)
     show(f"allowed={allowed} reason={reason or '-'}")
-    key = micperm._nonpackaged_key(r"D:\prabh\.venv\Scripts\pythonw.exe")
+    key = micperm._nonpackaged_key(r"D:\jarvis\.venv\Scripts\pythonw.exe")
     check("NonPackaged key ka naam",
-          key.endswith(r"NonPackaged\D##prabh#.venv#Scripts#pythonw.exe"), True)
+          key.endswith(r"NonPackaged\D##jarvis#.venv#Scripts#pythonw.exe"), True)
     check("chhota error", len(micperm.explain("A" * 300)) <= 160, True)
 
 

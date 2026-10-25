@@ -31,10 +31,10 @@ screen par confirm card aata hai.
 
 ## 1. Install (ek hi baar)
 
-PowerShell me `D:\prabh` jao:
+PowerShell me `D:\Projects\jarvis\jarvis2.0` jao:
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 python -m venv .venv
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 ```
@@ -92,7 +92,7 @@ Detail → [VOICE.md](VOICE.md).
 
 ### Raasta A — Jarvis (recommended, naya)
 
-`start_prabh.bat` par double-click. Ye:
+`start_jarvis.bat` par double-click. Ye:
 
 1. ek supervisor (launcher) chalao,
 2. Jarvis app ke andar server + **tray icon** + HUD window khulta hai,
@@ -125,12 +125,12 @@ Hotkey badalna ho to `.env` me `JARVIS_HUD_HOTKEY=<ctrl+alt+shift+s>` (ek letter
 ya F1–F24). Galat value ho to hotkey chalti hi nahi — app safe rehti hai.
 
 Teeno ka ek hi raasta `desktop/open_hud.py` hai: server chalu hai to HUD khulta
-hai, warna ek message box aata hai "pehle `start_prabh.bat` chalao".
+hai, warna ek message box aata hai "pehle `start_jarvis.bat` chalao".
 
 Shortcut dobara banana ho to:
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 .\.venv\Scripts\python.exe -m desktop.shortcut install   # ya: remove / status
 ```
 
@@ -164,7 +164,7 @@ value hai, is liye **admin ya UAC nahi chahiye**.
 Pehle check karo (sirf padhta hai, kuch nahi badalta):
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 .\.venv\Scripts\python.exe -m desktop.autostart status
 ```
 
@@ -176,8 +176,8 @@ On karna ho to (ye **sirf ek value** likhta hai):
 ```
 
 - Value ka naam `Jarvis` hai, aur value khud ye chalati hai:
-  `D:\prabh\.venv\Scripts\pythonw.exe D:\prabh\desktop\launcher.py` — wahi
-  supervisor jo `start_prabh.bat` chalaata hai. `pythonw` ki wajah se login par
+  `D:\Projects\jarvis\jarvis2.0\.venv\Scripts\pythonw.exe D:\Projects\jarvis\jarvis2.0\desktop\launcher.py` — wahi
+  supervisor jo `start_jarvis.bat` chalaata hai. `pythonw` ki wajah se login par
   koi black console nahi aata.
 - Value me `-m desktop.launcher` **nahi** likha jaata: Windows Run key par cwd
   `C:\Windows\System32` hota hai aur wahan se module import hi nahi hota. File
@@ -190,7 +190,7 @@ On karna ho to (ye **sirf ek value** likhta hai):
 ### Raasta B — purana tarika (browser me)
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 .\.venv\Scripts\python.exe main.py
 ```
 
@@ -208,7 +208,7 @@ Band karne ke liye terminal me `Ctrl + C`.
 Saare 81 suites ek loop me:
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 $fail = @()
 Get-ChildItem tests\test_*.py | ForEach-Object {
   .\.venv\Scripts\python.exe $_.FullName
@@ -250,7 +250,7 @@ chalao aur page dobara kholo — token apne aap refresh ho jaayega.
 ### Command line se test karna ho
 
 ```powershell
-cd D:\prabh
+cd D:\Projects\jarvis\jarvis2.0
 $page = Invoke-WebRequest http://localhost:8000 -UseBasicParsing
 $token = [regex]::Match($page.Content, 'name="jarvis-token" content="([^"]+)"').Groups[1].Value
 Invoke-RestMethod http://localhost:8000/chat -Method Post `
@@ -280,7 +280,7 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `config.py` | `.env`, settings, tool risk, allowed folders, blocked patterns |
 | `config_brain.py`, `config_voice.py` | Brain aur voice constants (`config.py` re-export karta hai) |
 | `config_desktop.py` | Desktop constants: tray rang, HUD size, crash backoff, exit code, mic/lock helpers, `HUD_HOTKEY` |
-| `log_setup.py` | `logs/prabh.log` banata hai |
+| `log_setup.py` | `logs/jarvis.log` banata hai |
 | `core/events.py`, `core/modes.py` | Chat events + naam se mode, persona, label |
 | `core/engine.py` | Poora chat flow + tool loop (**sirf** `run_tool` raasta) |
 | `brain/pool.py`, `pool_config.py` | Do-tier brain pool + uski order (pool hi Groq/Gemini/NVIDIA/OpenRouter chala hai) |
@@ -316,7 +316,7 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 | `ui/tools.js`, `ui/recorder.js`, `ui/speaker.js` | Confirm card, ACTIVITY jodi, mic record, audio play |
 | `ui/fonts/` | Local woff2 fonts + OFL license |
 | `personas/jarvis.txt`, `personas/prabh.txt` | Dono ka character |
-| `desktop/launcher.py` | Supervisor: app crash ho to dobara (pehle `start_prabh.bat` se chalta hai) |
+| `desktop/launcher.py` | Supervisor: app crash ho to dobara (pehle `start_jarvis.bat` se chalta hai) |
 | `desktop/app.py` | Jarvis app: server thread + tray + HUD + mic permission + lock watcher |
 | `desktop/tray.py`, `trayicon.py` | Tray menu (Mute / Open HUD / TOOLS / Restart / Quit) + rang se bana icon |
 | `desktop/hud_window.py` | Edge `--app` me HUD window (apna profile, 1200x720) |
@@ -335,18 +335,18 @@ Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hi
 
 ## Error kahan dekhein?
 
-Sab kuch `logs/prabh.log` me likha jaata hai — har brain call ka timing bhi (`pool: T1 groq 1402ms | total 1451ms`). Har tool ka hisaab `logs/actions.log` me.
+Sab kuch `logs/jarvis.log` me likha jaata hai — har brain call ka timing bhi (`pool: T1 groq 1402ms | total 1451ms`). Har tool ka hisaab `logs/actions.log` me.
 
 ```powershell
-Get-Content D:\prabh\logs\prabh.log -Tail 20
-Get-Content D:\prabh\logs\actions.log -Tail 20
+Get-Content D:\Projects\jarvis\jarvis2.0\logs\jarvis.log -Tail 20
+Get-Content D:\Projects\jarvis\jarvis2.0\logs\actions.log -Tail 20
 ```
 
-Agar `start_prabh.bat` se chalaya tha aur app khud band ho gayi, to supervisor ka
+Agar `start_jarvis.bat` se chalaya tha aur app khud band ho gayi, to supervisor ka
 alag log hai:
 
 ```powershell
-Get-Content D:\prabh\logs\desktop.out -Tail 30
+Get-Content D:\Projects\jarvis\jarvis2.0\logs\desktop.out -Tail 30
 ```
 
 Isme teen numbers matlab rakhte hain: `0` = saaf band (Quit), `1` = crash,

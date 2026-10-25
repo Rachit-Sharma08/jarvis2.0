@@ -9,7 +9,7 @@ Pakdi hui baatein:
 
 1. Value ka naam **config se** aata hai (`Jarvis`), "Prabh"/"Sunday" nahi.
 2. Command `pythonw.exe -m desktop.launcher` hai — pythonw (koi black console
-   nahi), aur wahi supervisor jo `start_prabh.bat` chalaata hai.
+   nahi), aur wahi supervisor jo `start_jarvis.bat` chalaata hai.
 3. Path me space ho to value quoted jaati hai (`list2cmdline`).
 4. `install`/`remove`/`read`/`status` ka cycle, + error aur "pehle se nahi
    tha" wala raasta.

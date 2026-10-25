@@ -152,7 +152,7 @@ liye PIN bhi rakha hai.
 Ye **sabse bada** step hai aur sabse risky bhi. Sunday jab code likhega aur
 chalayega — matlab woh khud apna kaam kar sakta hai. Is liye plan me:
 
-- sirf `D:\prabh\` ke andar hi likh sakta hai (bahar kahin nahi)
+- sirf `D:\Projects\jarvis\jarvis2.0\` ke andar hi likh sakta hai (bahar kahin nahi)
 - har run ke liye confirm card (ASK), auto-run nahi
 - har change git me commit → galti ho to pichle wapas
 - likhe hue code ko `maker/review.py` jaanche (tests chale) — bina green test

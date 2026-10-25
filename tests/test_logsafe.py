@@ -1,6 +1,6 @@
-"""KAAM 0: test ka log asli `logs/prabh.log` se alag.
+"""KAAM 0: test ka log asli `logs/jarvis.log` se alag.
 
-**Galti jo thi:** `logs/prabh.log` ek hi file — app aur test dono likhte the.
+**Galti jo thi:** `logs/jarvis.log` ek hi file — app aur test dono likhte the.
 S-1 audit me isi wajah se mic ka asli level galat nikaala gaya tha
 (`tests/wakehelp.py` ka `loud()` = RMS **exactly 0.129**, aur wahi number
 asli app ke log me bhi aa raha tha).
@@ -10,7 +10,7 @@ asli app ke log me bhi aa raha tha).
 
 Ye test do baatein pakadta hai:
 1. Har test file me wo import hai (`config` seedha ya helper ke through).
-2. Test likhta hai **temp** log me, aur `logs/prabh.log` bilkul nahi chhuta.
+2. Test likhta hai **temp** log me, aur `logs/jarvis.log` bilkul nahi chhuta.
 
 **App chalu nahi kiya gaya** — sirf file check + logger se ek line.
 """
@@ -57,7 +57,7 @@ class TestLogLocation(unittest.TestCase):
               self._app_log_has(STAMP), False)
 
     def _app_log_has(self, needle):
-        app_log = ROOT / "logs" / "prabh.log"
+        app_log = ROOT / "logs" / "jarvis.log"
         if not app_log.exists():
             return False
         return needle in app_log.read_text(encoding="ascii", errors="replace")

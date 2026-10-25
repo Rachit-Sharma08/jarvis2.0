@@ -21,7 +21,8 @@ def ensure_local_only() -> None:
 def main() -> None:
     ensure_local_only()
     config.ensure_workspace()
-    log.info("Prabh starting on %s:%s", config.SERVER_HOST, config.SERVER_PORT)
+    log.info("%s starting on %s:%s", config.ASSISTANT_NAME,
+             config.SERVER_HOST, config.SERVER_PORT)
     log.info(
         "workspace=%s | tools=%s (UI toggle se ON karo)",
         config.WORKSPACE,
@@ -36,7 +37,7 @@ def main() -> None:
     log.info("startup jaanch %.1fs me hui", time.perf_counter() - began)
     for problem in problems:
         print(f"WARNING: {problem}")
-    print(f"Prabh ready ->  http://localhost:{config.SERVER_PORT}")
+    print(f"{config.ASSISTANT_NAME} ready ->  http://localhost:{config.SERVER_PORT}")
     print("Ye ek local personal app hai, sirf is PC par chalta hai.")
     uvicorn.run(
         "server.app:app",

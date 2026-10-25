@@ -14,7 +14,7 @@ description: Jarvis project ke pakke niyam — .env, nakli audio, 200 line, DEFA
 
 ## Test ke niyam
 
-- Sab test **NAKLI** audio/mic/speaker se. `start_prabh.bat` mat chalao,
+- Sab test **NAKLI** audio/mic/speaker se. `start_jarvis.bat` mat chalao,
   koi process kill mat karo, port 8000 par server nahi (8700+).
 - Har badlav ke saath test. Bug-injection: fix kharab karke test fail
   hona chahiye, warna test kuch pakadta hi nahi.

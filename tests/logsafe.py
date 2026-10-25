@@ -1,6 +1,6 @@
-"""Test ka apna LOG — asli `logs/prabh.log` me test **kabhi** na likhe.
+"""Test ka apna LOG — asli `logs/jarvis.log` me test **kabhi** na likhe.
 
-**Kaunsi galti thi:** `logs/prabh.log` ek hi file hai — app aur dono ek jaisa
+**Kaunsi galti thi:** `logs/jarvis.log` ek hi file hai — app aur dono ek jaisa
 likhte hain. Test suite chalti to usme bhi entries aa jaati hain (`wake_command
 | user pehle se bol raha hai (rms=0.129)` waghera). S-1 audit me isi wajah se
 mic ka asli level galat nikaala gaya tha: `tests/wakehelp.py` ka `loud()` **exactly

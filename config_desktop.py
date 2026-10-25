@@ -98,7 +98,7 @@ TRAY_NAME = ASSISTANT_NAME
 # ---- Supervisor: crash par restart ----
 # Child (desktop.app) crash ho to supervisor use dobara chala deta hai.
 # Zyada crash ho to ruk jaata hai — Warna koi crash-loop chalu ho jaata aur
-# RAM/CPU khaali karega. Upar se chalao (`start_prabh.bat`).
+# RAM/CPU khaali karega. Upar se chalao (`start_jarvis.bat`).
 RESTART_MAX = 5
 RESTART_WINDOW_SECONDS = 10 * 60
 RESTART_BACKOFF = (2, 5, 10, 20, 30)
@@ -116,7 +116,7 @@ TRAY_START_ATTEMPTS = 3
 
 # ---- Startup ke 4 standard line ----
 # Ye chaar line hamesha isi shabd me aati hain — console par bhi aur
-# `logs/prabh.log` me bhi — taaki crash ke waqt pata chale app kahan tak
+# `logs/jarvis.log` me bhi — taaki crash ke waqt pata chale app kahan tak
 # pahunchi thi. Sirf `desktop/app.py` inhe bolta hai (ek hi jagah).
 STARTUP_SERVER = "server up"
 STARTUP_TRAY = "tray started"
@@ -157,7 +157,7 @@ AUTOSTART_NAME = ASSISTANT_NAME
 # Login par kya chalta hai: **supervisor** (`BASE_DIR` se relative). `pythonw`
 # se chalta hai, is liye koi black console nahi aata; crash
 # `logs/desktop.out` me padha jaata hai. Haath se chalane ka raasta alag hai -
-# `start_prabh.bat` (console khula, crash turant screen par).
+# `start_jarvis.bat` (console khula, crash turant screen par).
 # ⚠️ Ye path `-m module` nahi hai: Run key ka cwd `C:\Windows\System32` hota
 # hai aur wahan se `-m` import hota hi nahi. `desktop/launcher.py` apna BASE_DIR
 # khud `sys.path` me daalta hai, is liye file se chalna safe hai.

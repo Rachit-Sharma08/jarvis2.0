@@ -75,7 +75,7 @@ assistant bana sake, code likh ke". Ye **ho sakta hai**, par step-by-step.
 
 **5 suraksha (yeh nahi hatenge):**
 
-1. **Sirf `D:\prabh\` ke andar** likh sakta hai. Bahar (Desktop, C:\, network) nahi.
+1. **Sirf `D:\Projects\jarvis\jarvis2.0\` ke andar** likh sakta hai. Bahar (Desktop, C:\, network) nahi.
 2. **Har run ke liye confirm card** — auto-run KABHI nahi. Tum chalaye.
 3. **Har change git commit** — galti ho to ek command me wapas
 4. **Bina green test ke merge nahi** — apna test likh ke chalayega

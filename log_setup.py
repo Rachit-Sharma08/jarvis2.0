@@ -16,7 +16,7 @@ def ascii_text(text) -> str:
 
     Kyun: Windows console `cp1252` hai. Log me Devanagari/arrow jaise char
     aate hain to wo `?`/`??` ban jaate hain — matlab crash ki asli baat hi
-    kho jaati hai. Is liye log `logs/prabh.log` hamesha ASCII rakhta hai.
+    kho jaati hai. Is liye log `logs/jarvis.log` hamesha ASCII rakhta hai.
     """
     if text is None:
         return ""

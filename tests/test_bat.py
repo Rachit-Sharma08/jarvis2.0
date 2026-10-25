@@ -1,4 +1,4 @@
-"""`start_prabh.bat` ka test - koi app chala kar nahi, sirf file padhi jaati hai
+"""`start_jarvis.bat` ka test - koi app chala kar nahi, sirf file padhi jaati hai
 aur ek nayi copy par `cmd` se check hota hai.
 
 Ye Step 3a ke sabse burre live bug ka pakka test hai: file me ek `echo` line
@@ -19,7 +19,7 @@ from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 from desktophelp import FAILED, check, finish, show
 
 ROOT = Path(__file__).resolve().parent.parent
-BAT = ROOT / "start_prabh.bat"
+BAT = ROOT / "start_jarvis.bat"
 
 # Ye line bat ko nahi chala ke bas apna raasta dikhati hai.
 LAUNCH = '".venv\\Scripts\\python.exe" -m desktop.launcher'
@@ -113,4 +113,4 @@ for fn in (test_crlf, test_ascii_only, test_no_stray_bracket,
            test_cmd_actually_runs_the_line):
     fn()
 
-finish("Saare start_prabh.bat test pass.")
+finish("Saare start_jarvis.bat test pass.")

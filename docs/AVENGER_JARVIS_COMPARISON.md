@@ -4,7 +4,7 @@
 
 MCU JARVIS (Tony Stark ka) ek **proactive AI butler** hai — bolta kam, kaam zyada karta hai, HUD-first hai, sarcastic/dry witty hai aur systems control karta hai.
 
-Current D:\prabh ek solid **local voice assistant** hai (wake word + STT + brain + TTS + tools + HUD). Abhi mostly **reactive** hai (bolte hi response deta hai), **proactive** kam hai.
+Current D:\Projects\jarvis\jarvis2.0 ek solid **local voice assistant** hai (wake word + STT + brain + TTS + tools + HUD). Abhi mostly **reactive** hai (bolte hi response deta hai), **proactive** kam hai.
 
 | Feature (MCU JARVIS) | MCU Me Kya Dikha | Current Prabh | Gap | Local-Only? |
 |---|---|---|---|---|
@@ -87,7 +87,8 @@ Current D:\prabh ek solid **local voice assistant** hai (wake word + STT + brain
 
 - **Natural:** *"Copy last answer"*, *"Open this link"*
 - **Windows:** avoid pyperclip dep. Use PowerShell Set-Clipboard / Get-Clipboard via existing 	ools/run_command (SAFE for read? read ASK/Safe per rule). Or small PowerShell one-liner.
-- **Files:** extend 	ools/system.py or new thin wrapper (reuse un_command path).
+- **Files:** extend 	ools/system.py or new thin wrapper (reuse 
+un_command path).
 - **Feas:** Mod, no heavy new dep.
 
 ### #8. Memory Compression (Summary) (Nice, Mod, Local-only)
@@ -102,7 +103,8 @@ Current D:\prabh ek solid **local voice assistant** hai (wake word + STT + brain
 **Impact: Med | Feas: Mod**
 
 - **Natural:** *"Focus Chrome"*, *"Switch to Notepad"*
-- **Prefer:** PowerShell via un_command (existing tool, gatekeeper handles ASK). Avoid pywin32/ahk deps.
+- **Prefer:** PowerShell via 
+un_command (existing tool, gatekeeper handles ASK). Avoid pywin32/ahk deps.
 - **Feas:** Mod, Windows-only, use existing path (lower risk).
 
 ### #10. Proactive Reminders Check + HUD Badge (Nice, Mod, Local-only)
@@ -133,4 +135,5 @@ Current D:\prabh ek solid **local voice assistant** hai (wake word + STT + brain
 
 **Quickest bang-for-buck:** #1 + #2 + #4 (Memory + Reminders + Orb Pulse) — 1–1.5 hours max, repo rules follow (≤200 lines, pure tests, gatekeeper safe).
 
-**Avoid:** Heavy deps (pywin32 full, HomeAssistant heavy). Reuse existing un_command, JSON files, current brain/TTS. **Local-only preferred** — sab upar local hain.
+**Avoid:** Heavy deps (pywin32 full, HomeAssistant heavy). Reuse existing 
+un_command, JSON files, current brain/TTS. **Local-only preferred** — sab upar local hain.
