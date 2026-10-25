@@ -3,13 +3,13 @@
 > **Ye ek local personal app hai, sirf is PC par chalta hai.** Ye web app nahi hai —
 > doosre PC, phone ya internet se koi ise khol nahi sakta.
 
-Ye ek hi AI assistant hai — **Jarvis** (halka professional, chhote aur saaf jawab).
-Ek doosra mode **Prabh** (pyaar se, dostana, khula Hinglish) code me maujood hai par
-**dormant** hai — `.env` ke `JARVIS_SUNDAY_ONLY=1` se band, aur jaldi hatega.
+Ye ek hi AI assistant hai — **Jarvis**: Hinglish, chhote aur saaf jawab, seedha tone
+("sir", pehle haalat phir salah, bakwaas nahi).
 
 Browser me chalta hai, Windows 10/11 par, sab kuch free tools se. Mic se baat kar sakta
-hai aur PC ke kaam bhi kar sakta hai (file, folder, app, command) — har kaam ke pehle
-screen par confirm card aata hai.
+hai aur PC ke kaam bhi kar sakta hai (file, folder, app, command). Har call pehle
+gatekeeper se guzarti hai — safe kaam seedha chalta hai, khatarnak block hota hai, aur
+sab kuch `logs/actions.log` me likha jaata hai.
 
 > **Privacy:** brain aur tools **free providers** (Groq, Gemini, OpenRouter, NVIDIA) par
 > chalti hain, to message aur padhi hui file ka text unke paas jaata hai. Personal ya
