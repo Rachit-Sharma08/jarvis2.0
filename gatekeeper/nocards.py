@@ -132,6 +132,11 @@ def _close_app(args: dict) -> tuple:
 def resolve_ask(tool: str, args: dict) -> tuple:
     """-> ("ALLOW", None) | ("DENY", "ek line Hinglish wajah"). Card nahi banta."""
     args = args or {}
+    if config.TRUST_ALL:
+        # Owner ka faisla: koi restriction nahi. NEVER_ALLOW (rules.py) phir
+        # bhi pehle chalti hai, is liye gatekeeper/.env delete yahan tak
+        # pahunchti hi nahi.
+        return ALLOW, None
     if tool == "write_file":
         return _write_file(args)
     if tool == "delete_to_trash":
