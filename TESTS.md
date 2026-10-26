@@ -1,4 +1,4 @@
-# Tests (75 suites)
+# Tests (85 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 75 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 85 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -115,6 +115,10 @@ Ek-ek karke:
 | `test_hud_gold.py` | **Gold HUD (Playwright headless, nakli server)** - default `data-theme` asli config se, `?theme=` whitelist (adhoori value reject, bada `GOLD` chalta hai), orb ke asli layers ka **geometry** (`getBBox()` > 0 - SVG namespace bug yahin pakda), 4 state label, koi JS error nahi. Screenshot `%TEMP%` me |
 | `test_config_parts.py` | **config ka hissa poora hai ya nahi** — production me jo bhi `config.X` maangta hai wo **runtime** par resolve hona chahiye (`AttributeError` ka pakkaura); `config.py` jo `config_*.py` import karta hai uski file disk par; `config_lines`/`config_audio` ke har constant `config_wake` **aur** `config` dono me. Bug-injection: naya constant bana kar use ek production file me maanga → 2 FAIL, naam + jagah dono dikha. Sirf source padhta hai, koi module import nahi |
 | `test_wake_gain.py` | **Wake ka digital gain (14-Oct split)** — bina mic ke: khamoshi par gain 1 rahe (battery); **gate ke neeche (0.0015) ki awaaz 2000 block baad bhi gain na le** (DEAD ZONE pin); gate se upar (0.0055) dheemi awaaz par gain uthe; zor par gain 1.2 se neeche + clip nahi; do level comparable; `JARVIS_WAKE_GAIN` ke teen raaste (auto/number/off). `test_wake_resample.py` se nikal kar alag kiya (200 cross) |
+| `test_stt_local.py` | **Local STT (faster-whisper)** — `available()` ke saare raaste (model folder, library, `off`/`0`/`false`, `_BROKEN` yaad), provider chain (`auto`/`local`/`groq`/`off`), `_source()` 16k mono → numpy aur baaki → `BytesIO`, transcribe ke kwargs (`language=en`, `beam_size=1`, `vad_filter=False`), 600ms se chhoti recording reject, local deadline par caller turant, silence hallucination reject. **Asli model load nahi** — `FakeModel` |
+| `test_stt_fallback.py` | **Groq gira to local** — `auto` me Groq ka turant error (429/network) par wahi recording local se suni jaati hai; **timeout par fallback nahi** (budget khatam, caller ko turant saaf message); `JARVIS_STT_LOCAL=groq` par fallback nahi; local bhi gira to message me Groq ka asli reason |
+| `test_stt_broken.py` | **Toota local model yaad** — `_load()` ka fail `_BROKEN` me likha jata hai, doosri call 50ms me `RuntimeError`, aur `available()` uske baad `False` (har command par 4 s load barbaad nahi). `faster_whisper` module fake |
+| `test_wake_micdev.py` | **Mic device probe** — shared WASAPI par digital silence (p10 < 0.00005) mile to exclusive, healthy shared par shared hi; peak par faisla **nahi** (ek spike se mic na badle); `JARVIS_MIC_EXCLUSIVE` ke `auto`/`1`/`0`; `hostapi_name`/`native_rate` ke fallback. Asli `sounddevice` kabhi nahi |
 
 ### 14-Oct raat: 6 purane fail + 2 nayi suite
 
