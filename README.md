@@ -198,6 +198,17 @@ Browser me kholo: **http://localhost:8000**
 
 Band karne ke liye terminal me `Ctrl + C`.
 
+### Kuch kaam nahi kar raha? Pehle ye chalao
+
+```powershell
+.\.venv\Scripts\python.exe main.py --doctor
+```
+
+Ek-ek cheez batata hai: jawab dene wali key, sunne wala (STT), "Hlo Jarvis"
+wake word, mic, port, tools. Har line `OK` / `WARN` / `FAIL` hai aur aakhir me
+saaf natija — kya theek karna hai. Ye kuch shuru nahi karta, is liye app chalte
+hue bhi chala sakte ho.
+
 > Auto-start (Windows login par chalu) **abhi nahi banaya**. Wo Step 3 ke aakhir
 > me aayega aur tabhi computer ke Run registry me entry likhi jayegi.
 
