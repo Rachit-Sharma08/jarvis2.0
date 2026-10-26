@@ -85,11 +85,23 @@ def _tools() -> list:
     return [_line(OK, "Tools", f"{state} (trust mode)")]
 
 
+def _autostart() -> list:
+    """Login par app chalega? Mara hua path sabse chup-chaap wala bug hai —
+    registry purane folder par ho to app kabhi shuru hi nahi hota."""
+    from desktop import autostart
+    value = autostart.read()
+    if not value:
+        return [_line(WARN, "Auto-start", "band hai - login par JARVIS nahi chalega")]
+    if value == autostart.run_value():
+        return [_line(OK, "Auto-start", "login par chalu hoga")]
+    return [_line(WARN, "Auto-start", f"purana path - {value}")]
+
+
 def run() -> int:
     """Saare hisse jaancho. -> 0 sab theek, 1 kuch critical toota."""
     print(f"\n{config.ASSISTANT_NAME} doctor - kya chalega?\n")
     rows = []
-    for part in (_brain, _stt, _wake, _mic, _port, _tools):
+    for part in (_brain, _stt, _wake, _mic, _port, _autostart, _tools):
         try:
             rows.extend(part())
         except Exception as exc:                       # noqa: BLE001

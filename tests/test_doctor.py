@@ -23,7 +23,7 @@ import doctor  # noqa: E402
 from tests.wakecmdhelp import patch  # noqa: E402
 from tests.wakehelp import check, finish  # noqa: E402
 
-NAMES = ("_brain", "_stt", "_wake", "_mic", "_port", "_tools")
+NAMES = ("_brain", "_stt", "_wake", "_mic", "_port", "_autostart", "_tools")
 
 
 def only(**marks):
@@ -101,6 +101,25 @@ class TestPort(unittest.TestCase):
                 marks = doctor._port()
         check("busy port = OK", [m for m, _, _ in marks], [doctor.OK])
         check("message me 'chal raha'", "chal raha" in marks[0][2], True)
+
+
+class TestAutostart(unittest.TestCase):
+    def marks(self, value, expected="D:\\sahi\\launcher.py"):
+        from desktop import autostart
+        with patch(autostart, "read", lambda: value), \
+                patch(autostart, "run_value", lambda: expected):
+            return [m for m, _, _ in doctor._autostart()]
+
+    def test_sahi_path(self):
+        check("sahi path = OK", self.marks("D:\\sahi\\launcher.py"), [doctor.OK])
+
+    def test_band(self):
+        check("auto-start band = WARN", self.marks(""), [doctor.WARN])
+
+    def test_purana_path(self):
+        """Asli bug: registry D:\\prabh par tha, project D:\\Projects me."""
+        check("purana path = WARN", self.marks("D:\\prabh\\desktop\\launcher.py"),
+              [doctor.WARN])
 
 
 if __name__ == "__main__":
