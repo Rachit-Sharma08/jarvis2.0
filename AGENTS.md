@@ -121,17 +121,14 @@ prabh/
   start_prabh.bat    -> supervisor chalao (registry entry nahi, wo Step 3 ke aakhir me)
   ui/index.html, app.js (chat+ws glue), voice_ui.js (mic+speaker)
   ui/hud_base.css, hud_panel.css, hud_left.css, hud_center.css, hud_right.css, hud_bottom.css
-  ui/hud_card.css (KAAM A: confirm card, hud_bottom se nikla), arc.css, arc_layout.css,
-  arc_core.css, arc_bottom.css (KAAM B: Arc theme, sirf `html[data-theme="arc"]` me)
+  ui/hud_card.css (confirm card — trust mode me khulta hi nahi)
   ui/hud_clock.js, hud_stats.js, hud_activity.js, hud_status.js, hud_orb.js,
   ui/hud_weather.js, hud_quick.js, hud_prime.js (KAAM 6: load par /hud/stats)
-  ui/arc_config.js, arc_reactor.js, arc_dom.js, arc_live.js, arc_shell.js,
-  arc_wire.js, arc_boot.js, arc_load.js (KAAM B: arc theme, sirf arc par boot)
-  ui/hud_quick.js, hud_desktop.js (mic+wake ka sirf haalat)
+  ui/hud_desktop.js (mic+wake ka sirf haalat)
   ui/recorder.js, speaker.js, tools.js (confirm card + ACTIVITY jodi)
-  ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi)
-  tests/ (52 suite + poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py
-          + arclib.py + arc_probe.py + hudserve.py + pcmhelp.py — poori list TESTS.md me)
+  ui/fonts/*.woff2 + fonts.css (local, koi CDN nahi; head font = Michroma)
+  tests/ (poolhelp.py + desktophelp.py + hud_*.py + wakehelp.py + wakecmdhelp.py
+          + hudserve.py + pcmhelp.py — poori list TESTS.md me)
   README.md, VOICE.md, TOOLS.md, BRAIN.md, TESTS.md, ROUND2.md, CHANGELOG.md
   docs/ROADMAP_STATUS.md  → OWNER ka roadmap-vs-reality + free-only plan (S1..S11). Roadmap
                             planning se pehle iska relevant section padho; naya task bhi wahin likho.
@@ -759,20 +756,20 @@ chhupa kar chalne wala code ya test chup-chaap galat faisla de deta hai.**
 
 ### 8.1.7 HUD THEME + GIT IDENTITY KE PAKKAUREY NIYAM (14 Oct 2026 — KAAM B/D)
 
-- **Naya HUD theme = purana DEFAULT.** `PRABH_HUD_THEME` (`config_hud.hud_theme()`,
-  default `"neon"`). Nayi look `html[data-theme="arc"]` ke **andar** hi likho —
-  default HUD ka ek pixel bhi na hile. `?theme=` sirf `server/app.py` ke
-  `resolve_theme()` se guzre (whitelist: neon/arc, adhoori value = default).
-  Query string seedha attribute me **kabhi** nahi (XSS).
-- **Theme ka har constant Python se.** Rang/number `config_hud.py` me,
-  `fill_html()` meta me bhare, JS `meta.content` se padhe. Value dobara mat
-  likho — do jagah likha matlab dono alag ho jayenge.
+- **Ab ek hi HUD theme hai: `"gold"`** (golden plasma orb). Purane `"neon"` aur
+  `"arc"` dono hata diye — `config_hud.HUD_THEMES = ("gold",)`.
+  `?theme=` sirf `server/app.py` ke `resolve_theme()` se guzre (whitelist,
+  adhoori value = default). Query string seedha attribute me **kabhi** nahi (XSS).
+- **Theme ka har constant Python se.** Rang/number `config_hud.py` me, CSS
+  `:root` variables (`hud_base.css`) me — dono ek hi palette
+  (`--gold: #ffb43a`). Value dobara mat likho.
 - **SVG `createElementNS` se.** `document.createElement("svg")` HTML-namespace
   ka hota hai — usme SVG children `getBBox() = 0x0` dete hain (sab invisible,
   attributes sahi). Test me **tag nahi, geometry** check karo (`getBBox() > 0`).
-- **Dynamic `<script>` par `async = false`.** DOM se banaya `<script>` default
-  async hota hai — load order toot jaata hai. Pehle se chali aa rahi file bhi
-  toot sakti hai (arc_shell `arc_dom` se pehle chala tha).
+- **SVG par `transform-origin` default `0 0` hota hai** (CSS ka `50% 50%` nahi).
+  Har ghoomne/scaling wale SVG element par `transform-origin: 160px 160px`
+  explicitly do — warna ring page ke corner ke around ghoomti hai
+  (`.dotted` me yahi bug tha, screenshot me pakda).
 - **Git identity: global config hi.** User `Rachit Sharma`, email
   `339157645+Rachit-Sharma08@users.noreply.github.com`. Kabhi `-c user.name`,
   `--author`, ya local user config mat lagao. Push se pehle
@@ -808,14 +805,12 @@ hai: **test production ko nahi, apni purani soch ko pakadta hai.**
   **`config.py` me naam `import` se aate hain, `X = ...` se nahi**, is liye
   6 part ke har constant "missing" report ho gaye jabki runtime par sab theek
   the. **Import kiye naam dekhne ke liye `getattr` chahiye, AST nahi.**
-- **⚠️ DEFAULT BADALNE PAR SIRF `want` MAT BADLO — DOOSRE KA RAASTA BHI CHECK
-  KARO.** Default `"neon"` → `"arc"` karte waqt `test_hud_bar.py` ka poora
-  subject hi neon ke selectors (`.bottombar`, `.remind-pill`, `.qlbl`,
-  `.composer`, `.brainwarn`) hai. Bina pin ke wo **chup-chaap fail** hota —
-  kyunki uske saare selectors arc me maujood hi nahi rehte. Is liye
-  `hudserve.FakeHud(theme="neon")` banaya. Naya pakkaura: `?theme=neon` aur
-  `?theme=arc` **dono** khol kar test karo, taaki flip se pata chale ki purana
-  look phat se toota ya nahi.
+- **⚠️ THEME/LOOK BADALNE PAR TEST KA SUBJECT BHI DEKHO.** Ek theme hata di
+  (neon/arc → gold) to us theme ke selectors wale test **chup-chaap** kuch bhi
+  pass kar sakte hain, kyunki unke selectors maujood hi nahi rehte. Is liye
+  `hudserve.FakeHud(theme="gold")` pin karta hai, aur `test_hud_gold.py`
+  `?theme=` whitelist + orb geometry dono check karta hai. Naya theme/look
+  badlo to pehle grep karo kaun se test uske selectors par depend karte hain.
 
 **Bonus — `ACK_ON_WAKE` ka asli galti ka chhaka (14-Oct).** Wake command ek
 **random phrase** bolta hai (`random.choice` 5 me se), par 3 test poore

@@ -19,7 +19,7 @@ karo, khud theek mat karo.
    Python se. Exit code 0 = pass. 6 purane fail wahi hain:
    `test_desktop`, `test_desktop_shortcut`, `test_desktop_sleep`,
    `test_wake_ack`, `test_wake_command`, `test_wake_resample`.
-2. **Playwright HUD test**: `test_hud_bar.py` + `test_hud_arc.py`.
+2. **Playwright HUD test**: `test_hud_bar.py` + `test_hud_gold.py`.
    Headless, nakli server, teen viewport. Screenshot `%TEMP%` me.
 
 ## Niyam

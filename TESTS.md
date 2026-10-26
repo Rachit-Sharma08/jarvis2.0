@@ -112,7 +112,7 @@ Ek-ek karke:
 | `test_hot_window_helpers.py` | **KAAM 5 — wiring** — `command.py` ke `finally` me `mark_hot()` aur wo **release ke BAAD**; `Session.set_hot` + `worker.mark_hot` delegate; config 12 s; env key ke naam; `config.describe()` me `hot=` |
 | `test_hud_stats_load.py` | **KAAM 6 — SYSTEM panel `--` na rahe** — `/hud/stats` 200 + `cpu`/`ram` **kabhi `None` nahi** (yaani `--` data ki kami nahi, call na hone ki kami thi); battery `percent=None` par UI PLUG; bina token 401; naya `ui/hud_prime.js` load par `/hud/stats` maarta hai + token bhejta hai + `index.html` me tag; weather **double** fetch nahi; WS raasta bhi bacha; `textContent` (innerHTML nahi); pump **pehle** sota hai (ye `--` ki wajah tha). **Browser nahi, port 8000 par kuch nahi** |
 | `test_hud_bar.py` | **KAAM A — bottom bar (Playwright headless, nakli server)** — 1366x768 + 1280x720 + 1920x1080 + 1200x688 + 1024x700 par bar ka cut nahi, koi element clip nahi, 13 overlap pair me koi overlap nahi, hud overflow nahi. Bug-injection: `.remind-pill` par absolute wapas daalne se 5 check fail. Screenshot `%TEMP%` me, repo me nahi |
-| `test_hud_arc.py` | **KAAM B — Arc theme (Playwright headless, nakli server)** — 1366x768 + 1920x1080 par clip/overflow nahi, input bar poori, reactor ka **asli geometry** (`getBBox()` > 0 — namespace bug yahin pakda), 3 state label, Hindi typewriter, default neela regress nahi, `?theme=` whitelist (adhoori value reject, bada `ARC` chalta hai). Bug-injection: namespace bug wapas daalne par 8 clean FAIL (crash nahi). Screenshot `%TEMP%` me |
+| `test_hud_gold.py` | **Gold HUD (Playwright headless, nakli server)** - default `data-theme` asli config se, `?theme=` whitelist (adhoori value reject, bada `GOLD` chalta hai), orb ke asli layers ka **geometry** (`getBBox()` > 0 - SVG namespace bug yahin pakda), 4 state label, koi JS error nahi. Screenshot `%TEMP%` me |
 | `test_config_parts.py` | **config ka hissa poora hai ya nahi** — production me jo bhi `config.X` maangta hai wo **runtime** par resolve hona chahiye (`AttributeError` ka pakkaura); `config.py` jo `config_*.py` import karta hai uski file disk par; `config_lines`/`config_audio` ke har constant `config_wake` **aur** `config` dono me. Bug-injection: naya constant bana kar use ek production file me maanga → 2 FAIL, naam + jagah dono dikha. Sirf source padhta hai, koi module import nahi |
 | `test_wake_gain.py` | **Wake ka digital gain (14-Oct split)** — bina mic ke: khamoshi par gain 1 rahe (battery); **gate ke neeche (0.0015) ki awaaz 2000 block baad bhi gain na le** (DEAD ZONE pin); gate se upar (0.0055) dheemi awaaz par gain uthe; zor par gain 1.2 se neeche + clip nahi; do level comparable; `JARVIS_WAKE_GAIN` ke teen raaste (auto/number/off). `test_wake_resample.py` se nikal kar alag kiya (200 cross) |
 
@@ -198,7 +198,7 @@ Runner sirf hai; saare checks char helper me hain (har file `<200` lines):
 | `hud_check_get.py` | same-origin GET ka rule — Referer / `Sec-Fetch-Site` proof, cross-site reject, `origin_from_referer()` |
 | `hud_check_api.py` | weather `_parse` mock + crash-safe, stats shape/cache, `/hud/*` security + CSP, `/hud/quick` extra-field 422, gatekeeper no-bypass, **ek shared Engine** |
 
-### Playwright helper (`hudserve.py` + `hudcheck_bar.py`/`arccheck.py`)
+### Playwright helper (`hudserve.py` + `hudcheck_bar.py` + `test_hud_gold.py`)
 
 `tests/hudserve.py` dono Playwright suite ka shared nakli server hai — sirf
 `ui/` static + `/hud/stats` + `/hud/weather`, port **8731+** (8000 kabhi
@@ -207,35 +207,26 @@ HTTP/1.1 + Content-Length — warna Chromium ke parallel load beech me kat
 jaate hain aur alag-alag baar alag JS error aata hai. `?theme=` ka rule asli
 server jaisa (lowercase + whitelist).
 
-`hudcheck_bar.py` (KAAM A) aur `arccheck.py` + `arc_probe.py` (KAAM B) me
-asli checks hain; `test_hud_bar.py` / `test_hud_arc.py` sirf runner hain.
-Dono ke niyam `hud-playwright-check` skill me hain.
+`hudcheck_bar.py` (bottom bar) me asli checks hain; `test_hud_bar.py` sirf
+runner hai. `test_hud_gold.py` theme whitelist + orb geometry + state labels
+check karta hai (pehle ye kaam `test_hud_arc.py` + 4 helper files karta tha —
+do theme the; ab ek hi "gold" theme hai, is liye sab ek file me).
 
-**14-Oct ke do naye helpers:**
-
-- `tests/arclib.py` — `check` / `FAILED` / `wait_ready` / `set_state` /
-  `visible_css` / `shots_dir`. Ye is liye alag hai ki `arccheck.py` (theme) aur
-  `arc_layout.py` (geometry) dono ko ye chahiye — dono ek doosre se import
-  karte to **circular import**. `FAILED` ek list object hai aur teenon me wahi
-  hai, is liye runner ka `from arccheck import FAILED` sahi chalta hai.
-  **arccheck 200 cross tha to split hua:** `arc_layout.py` = clip/overflow/
-  geometry/state/Hindi (sirf arc), `arccheck.py` = default + `?theme=` whitelist
-  + wiring (dono themes).
-- `tests/pcmhelp.py` — `check` + `FAILED` + `gain_value()`. `test_wake_gain.py`
-  aur `test_wake_resample.py` dono ko ye chahiye; ek jagah likha hai taaki ek ka
-  fail doosre me na dikhe.
-
-**`hudserve.FakeHud(theme=...)` naya option (14-Oct):** `theme="neon"` dene par
-us theme ko pin karta hai (`__exit__` par wapas). `test_hud_bar.py` is liye
-`neon` pin karta hai — uske saare selectors (`.bottombar`, `.remind-pill`,
-`.qlbl`, `.composer`, `.brainwarn`) neon ke hain, arc ke nahi. **Bina pin ke
-default flip karte hi wo chup-chaap fail hota**, kyunki uske selectors maujood
-hi nahi rehte — yahi galti Phase 4 me 8 baar hui thi.
+**`hudserve.FakeHud(theme=...)`:** `theme="gold"` dene par us theme ko pin
+karta hai (`__exit__` par wapas). `test_hud_bar.py` is liye `gold` pin karta
+hai — uske saare selectors (`.bottombar`, `.remind-pill`, `.qlbl`,
+`.composer`, `.brainwarn`) gold HUD ke hain. **Bina pin ke default flip karte
+hi wo chup-chaap fail hota**, kyunki uske selectors maujood hi nahi rehte —
+yahi galti Phase 4 me 8 baar hui thi.
 
 **`hudserve.DEFAULT_THEME` module-level hai aur `filled_html()` use
 call-time par padhta hai** (import par nahi). Test runner use
 `config.hud_theme()` se bharta hai, is liye nakli server **bhi asli default
 serve** karta hai — comment me likha tha "asli values" par code hard-code tha.
+
+`tests/pcmhelp.py` — `check` + `FAILED` + `gain_value()`. `test_wake_gain.py`
+aur `test_wake_resample.py` dono ko ye chahiye; ek jagah likha hai taaki ek ka
+fail doosre me na dikhe.
 
 Naya test is file me daalna ho to sahi helper chune — nayi file banane se pehle
 socho, `hud_check_ui.py` UI ke liye hai aur `hud_check_api.py` server ke liye.
