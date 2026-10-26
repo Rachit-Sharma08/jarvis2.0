@@ -1,48 +1,58 @@
-/* Panel ka look: translucent + 1px cyan border + kone par brackets + filled tab.
- * Har panel ke andar ka layout nahi — sirf ye common khaalipan.
+/* Panel ka look: koi box nahi — sirf ek hairline + kone ka bracket.
+ * Film HUD me panels khule frames hote hain, bhare hue dabbe nahi.
  */
 
 .panel {
   position: relative;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  backdrop-filter: blur(2px);
-  padding: 20px 12px 12px;
+  background: linear-gradient(180deg, rgba(255, 180, 58, 0.022), transparent 45%);
+  border: none;
+  padding: 22px 12px 12px;
   min-height: 0;
   display: flex;
   flex-direction: column;
-  box-shadow: inset 0 0 26px rgba(46, 168, 255, 0.05);
 }
 .panel.grow { flex: 1; }
 
-/* kone par chhote brackets — pure CSS, koi image nahi */
-.panel::before,
+/* upar ki hairline — shuru me 16px bright (top-left corner ka ehsaas) */
+.panel::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    var(--gold) 0 16px, var(--gold-deep) 16px, transparent 88%);
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+/* neeche-daayin kona — doosra (asymmetric) corner mark */
 .panel::after {
   content: "";
   position: absolute;
-  width: 11px;
-  height: 11px;
-  border-color: var(--cyan-bright);
-  border-style: solid;
-  border-width: 0;
+  right: 0;
+  bottom: 0;
+  width: 14px;
+  height: 14px;
+  border-right: 1px solid var(--gold-mid);
+  border-bottom: 1px solid var(--gold-mid);
+  opacity: 0.65;
   pointer-events: none;
 }
-.panel::before { top: 3px; left: 3px; border-top-width: 2px; border-left-width: 2px; }
-.panel::after  { bottom: 3px; right: 3px; border-bottom-width: 2px; border-right-width: 2px; }
 
-/* title ek chhota filled tab, UPPERCASE + letter-spacing (text hi UPPER hai) */
+/* title: patla outlined tag, bottom-right kata hua, hairline par baitha */
 .ptab {
   position: absolute;
   top: -1px;
-  left: 10px;
-  padding: 3px 10px;
-  font-family: var(--font-head);
-  font-size: 9px;
-  font-weight: 500;
+  left: 0;
+  padding: 3px 13px 3px 8px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-weight: 400;
   letter-spacing: 3px;
-  color: #04121f;
-  background: var(--cyan);
-  clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+  color: var(--gold);
+  background: rgba(255, 180, 58, 0.07);
+  border: 1px solid var(--line-dim);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 9px) 100%, 0 100%);
 }
 
 .tag {
@@ -51,40 +61,39 @@
   right: 10px;
   padding: 1px 7px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: 8px;
   letter-spacing: 2px;
-  color: var(--cyan-bright);
-  border: 1px solid var(--border);
-  background: rgba(46, 168, 255, 0.10);
+  color: var(--gold-mid);
+  border: 1px solid var(--line-dim);
 }
-.tag.live { color: var(--amber); border-color: rgba(245, 166, 35, 0.45); }
+.tag.live { color: var(--gold-hot); border-color: var(--gold); }
 
 /* ---- Pills: status + SYSTEM ---- */
 .pill {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 2px;
-  padding: 3px 10px;
-  border: 1px solid var(--border);
-  background: rgba(46, 168, 255, 0.08);
-  color: var(--ink-dim);
+  padding: 3px 9px;
+  border: 1px solid var(--line-dim);
+  background: rgba(255, 180, 58, 0.04);
+  color: var(--gold-mid);
   white-space: nowrap;
 }
-.pill.st-idle    { color: var(--ink-dim); }
-.pill.st-listen  { color: var(--amber); border-color: rgba(245, 166, 35, 0.55); background: rgba(245, 166, 35, 0.10); }
-.pill.st-think   { color: var(--cyan-bright); border-color: var(--cyan); background: rgba(46, 168, 255, 0.16); }
-.pill.st-speak   { color: var(--cyan-bright); border-color: var(--cyan); background: rgba(46, 168, 255, 0.16); }
+.pill.st-idle    { color: var(--gold-mid); }
+.pill.st-listen  { color: var(--gold); border-color: var(--gold); background: rgba(255, 180, 58, 0.10); }
+.pill.st-think   { color: var(--gold-hot); border-color: var(--gold-hot); background: rgba(255, 233, 176, 0.08); }
+.pill.st-speak   { color: var(--gold-hot); border-color: var(--gold-hot); background: rgba(255, 233, 176, 0.08); }
 
-.pill.sys.on    { color: #5cffb0; border-color: rgba(92, 255, 176, 0.45); }
-.pill.sys.degrade { color: var(--amber); border-color: rgba(245, 166, 35, 0.5); }
-.pill.sys.off   { color: #ff8080; border-color: rgba(255, 128, 128, 0.5); }
+.pill.sys.on      { color: var(--gold-hot); border-color: rgba(255, 233, 176, 0.45); }
+.pill.sys.degrade { color: var(--gold); border-color: rgba(255, 180, 58, 0.55); }
+.pill.sys.off     { color: var(--ember); border-color: rgba(255, 92, 51, 0.5); }
 
 /* Desktop pill — Python side ka mic + wake. Tray icon ka rang yahi hai. */
-.pill.desk            { color: var(--ink-dim); }
-.pill.desk.idle       { color: var(--cyan); border-color: rgba(46, 168, 255, 0.45); }
-.pill.desk.listening  { color: var(--cyan-bright); border-color: var(--cyan); background: rgba(46, 168, 255, 0.16); }
-.pill.desk.muted      { color: var(--amber); border-color: rgba(245, 166, 35, 0.55); background: rgba(245, 166, 35, 0.10); }
-.pill.desk.error      { color: #ff8080; border-color: rgba(255, 128, 128, 0.5); }
+.pill.desk            { color: var(--gold-deep); }
+.pill.desk.idle       { color: var(--gold-mid); border-color: var(--line); }
+.pill.desk.listening  { color: var(--gold); border-color: var(--gold); background: rgba(255, 180, 58, 0.10); }
+.pill.desk.muted      { color: var(--gold-hot); border-color: rgba(255, 233, 176, 0.5); }
+.pill.desk.error      { color: var(--ember); border-color: rgba(255, 92, 51, 0.5); }
 
 /* ---- Chhote buttons (top bar + bottom bar) ---- */
 .mini {
@@ -92,26 +101,26 @@
   font-size: 9px;
   letter-spacing: 2px;
   padding: 4px 9px;
-  color: var(--ink);
-  background: rgba(6, 18, 34, 0.7);
-  border: 1px solid var(--border);
+  color: var(--bone);
+  background: transparent;
+  border: 1px solid var(--gold-deep);
   cursor: pointer;
 }
-.mini:hover { border-color: var(--cyan-bright); color: var(--cyan-bright); }
-.mini.active { color: var(--amber); border-color: var(--amber); background: rgba(245, 166, 35, 0.12); }
-.mini.on     { color: #5cffb0; border-color: rgba(92, 255, 176, 0.5); }
+.mini:hover { border-color: var(--gold); color: var(--gold); }
+.mini.active { color: var(--void); border-color: var(--gold); background: var(--gold); }
+.mini.on { color: var(--gold-hot); border-color: var(--gold-hot); }
 
 /* ---- Chhote helper text ---- */
 .tiny {
   font-family: var(--font-mono);
   font-size: 9px;
   letter-spacing: 1px;
-  color: var(--ink-dim);
+  color: var(--gold-mid);
   margin: 0;
 }
 .hint {
   font-size: 11px;
-  color: var(--ink-dim);
+  color: var(--gold-mid);
   margin-top: 6px;
   min-height: 13px;
 }
@@ -120,23 +129,17 @@
 .chatlog::-webkit-scrollbar,
 .actlist::-webkit-scrollbar { width: 4px; }
 .chatlog::-webkit-scrollbar-thumb,
-.actlist::-webkit-scrollbar-thumb { background: var(--cyan-dim); border-radius: 2px; }
+.actlist::-webkit-scrollbar-thumb { background: var(--gold-deep); border-radius: 2px; }
 .chatlog::-webkit-scrollbar-track,
 .actlist::-webkit-scrollbar-track { background: transparent; }
-.chatlog, .actlist { scrollbar-width: thin; scrollbar-color: var(--cyan-dim) transparent; }
+.chatlog, .actlist { scrollbar-width: thin; scrollbar-color: var(--gold-deep) transparent; }
 
 /* ---- Notice / micflag / brainwarn ----
  *
- * KAAM A (14-Oct, Playwright verified): ye teen `position: fixed` overlays
- * THE. `.notice` aur `.micflag` `bottom: 84px` par the — yaani wahi jagah
- * jahan left/right column ke panels khatam hote hain (1366x768 par panel
- * bottom 685, notice 670..684). Is liye error text CONVERSATION panel par
- * chadh aata tha. `.brainwarn` `top: 6px` par tha aur topbar (10..49) ko
- * dhak deta tha.
- *
- * AB: `.notice`/`.micflag` bottom bar ke apne `.barhint` row me hain
- * (`hud_bottom.css`) — static flow, koi overlap nahi. `.brainwarn` abhi bhi
- * fixed hai par topbar ke upar apni jagah banata hai (niche dekho).
+ * KAAM A (14-Oct, Playwright verified): `.notice`/`.micflag` pehle fixed
+ * `bottom: 84px` par the — left/right panels ke bottom par chadh jaate the.
+ * Ab wo bottom bar ke apne `.barhint` row me hain (static flow).
+ * `.brainwarn` bhi topbar ke flow me hai (`.tb-mid`), fixed nahi.
  */
 .notice, .micflag {
   font-size: 11px;
@@ -147,27 +150,24 @@
   white-space: nowrap;
   display: none;
 }
-.notice { color: #ff9c9c; }
+.notice { color: var(--ember); }
 .notice:not(:empty) { display: block; }
 .micflag {
   font-family: var(--font-mono);
   letter-spacing: 3px;
-  color: var(--amber);
+  color: var(--gold);
   margin-left: auto;
 }
 .micflag.on { display: block; }
 
-/* brainwarn: pehle `position: fixed; top: 6px` tha aur topbar (10..49) ko
- * dhak deta tha (Playwright verified, KAAM A). Ab `.tb-mid` ke flow me hai —
- * khaali ho to `display: none`, yaani topbar bilkul nahi hile. */
 .brainwarn {
   display: none;
   margin: 4px auto 0;
   max-width: 340px;
   padding: 2px 12px;
-  border: 1px solid rgba(245, 166, 35, 0.5);
-  background: rgba(245, 166, 35, 0.10);
-  color: var(--amber);
+  border: 1px solid rgba(255, 180, 58, 0.4);
+  background: rgba(255, 180, 58, 0.06);
+  color: var(--gold);
   font-family: var(--font-mono);
   font-size: 10px;
   line-height: 1.5;

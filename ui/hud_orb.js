@@ -1,8 +1,9 @@
-// CENTER ka orb: bahar fine tick-marks, segmented ring, amber progress arc,
-// dotted ring, aur beech ka core. State (idle/listening/thinking/speaking)
-// body par class lagata hai — animation pure CSS me hai (hud_center.css).
+// CENTER ka orb: bahar fine tick-marks, segmented ring, gold progress arc,
+// dotted ring, aur beech ka donut core (golden plasma sphere ke andar).
+// State (idle/listening/thinking/speaking) wrap + orb par class lagata hai —
+// animation pure CSS me hai (hud_center.css).
 //
-// Progress arc: amber, neeche-daayin se. `setProgress(0..1)` se chalti hai —
+// Progress arc: gold, neeche-daayin se. `setProgress(0..1)` se chalti hai —
 // brain ka sochne ka time ya koi loading dikhane ke liye. Har text textContent.
 
 (function () {
@@ -15,7 +16,7 @@
   const SVG_NS = "http://www.w3.org/2000/svg";
   const TICKS = 72;              // bahar kitne fine tick-marks
   const R_OUTER = 152;
-  const PROG_C = 653.4;          // 2 * pi * 104
+  const PROG_C = 666;            // 2 * pi * 106
   const STATES = ["idle", "listening", "transcribing", "thinking", "speaking"];
   const STATE_TEXT = {
     idle: "READY",
@@ -47,17 +48,16 @@
   // ---- state class ----
   function setState(value) {
     let key = String(value || "idle").toLowerCase();
-    if (key === "transcribing") key = "listening";   // CSS me wahi animation
+    // CSS me transcribing ke liye alag animation nahi — wahi listening.
+    if (key === "transcribing") key = "listening";
     if (STATES.indexOf(key) === -1) key = "idle";
 
     for (const name of STATES) wrap.classList.remove(name);
-    // CSS sirf idle/listening/thinking/speaking par animations rakhta hai
-    const cssName = key === "transcribing" ? "listening" : key;
-    wrap.classList.add(cssName);
+    wrap.classList.add(key);
     const orb = document.getElementById("orb");
     if (orb) {
       orb.className.baseVal = (orb.className.baseVal || "").replace(/\b(idle|listening|transcribing|thinking|speaking)\b/g, "");
-      orb.classList.add(cssName);
+      orb.classList.add(key);
     }
     stateEl.textContent = STATE_TEXT[key] || STATE_TEXT.idle;
   }
@@ -72,7 +72,7 @@
   modeEl.textContent = (raw === "sunday" ? fallback : (mode || fallback)).toUpperCase();
   }
 
-  // ---- amber progress arc ----
+  // ---- gold progress arc ----
   const progEl = document.getElementById("ringProg");
   function setProgress(fraction) {
     let pct = Number(fraction);

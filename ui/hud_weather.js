@@ -23,8 +23,8 @@
     pct = Math.max(0, Math.min(100, pct));
     arcEl.style.strokeDashoffset = String(ARC * (1 - pct / 100));
     arcEl.classList.remove("warm", "cold");
-    if (pct >= 65) arcEl.classList.add("warm");       // 12°C+ -> amber
-    else if (pct <= 30) arcEl.classList.add("cold");  // -5°C-  -> bright cyan
+    if (pct >= 65) arcEl.classList.add("warm");       // 12°C+ -> ember
+    else if (pct <= 30) arcEl.classList.add("cold");  // -5°C-  -> gold-hot
   }
 
   function render(data) {

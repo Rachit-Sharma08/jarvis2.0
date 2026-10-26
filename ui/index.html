@@ -1,7 +1,6 @@
 <!DOCTYPE html>
-<!-- `data-theme` `<html>` par (arc CSS `html[data-theme="arc"]` ke andar
-     hai). Server (`fill_html`) ise bhar deta hai — JS nahi, warna pehle frame
-     par flash aata. Sirf "neon" (default) ya "arc" maane jaate hain. -->
+<!-- `data-theme` server (`fill_html`) bharta hai â€” JS nahi, warna pehle frame
+     par flash. Ab sirf "gold"; whitelist `config.HUD_THEMES` me hai. -->
 <html lang="en" data-theme="__JARVIS_HUD_THEME__">
 <head>
 <meta charset="utf-8" />
@@ -12,20 +11,7 @@
      liye "Jarvis" app.js / hud_*.js me dobara likha nahi gaya. -->
 <meta name="jarvis-name" content="__JARVIS_ASSISTANT_NAME__" />
 <meta name="jarvis-display" content="__JARVIS_DISPLAY_NAME__" />
-<!-- KAAM B: theme + arc ke constants. Python ka ek hi source (`config_hud.py`);
-     JS unhe yahin se meta ke through padhta hai (`arc_config.js`). Content
-     JSON hai (numbers/arrays) ya plain text (credit/channel). -->
 <meta name="jarvis-theme" content="__JARVIS_HUD_THEME__" />
-<meta name="arc-accent" content="__ARC_ACCENT__" />
-<meta name="arc-accent-2" content="__ARC_ACCENT_2__" />
-<meta name="arc-routing" content="__ARC_ROUTING__" />
-<meta name="arc-channel" content="__ARC_CHANNEL__" />
-<meta name="arc-credit" content="__ARC_CREDIT__" />
-<meta name="arc-ticks" content="__ARC_TICKS__" />
-<meta name="arc-hex" content="__ARC_HEX__" />
-<meta name="arc-act-max" content="__ARC_ACT_MAX__" />
-<meta name="arc-type-ms" content="__ARC_TYPE_MS__" />
-<meta name="arc-frame-ms" content="__ARC_FRAME_MS__" />
 <title>__JARVIS_ASSISTANT_NAME__ HUD</title>
 <link rel="stylesheet" href="/ui/fonts.css" />
 <link rel="stylesheet" href="/ui/hud_base.css" />
@@ -35,9 +21,6 @@
 <link rel="stylesheet" href="/ui/hud_right.css" />
 <link rel="stylesheet" href="/ui/hud_bottom.css" />
 <link rel="stylesheet" href="/ui/hud_card.css" />
-<!-- KAAM B: arc ki CSS+JS `arc_load.js` se (line limit). Default HUD par koi
-     asar nahi — CSS `html[data-theme="arc"]` ke andar hai. -->
-<script src="/ui/arc_load.js"></script>
 </head>
 <body>
 <div class="gridbg" aria-hidden="true"></div>
@@ -47,7 +30,7 @@
   <header class="topbar">
     <div class="tb-left">
       <h1 class="brand" id="brand">__JARVIS_DISPLAY_NAME__</h1>
-      <span class="pill st-idle" id="status">● IDLE</span>
+      <span class="pill st-idle" id="status">â— IDLE</span>
     </div>
     <div class="tb-mid">
       <div class="ruler" id="ruler" aria-hidden="true"></div>
@@ -55,8 +38,8 @@
       <p class="brainwarn" id="brainwarn">__JARVIS_BRAIN_WARN__</p>
     </div>
     <div class="tb-right">
-      <span class="pill sys" id="sysstate">SYSTEM …</span>
-      <span class="pill desk off" id="deskstate">DESKTOP …</span>
+      <span class="pill sys" id="sysstate">SYSTEM â€¦</span>
+      <span class="pill desk off" id="deskstate">DESKTOP â€¦</span>
       <span class="prov" id="provider"></span>
       <button class="mini" id="mute" type="button">MUTE</button>
       <button class="mini" id="stop" type="button">STOP</button>
@@ -77,7 +60,7 @@
         </div>
         <div class="clocktext">
           <p class="bigtime" id="clockTime">--:--</p>
-          <p class="tiny" id="clockDate">…</p>
+          <p class="tiny" id="clockDate">â€¦</p>
         </div>
       </div>
     </section>
@@ -95,24 +78,46 @@
   </aside>
 
   <section class="col-center">
+    <!-- Golden plasma orb: sphere + donut core + arcs + filaments. Gradients
+         SVG me CSS se nahi bante, is liye defs yahan. State class JS lagata hai. -->
     <div class="orbwrap" id="orbwrap">
-      <svg class="orb" viewBox="0 0 320 320" role="img" aria-label="Jarvis orb">
+      <svg class="orb" id="orb" viewBox="0 0 320 320" role="img" aria-label="Jarvis orb">
         <defs>
-          <!-- core circle ka asli radial gradient. SVG me CSS radial-gradient
-               nahi chalta, isliye yahan define karna padta hai. -->
-          <radialGradient id="coreGrad" cx="50%" cy="42%" r="60%">
-            <stop offset="0%" stop-color="rgba(76,195,255,0.55)" />
-            <stop offset="60%" stop-color="rgba(10,28,70,0.85)" />
-            <stop offset="100%" stop-color="rgba(3,6,15,0.95)" />
+          <radialGradient id="plasmaGrad" cx="42%" cy="36%" r="70%">
+            <stop offset="0%" stop-color="#ffe9b0" stop-opacity="0.55" />
+            <stop offset="34%" stop-color="#ffb43a" stop-opacity="0.28" />
+            <stop offset="70%" stop-color="#6b4713" stop-opacity="0.55" />
+            <stop offset="100%" stop-color="#0d0906" stop-opacity="0.94" />
           </radialGradient>
+          <linearGradient id="coreGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#ffe9b0" />
+            <stop offset="45%" stop-color="#ffb43a" />
+            <stop offset="100%" stop-color="#c8842a" />
+          </linearGradient>
+          <linearGradient id="sheenGrad" x1="0" y1="1" x2="1" y2="0">
+            <stop offset="0%" stop-color="#ffe9b0" stop-opacity="0" />
+            <stop offset="100%" stop-color="#ffe9b0" stop-opacity="0.85" />
+          </linearGradient>
         </defs>
         <g id="ringOuter"></g>
         <circle class="segtrack" cx="160" cy="160" r="132" />
         <circle class="seg" id="ringSeg" cx="160" cy="160" r="132" />
-        <circle class="progtrack" cx="160" cy="160" r="104" />
-        <circle class="prog" id="ringProg" cx="160" cy="160" r="104" />
-        <circle class="dotted" id="ringDot" cx="160" cy="160" r="76" />
-        <circle class="core" id="ringCore" cx="160" cy="160" r="58" />
+        <circle class="progtrack" cx="160" cy="160" r="106" />
+        <circle class="prog" id="ringProg" cx="160" cy="160" r="106" />
+        <circle class="arc arcA" cx="160" cy="160" r="124" />
+        <circle class="arc arcB" cx="160" cy="160" r="116" />
+        <circle class="arc arcC" cx="160" cy="160" r="96" />
+        <circle class="sphere" cx="160" cy="160" r="84" />
+        <!-- specular highlight: sphere ke upar-baayin 70Â° ka arc -->
+        <path class="sheen" d="M78.9 138.3 A84 84 0 0 1 152.7 76.3" />
+        <circle class="fil" cx="160" cy="160" r="74" />
+        <circle class="fil f2" cx="160" cy="160" r="68" />
+        <circle class="fil f3" cx="160" cy="160" r="62" />
+        <circle class="fil f4" cx="160" cy="160" r="56" />
+        <circle class="dotted" id="ringDot" cx="160" cy="160" r="79" />
+        <circle class="core" id="ringCore" cx="160" cy="160" r="48" />
+        <g class="satorbit satA"><circle class="sat" cx="160" cy="20" r="2.6" /></g>
+        <g class="satorbit satB"><circle class="sat" cx="160" cy="42" r="2" /></g>
       </svg>
       <div class="orbtext">
         <p class="orbmode" id="orbMode">__JARVIS_DISPLAY_NAME__</p>
@@ -131,7 +136,7 @@
           <path class="t-fg" id="tempArc" d="M12 60 A48 48 0 0 1 108 60" />
         </svg>
         <div class="wxtext">
-          <p class="wxtemp" id="wxTemp">--°</p>
+          <p class="wxtemp" id="wxTemp">--Â°</p>
           <p class="wxcond" id="wxCond">No data</p>
           <p class="tiny" id="wxCity">Delhi</p>
         </div>
@@ -144,7 +149,6 @@
       <div class="chatlog" id="messages"></div>
     </section>
   </aside>
-
   <!-- BOTTOM BAR (KAAM A: .notice/.micflag bar ke apne .barhint row me) -->
   <footer class="bottombar">
     <div class="barhint">
@@ -164,7 +168,7 @@
     <div class="qgroup" id="qRight"></div>
   </footer>
 </main>
-
+<!-- Trust mode me ye card kabhi nahi khulta; trust off par purana ALLOW/DENY. -->
 <div class="overlay" id="confirmcard" hidden>
   <div class="card">
     <h3>ALLOW YA DENY?</h3>
@@ -177,7 +181,6 @@
     </div>
   </div>
 </div>
-
 <script src="/ui/recorder.js"></script>
 <script src="/ui/speaker.js"></script>
 <script src="/ui/hud_clock.js"></script>

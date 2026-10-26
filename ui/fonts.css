@@ -9,11 +9,11 @@
  */
 
 @font-face {
-  font-family: "Orbitron";
+  font-family: "Michroma";
   font-style: normal;
-  font-weight: 500 700;
+  font-weight: 400;
   font-display: swap;
-  src: url("/ui/fonts/orbitron-var.woff2") format("woff2");
+  src: url("/ui/fonts/michroma-400.woff2") format("woff2");
 }
 
 @font-face {

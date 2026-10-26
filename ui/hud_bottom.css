@@ -1,18 +1,19 @@
 /* BOTTOM BAR: 3+3 quick buttons, composer (MIC + input + slanted SEND),
- * aur confirm card overlay. Card ka behaviour tools.js me hai — sirf look yahan.
+ * aur hint strip (reminder/notice/micflag). Confirm card ka look alag file
+ * (hud_card.css) me hai — trust mode me wo dikhta hi nahi.
  */
 
 .bottombar {
   display: grid;
   /* Row 1 = hint strip (reminder/notice/micflag), Row 2 = controls.
-     Pehle sirf ek row thi, is liye hint strip ke liye jagah hi nahi thi —
-     wahi 1366x768 par label par text chadh jane ki wajah tha (KAAM A). */
+     Pehle sirf ek row thi, is liye hint strip ke liye jagah hi nahi thi — wahi
+     1366x768 par label par text chadh jane ki wajah tha (KAAM A). */
   grid-template-columns: auto 1fr auto;
   grid-template-rows: auto auto;
   align-items: center;
   gap: 6px 14px;
   padding: 6px 2px 2px;
-  border-top: 1px solid var(--border);
+  border-top: 1px solid var(--line-dim);
 }
 .bottombar > .qgroup, .bottombar > .composer { grid-row: 2; }
 
@@ -31,19 +32,19 @@
   padding: 0;
 }
 .qbtn:disabled { cursor: not-allowed; opacity: 0.32; }
-.qbtn:not(:disabled):hover .qico { border-color: var(--cyan-bright); box-shadow: 0 0 12px rgba(46, 168, 255, 0.55); }
+.qbtn:not(:disabled):hover .qico { border-color: var(--gold); box-shadow: 0 0 12px rgba(255, 180, 58, 0.5); }
 
-/* gol icon box */
+/* chamfered icon box — gol nahi, 45° kata hua (film HUD ka shape) */
 .qico {
   width: 38px;
   height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  background: rgba(6, 18, 34, 0.7);
-  color: var(--cyan);
+  border: 1px solid var(--gold-deep);
+  background: rgba(255, 180, 58, 0.04);
+  color: var(--gold);
+  clip-path: polygon(22% 0, 100% 0, 100% 78%, 78% 100%, 0 100%, 0 22%);
 }
 .qico svg { width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.7; }
 
@@ -51,9 +52,9 @@
   font-family: var(--font-mono);
   font-size: 8px;
   letter-spacing: 1px;
-  color: var(--ink-dim);
+  color: var(--gold-mid);
 }
-.qbtn:not(:disabled):hover .qlbl { color: var(--cyan-bright); }
+.qbtn:not(:disabled):hover .qlbl { color: var(--gold-hot); }
 
 /* ---- composer: MIC + input + slanted SEND ---- */
 .composer {
@@ -61,39 +62,39 @@
   grid-template-columns: auto 1fr auto;
   align-items: center;
   gap: 10px;
-  background: rgba(6, 18, 34, 0.65);
-  border: 1px solid var(--border);
+  background: rgba(255, 180, 58, 0.03);
+  border: 1px solid var(--line-dim);
   padding: 6px 6px 6px 8px;
 }
-.composer:focus-within { border-color: var(--cyan); }
+.composer:focus-within { border-color: var(--gold); }
 
 #cmd {
   background: none;
   border: none;
   outline: none;
-  color: var(--ink);
+  color: var(--bone);
   font-family: var(--font-body);
   font-size: 15px;
   padding: 7px 2px;
   min-width: 0;
 }
-#cmd::placeholder { color: var(--ink-dim); }
+#cmd::placeholder { color: var(--gold-deep); }
 
-/* MIC: gol button, recording me amber */
+/* MIC: chamfered button, recording me ember */
 .mic {
   display: flex;
   align-items: center;
   gap: 5px;
   padding: 5px 10px;
-  background: rgba(6, 18, 34, 0.7);
-  border: 1px solid var(--border);
-  border-radius: 20px;
+  background: rgba(255, 180, 58, 0.04);
+  border: 1px solid var(--gold-deep);
   cursor: pointer;
-  color: var(--ink-dim);
+  color: var(--gold-mid);
+  clip-path: polygon(9px 0, 100% 0, 100% calc(100% - 9px), calc(100% - 9px) 100%, 0 100%, 0 9px);
 }
 .micdot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
 .mictx { font-family: var(--font-mono); font-size: 9px; letter-spacing: 2px; }
-.mic.recording { color: var(--amber); border-color: var(--amber); }
+.mic.recording { color: var(--ember); border-color: var(--ember); }
 .mic.recording .micdot { animation: blink 0.9s ease-in-out infinite; }
 @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
 
@@ -101,26 +102,26 @@
 #send {
   padding: 9px 22px;
   font-family: var(--font-head);
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 400;
   letter-spacing: 3px;
-  color: #04121f;
-  background: var(--cyan);
+  color: var(--void);
+  background: var(--gold);
   border: none;
   cursor: pointer;
   clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
 }
-#send:hover { background: var(--cyan-bright); }
+#send:hover { background: var(--gold-hot); }
 
 /* ---- Reminder pill (KAAM A ka fix) ----
  *
  * PEHLE: `position: absolute; bottom: 8px` — par `.bottombar` par
  * `position: relative` NAHI tha. Is liye ye `.hud` (position: relative,
  * height 100vh) ke against position hota tha, yaani browser viewport ke
- * bilkul neeche. 1366x768 par ye y=746..760 par tha jabki quick-button
- * ke label (.qlbl) y=745..754 par — yaani REMINDER TEXT un label par
- * **chadh** diya tha, aur bar ke apne bottom edge (756) se 4px neeche.
- * User ko yahi "type-bar neeche se kat rahi hai" dikha.
+ * bilkul neeche. 1366x768 par ye y=746..760 par tha jabki quick-button ke
+ * label (.qlbl) y=745..754 par — yaani REMINDER TEXT un label par chadh diya
+ * tha, aur bar ke apne bottom edge (756) se 4px neeche. User ko yahi
+ * "type-bar neeche se kat rahi hai" dikha.
  *
  * AB: ye bar ka apna grid member hai (`.barhint` row), `position: static`.
  * Is liye overlap ka sawaal hi nahi banta, chahe viewport kitna bhi chhota ho.
@@ -135,7 +136,7 @@
 }
 .remind-pill {
   font: 10px/14px var(--font-mono);
-  color: var(--cyan-dim);
+  color: var(--gold-deep);
   opacity: 0.8;
   min-width: 0;
   overflow: hidden;

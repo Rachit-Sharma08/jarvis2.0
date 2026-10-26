@@ -7,7 +7,7 @@
 // ya "hello jarvis" se hota hai. Browser ka apna MIC button alag hai
 // (wo page ke andar record karta hai).
 //
-// Text: `textContent` hi — innerHTML kabhi nahi (AGENTS.md ka UI niyam).
+// Text: `textContent` hi — HTML injection kabhi nahi (AGENTS.md ka UI niyam).
 
 (function () {
   "use strict";

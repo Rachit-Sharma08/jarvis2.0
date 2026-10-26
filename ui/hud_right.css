@@ -3,31 +3,31 @@
 /* ---- WEATHER ---- */
 .wxrow { display: flex; align-items: center; gap: 12px; }
 .tempdial { width: 96px; flex: 0 0 96px; overflow: visible; }
-.t-track { fill: none; stroke: rgba(46, 168, 255, 0.15); stroke-width: 6; stroke-linecap: round; }
+.t-track { fill: none; stroke: rgba(200, 132, 42, 0.15); stroke-width: 6; stroke-linecap: round; }
 .t-fg {
   fill: none;
-  stroke: var(--cyan);
+  stroke: var(--gold);
   stroke-width: 6;
   stroke-linecap: round;
   stroke-dasharray: 151;          /* ardh-gol ki perimeter */
   stroke-dashoffset: 151;
   transition: stroke-dashoffset 0.7s ease, stroke 0.4s ease;
-  filter: drop-shadow(0 0 5px rgba(46, 168, 255, 0.8));
+  filter: drop-shadow(0 0 5px rgba(255, 180, 58, 0.8));
 }
-.t-fg.warm { stroke: var(--amber); }
-.t-fg.cold { stroke: var(--cyan-bright); }
+.t-fg.warm { stroke: var(--ember); }
+.t-fg.cold { stroke: var(--gold-hot); }
 
 .wxtext { min-width: 0; }
 .wxtemp {
   font-family: var(--font-head);
-  font-size: 30px;
-  font-weight: 700;
+  font-size: 26px;
+  font-weight: 400;
   letter-spacing: 1px;
-  color: var(--ink);
+  color: var(--bone);
   line-height: 1.05;
   font-variant-numeric: tabular-nums;
 }
-.wxcond { font-size: 13px; color: var(--cyan-bright); margin: 2px 0 3px; }
+.wxcond { font-size: 13px; color: var(--gold-hot); margin: 2px 0 3px; }
 
 /* ---- CONVERSATION ---- */
 .chatlog {
@@ -52,10 +52,10 @@
   line-height: 1.45;
   overflow-wrap: anywhere;
   padding: 5px 8px;
-  background: rgba(46, 168, 255, 0.05);
+  background: rgba(255, 180, 58, 0.05);
   border-left: 2px solid transparent;
 }
-.msg.user .who { color: var(--amber); }
-.msg.user .body { color: #e8f1ff; border-left-color: rgba(245, 166, 35, 0.5); background: rgba(245, 166, 35, 0.05); }
-.msg.assistant .who { color: var(--cyan-bright); }
-.msg.assistant .body { color: var(--ink); border-left-color: var(--cyan); }
+.msg.user .who { color: var(--gold-mid); }
+.msg.user .body { color: var(--bone); border-left-color: rgba(200, 132, 42, 0.55); background: rgba(200, 132, 42, 0.06); }
+.msg.assistant .who { color: var(--gold); }
+.msg.assistant .body { color: var(--bone); border-left-color: var(--gold); }

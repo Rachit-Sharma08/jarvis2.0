@@ -1,12 +1,12 @@
 # ui/fonts — kahan se aaya
 
-CSS source: https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap
+CSS source: https://fonts.googleapis.com/css2?family=Michroma&family=Rajdhani:wght@400;500;600&family=Share+Tech+Mono&display=swap
 Font files: fonts.gstatic.com (woff2, latin subset only)
 
-orbitron-var.woff2
-  family=Orbitron weight=500..700 style=normal   (variable font — ek hi file dono weights)
-  sha256=c25a9f9da5d9f3db
-  from=https://fonts.gstatic.com/s/orbitron/v35/yMJRMIlzdpvBhQQL_Qq7dy0.woff2
+michroma-400.woff2
+  family=Michroma weight=400 style=normal
+  sha256=754fdb31c9906e82
+  from=https://fonts.gstatic.com/s/michroma/v21/PN_zRfy9qWD8fEagAPg9pTk.woff2
 
 rajdhani-400.woff2
   family=Rajdhani weight=400 style=normal

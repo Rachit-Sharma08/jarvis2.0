@@ -1,21 +1,22 @@
-/* HUD ka base: reset, gehra background + neeli grid, 3-column grid, top bar.
+/* HUD ka base: reset, warm-black background + gold grid, 3-column grid, top bar.
  * Sirf yahan `body`/`html`/`grid`/`topbar` — baaki har file me apna kaam.
- * Rang: config_hud.py ke constants se match karte hain (CYAN #2ea8ff, AMBER #f5a623).
+ * Palette `config_hud.py` se match karti hai (GOLD #ffb43a).
  */
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 :root {
-  --cyan: #2ea8ff;
-  --cyan-bright: #4cc3ff;
-  --cyan-dim: #1c5f9e;
-  --amber: #f5a623;
-  --ink: #cfe4ff;
-  --ink-dim: #5f7fa8;
-  --bg: #04070f;
-  --panel: rgba(8, 20, 38, 0.55);
-  --border: rgba(46, 168, 255, 0.28);
-  --font-head: "Orbitron", "Rajdhani", "Segoe UI", sans-serif;
+  --void: #060403;
+  --void-2: #0d0906;
+  --gold: #ffb43a;
+  --gold-hot: #ffe9b0;
+  --gold-mid: #c8842a;
+  --gold-deep: #6b4713;
+  --bone: #f4e7ce;
+  --ember: #ff5c33;
+  --line: rgba(255, 180, 58, 0.20);
+  --line-dim: rgba(200, 132, 42, 0.16);
+  --font-head: "Michroma", "Rajdhani", "Segoe UI", sans-serif;
   --font-body: "Rajdhani", "Segoe UI", sans-serif;
   --font-mono: "Share Tech Mono", "Consolas", monospace;
 }
@@ -23,42 +24,97 @@
 html, body { height: 100%; }
 
 body {
-  background: var(--bg);
-  color: var(--ink);
+  background: var(--void);
+  color: var(--bone);
   font-family: var(--font-body);
   overflow: hidden;               /* page kabhi scroll na ho */
   -webkit-font-smoothing: antialiased;
 }
 
-/* Halki neeli grid + beech ka glow. Reference photo jaisa. */
+/* Warm gold grid + beech ka bloom. Film HUD me jagah khaali rehti hai, is
+ * liye grid bahut halki hai — sirf depth ke liye, dhyan kheenchnay ke liye nahi. */
 .gridbg {
   position: fixed;
   inset: 0;
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 55% 45% at 50% 42%, rgba(46, 168, 255, 0.16), transparent 70%),
-    linear-gradient(rgba(46, 168, 255, 0.05) 1px, transparent 1px) 0 0 / 100% 44px,
-    linear-gradient(90deg, rgba(46, 168, 255, 0.05) 1px, transparent 1px) 0 0 / 44px 100%,
-    var(--bg);
+    radial-gradient(ellipse 52% 46% at 50% 44%, rgba(255, 180, 58, 0.14), transparent 72%),
+    radial-gradient(ellipse 88% 74% at 50% 50%, rgba(255, 92, 51, 0.05), transparent 70%),
+    linear-gradient(rgba(200, 132, 42, 0.055) 1px, transparent 1px) 0 0 / 100% 48px,
+    linear-gradient(90deg, rgba(200, 132, 42, 0.055) 1px, transparent 1px) 0 0 / 48px 100%,
+    var(--void);
 }
 
-/* ---- 3 column grid: 24 / 50 / 26 ka santulan, top bar aur bottom alag ----
- * Raw `%` (24% 50% 26%) yahan kaam nahi karta: teen percent column poori grid
- * ka 100% le lete hain, phir `gap` bhi jud jaata hai aur grid padding se
- * bahar nikal jaati hai (1366 par 6px scroll bar). `fr` + `minmax(0, …)`
- * gap ko pehle hi alag kar deta hai, isliye asli pariman 24:50:26 rehta hai
- * aur kuch bhi overflow nahi hota.
- */
+/* Grid dheere chalti hai (26s me ek cell) — screen zinda lagti hai, par
+ * dhyan nahi khinchti. Sirf background-position = GPU-friendly. */
+.gridbg::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(rgba(200, 132, 42, 0.05) 1px, transparent 1px) 0 0 / 100% 48px,
+    linear-gradient(90deg, rgba(200, 132, 42, 0.05) 1px, transparent 1px) 0 0 / 48px 100%;
+  animation: gridDrift 26s linear infinite;
+}
+
+@keyframes gridDrift {
+  from { background-position: 0 0, 0 0; }
+  to   { background-position: 0 48px, 48px 0; }
+}
+
+/* CRT depth: patli scanlines + kone par vignette + ek 9s scan band.
+ * Text ke UPAR hai (z-index 2) par 0.3 opacity — padhne me rukawat nahi. */
+.fx {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.3;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg,
+      rgba(8, 4, 2, 0.55) 0 1px, transparent 1px 4px),
+    radial-gradient(ellipse 78% 68% at 50% 45%,
+      transparent 55%, rgba(4, 2, 1, 0.88) 100%);
+}
+.fx::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 90px;
+  background: linear-gradient(180deg, transparent,
+    rgba(255, 180, 58, 0.06), transparent);
+  animation: scanBand 9s linear infinite;
+}
+
+@keyframes scanBand {
+  from { top: -90px; }
+  to   { top: 100%; }
+}
+
+/* Boot: HUD ek baar fade + halka zoom. Orb alag se "ignite" hota hai
+ * (hud_center.css). Dono `both` par — reduced motion par band. */
 .hud {
   position: relative;
   z-index: 1;
   display: grid;
+  /* 24 / 50 / 26 ka santulan. Raw `%` yahan kaam nahi karta: teen percent
+   * column poori grid ka 100% le lete hain, phir `gap` bhi jud jaata hai aur
+   * grid padding se bahar nikal jaati hai (1366 par 6px scroll bar).
+   * `fr` + `minmax(0, …)` gap ko pehle hi alag kar deta hai. */
   grid-template-columns: minmax(0, 24fr) minmax(0, 50fr) minmax(0, 26fr);
   grid-template-rows: auto 1fr auto;
   height: 100vh;
   gap: 10px;
   padding: 10px 14px 12px;
+  animation: hudBoot 700ms ease-out both;
+}
+
+@keyframes hudBoot {
+  from { opacity: 0; transform: scale(1.012); }
+  to   { opacity: 1; transform: none; }
 }
 
 .topbar    { grid-column: 1 / -1; grid-row: 1; }
@@ -82,7 +138,7 @@ body {
   align-items: center;
   gap: 14px;
   padding: 6px 2px 8px;
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid var(--line-dim);
 }
 
 .tb-left  { display: flex; align-items: center; gap: 12px; }
@@ -91,11 +147,11 @@ body {
 
 .brand {
   font-family: var(--font-head);
-  font-size: 19px;
-  font-weight: 700;
-  letter-spacing: 4px;
-  color: var(--cyan-bright);
-  text-shadow: 0 0 14px rgba(46, 168, 255, 0.6);
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: 7px;
+  color: var(--gold-hot);
+  text-shadow: 0 0 18px rgba(255, 180, 58, 0.45);
   white-space: nowrap;
 }
 
@@ -105,33 +161,33 @@ body {
   width: 100%;
   background-repeat: repeat-x;
   background-position: bottom;
-  opacity: 0.7;
+  opacity: 0.6;
   background-image:
-    linear-gradient(var(--cyan-dim), var(--cyan-dim)),
-    repeating-linear-gradient(90deg, var(--cyan) 0 1px, transparent 1px 12px);
+    linear-gradient(var(--gold-deep), var(--gold-deep)),
+    repeating-linear-gradient(90deg, var(--gold-mid) 0 1px, transparent 1px 14px);
   background-size: 100% 1px, 100% 7px;
 }
 
 .prov {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: 9px;
   letter-spacing: 1px;
-  color: var(--ink-dim);
+  color: var(--gold-deep);
   max-width: 190px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-#orb { transition: filter 250ms ease, transform 250ms ease; }
-#orb.listening { filter: drop-shadow(0 0 30px rgba(46,168,255,.75)); transform: scale(1.02); }
-#orb.thinking  { filter: drop-shadow(0 0 40px rgba(138,43,226,.70)); animation: orbPulse 800ms ease-in-out infinite alternate; }
-#orb.speaking  { filter: drop-shadow(0 0 36px rgba(0,255,180,.70)); transform: scale(1.03); }
-#orb.listening #core,
-#orb.thinking  #core,
-#orb.speaking  #core { opacity: .98; }
-
-@keyframes orbPulse {
-  from { transform: scale(1.00); }
-  to   { transform: scale(1.04); }
+/* ---- Accessibility: motion kam chahiye to sab band ---- */
+@media (prefers-reduced-motion: reduce) {
+  .gridbg::after,
+  .fx::after,
+  .hud,
+  .orbwrap { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
 }
