@@ -12,6 +12,7 @@ import webbrowser
 from urllib.parse import urlparse
 
 import config
+from tools.keys import send_key
 from tools.quick import _web_url
 
 try:
@@ -61,6 +62,13 @@ def open_app(name: str, url: str = "") -> str:
         args.append(str(url).strip())
     subprocess.Popen(args, cwd=str(config.ensure_workspace()), shell=False)
     return f"{target} khol diya." + (f" {args[-1]}" if len(args) > 1 else "")
+
+
+def vscode_terminal() -> str:
+    """Khuli VS Code window me terminal (Ctrl+`) kholo."""
+    if not send_key(("Code",), "^`"):
+        return "VS Code window nahi mili (pehle kholo)."
+    return "VS Code me terminal khol diya."
 
 
 def open_website(url: str) -> str:

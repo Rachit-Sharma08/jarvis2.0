@@ -30,6 +30,7 @@ Rules:
   Brave me video). Gaana/video chalana ho to play_media(query).
 - Chal rahe player me aage/peeche/pause ke liye media_control(action):
   forward, back, play_pause, next, prev.
+- VS Code me terminal kholna ho to vscode_terminal() chalao.
 - Tool se jawab aane ke baad user ko saaf Hinglish me batao.
 - Tool ka jawab aane ka matlab kaam ho gaya - user ko seedha ek line me batao; wahi tool dobara mat bulao.
 - Agar tumne tool nahi bulaya to kabhi mat bolo ki kaam ho gaya.

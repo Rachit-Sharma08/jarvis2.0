@@ -30,6 +30,7 @@ TOOL_BASE_RISK = {
     "run_command": ASK,
     "open_app": SAFE,
     "open_website": SAFE,
+    "vscode_terminal": SAFE,
     "play_media": SAFE,
     "media_control": SAFE,
     "close_app": ASK,

@@ -12,7 +12,7 @@ import urllib.parse
 import urllib.request
 
 from tools.apps import open_app
-from tools.quick import _ps
+from tools.keys import send_key
 
 _UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
        "(KHTML, like Gecko) Chrome/124.0 Safari/537.36")
@@ -26,22 +26,7 @@ _KEYS = {
 }
 
 # Brave > Chrome > Edge > Firefox: jo pehla window wala mile use focus karo.
-_FOCUS_PS = r"""
-$ErrorActionPreference = 'SilentlyContinue'
-foreach ($n in @('brave', 'chrome', 'msedge', 'firefox')) {
-  $p = Get-Process -Name $n | Where-Object { $_.MainWindowHandle -ne 0 } | Select-Object -First 1
-  if ($p) {
-    $shell = New-Object -ComObject WScript.Shell
-    if ($shell.AppActivate($p.Id)) {
-      Start-Sleep -Milliseconds 300
-      $shell.SendKeys('%s')
-      'ok'
-      exit 0
-    }
-  }
-}
-'no-window'
-"""
+_BROWSERS = ("brave", "chrome", "msedge", "firefox")
 
 
 def _fetch(url: str) -> str:
@@ -79,8 +64,7 @@ def play_media(query: str) -> str:
 
 
 def _send_key(key: str) -> str:
-    out = _ps(_FOCUS_PS % key, timeout=15).strip()
-    return "ok" if out == "ok" else "no-window"
+    return "ok" if send_key(_BROWSERS, key) else "no-window"
 
 
 def media_control(action: str) -> str:

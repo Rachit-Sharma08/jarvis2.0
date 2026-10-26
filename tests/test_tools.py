@@ -187,8 +187,28 @@ class ToolsTest(unittest.TestCase):
             self.assertEqual("ok", tools.execute("open_app", {"name": "brave"}))
         self.assertEqual({"name": "brave", "url": ""}, seen)
 
+    def test_vscode_terminal_no_window(self):
+        with mock.patch.object(apps, "send_key", return_value=False):
+            self.assertIn("nahi mili", apps.vscode_terminal())
+
+    def test_vscode_terminal_sends_ctrl_backtick(self):
+        calls = []
+        with mock.patch.object(apps, "send_key",
+                               side_effect=lambda names, key: calls.append((names, key)) or True):
+            self.assertIn("terminal khol diya", apps.vscode_terminal())
+        self.assertEqual([(("Code",), "^`")], calls)
+
     def test_spec_marks_optional(self):
         self.assertIn("open_app(name, url?)", tools.spec())
+        self.assertIn("vscode_terminal()", tools.spec())
+
+    def test_send_key_result(self):
+        from tools import keys
+
+        with mock.patch.object(keys, "_ps", return_value="ok"):
+            self.assertTrue(keys.send_key(("Code",), "^`"))
+        with mock.patch.object(keys, "_ps", return_value="no-window"):
+            self.assertFalse(keys.send_key(("Code",), "^`"))
 
     def test_close_app_nothing_running(self):
         result = apps.close_app("definitely_not_running_xyz.exe")

@@ -74,9 +74,9 @@ class MediaTest(unittest.TestCase):
             self.assertIn("browser window nahi mili", media.media_control("forward"))
 
     def test_send_key_reports_window(self):
-        with mock.patch.object(media, "_ps", return_value="no-window"):
+        with mock.patch.object(media, "send_key", return_value=False):
             self.assertEqual("no-window", media._send_key("l"))
-        with mock.patch.object(media, "_ps", return_value="ok"):
+        with mock.patch.object(media, "send_key", return_value=True):
             self.assertEqual("ok", media._send_key("l"))
 
 
