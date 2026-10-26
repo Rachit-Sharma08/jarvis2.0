@@ -110,12 +110,49 @@ guard lagata hai:
 | **Silence / khaali** | Text khaali, sirf punctuation, ya `.`/`♪` jaisa ek-aksh pattern | Awaaz me kuch nahi tha — text bhi nahi. |
 | **Script** | Text me Devanagari ya Latin letter hi nahi (CJK/Cyrillic/Arabic allowed nahi) | Galat recording par ajeeb output. |
 
-Ek aur baat: `language="hi"` **bilkul nahi** bhejte. Whisper Hinglish (romanized
-Hindi) ko Hindi maan kar Devanagari me convert kar deta tha, jo galat tha. Auto
-detection sahi rehti hai.
+Ek aur baat: Groq ko `language="hi"` **bilkul nahi** bhejte. Whisper Hinglish
+(romanized Hindi) ko Hindi maan kar Devanagari me convert kar deta tha, jo galat
+tha. Groq par auto detection sahi rehti hai.
 
 Guard reject kare to user ko saaf message milta hai — "bolege nahi sun paya, thoda
 lamba bolo", brain call hota hi nahi.
+
+## Local STT — bina key, bina internet (faster-whisper)
+
+`GROQ_API_KEY` khaali ho to bhi JARVIS sunta hai. `voice/stt_local.py` CPU par
+faster-whisper chalata hai — audio **kahin disk par nahi jaati**, WAV bytes
+memory me numpy ban jaate hain.
+
+| Baat | Detail |
+|---|---|
+| Model | `models/faster-whisper-small` (gitignored, ek baar download) |
+| Compute | `int8`, 4 threads (i5-1145G7) — ~2x realtime |
+| Language | **`"en"` jaan-boojh kar.** Groq se ulta: local par auto-detect ~5 s khaata hai aur Hinglish ko Devanagari me likh deta hai. `"en"` par romanized Hinglish Latin me rehti hai — wahi jo brain samajhta hai. |
+| VAD | `vad_filter=False` — hamara VAD (`wake/listen.py`) pehle hi chal chuka hai |
+| Warmup | App start par background thread me load (`stt_local.warm_async()`) — pehli command 4 s extra nahi leti |
+
+### Kaun sunega — `JARVIS_STT_LOCAL`
+
+| Value | Matlab |
+|---|---|
+| `auto` (default) | Groq key ho to Groq, warna local |
+| `local` | Hamesha offline (key ho tab bhi) |
+| `groq` | Sirf cloud — local par **fallback nahi** |
+| `off` | Local band (sirf Groq) |
+
+`auto` me ek aur suraksha hai: Groq **turant** gira (network/429/5xx) to wahi
+recording local model par chali jaati hai. Groq **timeout** ho to fallback nahi —
+budget khatam hone ke baad local 75 s aur leta, user ko turant saaf message
+behtar hai.
+
+Model ek baar download karne ke liye (repo ke root se):
+
+```powershell
+.\.venv\Scripts\python.exe -c "from faster_whisper import WhisperModel; WhisperModel('small', download_root='models/faster-whisper-small')"
+```
+
+Toota model yaad rakha jata hai (`stt_local._BROKEN`) — har command par dobara
+load karne ki koshish nahi hoti.
 
 ## Mode bolke switch karo
 
