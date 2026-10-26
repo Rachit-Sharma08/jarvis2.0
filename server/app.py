@@ -99,7 +99,7 @@ async def index(request: Request):
     if denied:
         raise HTTPException(*denied)
 
-    # `?theme=arc` se switch (record/test ke liye); warna config ka value.
+    # `?theme=` sirf whitelist (`gold`) se guzarta hai; warna config ka value.
     return HTMLResponse(fill_html(
         (config.UI_DIR / "index.html").read_text(encoding="utf-8"),
         resolve_theme(request.query_params.get("theme", ""))))
