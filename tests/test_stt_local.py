@@ -144,6 +144,8 @@ class TestLocalTranscribe(unittest.TestCase):
         check("vad_filter off (hamara VAD pehle chala)",
               kw["vad_filter"], False)
         check("timestamps nahi", kw["without_timestamps"], True)
+        check("hinglish prompt (Mahabharat)",
+              "Mahabharat" in kw["initial_prompt"], True)
 
     def test_async_path_uses_local(self):
         async def go():

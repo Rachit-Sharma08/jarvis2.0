@@ -27,6 +27,14 @@ _MODEL = None
 _LOCK = threading.Lock()
 _BROKEN = ""
 
+# Whisper ko Hinglish naam/prompt ka andaaza do — warna "Mahabharat" ko
+# "Maura" jaisa English shabd samajh leta hai (live test, 26-Oct).
+_PROMPT = (
+    "Jarvis, Hinglish commands. Mahabharat title song, Ramayan, Bollywood, "
+    "gaana chalao, song play karo, Brave browser, Chrome, YouTube, VS Code, "
+    "terminal kholo, 3D heart banao, 10 second aage karo, skip karo."
+)
+
 
 def available() -> bool:
     """Model + library dono maujood hain? (call par load nahi hota)."""
@@ -101,5 +109,5 @@ def transcribe(audio: bytes) -> str:
     segments, _info = model.transcribe(
         _source(audio), beam_size=1, language=config.STT_LANGUAGE or None,
         vad_filter=False, condition_on_previous_text=False,
-        without_timestamps=True)
+        initial_prompt=_PROMPT, without_timestamps=True)
     return " ".join(seg.text.strip() for seg in segments).strip()
