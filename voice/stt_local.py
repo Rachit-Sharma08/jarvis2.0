@@ -44,15 +44,24 @@ def available() -> bool:
 
 
 def _load():
-    global _MODEL
+    global _MODEL, _BROKEN
     with _LOCK:
         if _MODEL is not None:
             return _MODEL
-        from faster_whisper import WhisperModel
-        log.info("local stt load: %s", config.STT_LOCAL_MODEL)
-        _MODEL = WhisperModel(config.STT_LOCAL_MODEL, device="cpu",
-                              compute_type="int8",
-                              cpu_threads=config.STT_LOCAL_THREADS)
+        if _BROKEN:
+            raise RuntimeError(_BROKEN)
+        try:
+            from faster_whisper import WhisperModel
+            log.info("local stt load: %s", config.STT_LOCAL_MODEL)
+            _MODEL = WhisperModel(config.STT_LOCAL_MODEL, device="cpu",
+                                  compute_type="int8",
+                                  cpu_threads=config.STT_LOCAL_THREADS)
+        except Exception as exc:
+            # Yaad rakho: toota model har command par dobara load karne ki
+            # koshish nahi karta (har baar 4 s barbaad + wahi error).
+            _BROKEN = f"{type(exc).__name__}: {exc}"
+            log.error("local stt load fail: %s", _BROKEN)
+            raise
         return _MODEL
 
 
@@ -64,14 +73,11 @@ def warm_async() -> None:
 
 
 def _warm() -> bool:
-    global _BROKEN
     try:
         _load()
         log.info("local stt ready")
         return True
-    except Exception as exc:
-        _BROKEN = f"{type(exc).__name__}: {exc}"
-        log.error("local stt load fail: %s", _BROKEN)
+    except Exception:
         return False
 
 
