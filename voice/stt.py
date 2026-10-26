@@ -99,6 +99,32 @@ def _provider_error() -> SttError:
     return SttError("Koi STT nahi: GROQ_API_KEY khaali hai aur local model bhi nahi mila.")
 
 
+def _may_fall_back() -> bool:
+    """Groq fail hone par local try karein? `groq` mode forced hai to nahi."""
+    if config.STT_LOCAL in ("groq", "cloud"):
+        return False
+    return stt_local.available()
+
+
+async def _listen(which: str, audio: bytes) -> str:
+    """Ek provider se sunna - ceiling + event loop dono sambhale hue."""
+    fn = _transcribe if which == "groq" else _transcribe_local
+    deadline = (config.stt_deadline() if which == "groq"
+                else config.STT_LOCAL_DEADLINE_SECONDS)
+    # Do parde: `_run_bounded` provider ke budget ka ceiling rakhta hai, aur
+    # `to_thread` event loop ko free rakhta hai (HTTP route ke liye).
+    return await asyncio.to_thread(_run_bounded, fn, audio, deadline)
+
+
+def _failed(exc: Exception, took: int) -> SttError:
+    """Provider ka exception -> user ke liye saaf Hinglish message."""
+    if isinstance(exc, TimeoutError):
+        log.error("stt atka (%dms): %s", took, exc)
+        return SttError("Sun nahi paya (awaaz bhejne me waqt laga). Dobara boliye.")
+    log.error("stt failed (%dms): %s: %s", took, type(exc).__name__, exc)
+    return SttError(f"Sun nahi paya ({exc}).")
+
+
 async def transcribe(audio: bytes, duration_ms=None) -> str:
     """Browser/wake ki recording -> text (Hindi + English dono samajhta hai)."""
     if not audio:
@@ -120,22 +146,25 @@ async def transcribe(audio: bytes, duration_ms=None) -> str:
     if not which:
         raise _provider_error()
 
-    fn = _transcribe if which == "groq" else _transcribe_local
-    deadline = (config.stt_deadline() if which == "groq"
-                else config.STT_LOCAL_DEADLINE_SECONDS)
     start = time.perf_counter()
     try:
-        # Do parde: `_run_bounded` provider ke budget ka ceiling rakhta hai, aur
-        # `to_thread` event loop ko free rakhta hai (HTTP route ke liye).
-        text = await asyncio.to_thread(_run_bounded, fn, audio, deadline)
+        text = await _listen(which, audio)
     except TimeoutError as exc:
-        took = int((time.perf_counter() - start) * 1000)
-        log.error("stt atka (%dms) - ceiling %.1fs: %s", took, deadline, exc)
-        raise SttError("Sun nahi paya (awaaz bhejne me waqt laga). Dobara boliye.")
+        # Budget khatam - ab local par jaana matlab user ko dobara 75 s ka
+        # intezaar. Turant saaf message (S-1 ka niyam: caller atke nahi).
+        raise _failed(exc, int((time.perf_counter() - start) * 1000)) from exc
     except Exception as exc:
-        log.error("stt failed (%dms): %s: %s", int((time.perf_counter() - start) * 1000),
-                  type(exc).__name__, exc)
-        raise SttError(f"Sun nahi paya ({exc}).") from exc
+        took = int((time.perf_counter() - start) * 1000)
+        # Groq turant gira (network/429/5xx) to local model se sun lo. Warna key
+        # hone par bhi JARVIS behra ho jata - wahi purana bug, doosre raaste se.
+        if which != "groq" or not _may_fall_back():
+            raise _failed(exc, took) from exc
+        log.warning("groq fail (%dms): %s - local par", took, exc)
+        which = "local"
+        try:
+            text = await _listen("local", audio)
+        except Exception as exc2:
+            raise _failed(exc2, int((time.perf_counter() - start) * 1000)) from exc2
 
     if not text:
         log.warning("stt ne khaali text diya (%s)", which)
