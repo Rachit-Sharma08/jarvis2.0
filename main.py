@@ -48,4 +48,12 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    # `python main.py --doctor` = sirf jaanch, server nahi. Owner ke liye:
+    # "chalega ya nahi?" ka ek command wala jawab (doctor.py).
+    import sys
+
+    if "--doctor" in sys.argv[1:]:
+        import doctor
+
+        raise SystemExit(doctor.run())
     main()
