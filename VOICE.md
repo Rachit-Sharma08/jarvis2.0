@@ -8,7 +8,8 @@ aur text ko awaaz me.
 
 ## Chalao
 
-1. Server chalu karo (`main.py`).
+1. Server chalu karo (`main.py`). Wake word ("Hlo Jarvis") bhi isi process me
+   chalta hai — alag se kuch shuru nahi karna.
 2. Browser me **http://localhost:8000** kholo.
 3. Browser puchega **"Use microphone"** — **Allow** dabao. Mana kiya to MIC kaam
    nahi karega aur screen par saaf message aayega.

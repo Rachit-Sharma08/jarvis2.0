@@ -186,6 +186,9 @@ On karna ho to (ye **sirf ek value** likhta hai):
   wahi jagah, jahan pehle bhi tha.
 - Wapas sab theek karna ho to Windows ka apna **Task Manager → Startup** tab
   me `Jarvis` ko disable kar do.
+- Project folder **move** kiya ho to `install` dobara chalao. Purana path
+  registry me reh jaata hai aur login par app chup-chaap nahi chalta —
+  `--doctor` ise `WARN` dikhata hai.
 
 ### Raasta B — purana tarika (browser me)
 
@@ -198,6 +201,10 @@ Browser me kholo: **http://localhost:8000**
 
 Band karne ke liye terminal me `Ctrl + C`.
 
+Is raaste me bhi **"Hlo Jarvis" chalta hai** (wake worker isi process me
+shuru hota hai). Dono raaste ek hi lock use karte hain, is liye ek saath do
+JARVIS nahi chal sakte.
+
 ### Kuch kaam nahi kar raha? Pehle ye chalao
 
 ```powershell
@@ -205,18 +212,15 @@ Band karne ke liye terminal me `Ctrl + C`.
 ```
 
 Ek-ek cheez batata hai: jawab dene wali key, sunne wala (STT), "Hlo Jarvis"
-wake word, mic, port, tools. Har line `OK` / `WARN` / `FAIL` hai aur aakhir me
-saaf natija — kya theek karna hai. Ye kuch shuru nahi karta, is liye app chalte
-hue bhi chala sakte ho.
-
-> Auto-start (Windows login par chalu) **abhi nahi banaya**. Wo Step 3 ke aakhir
-> me aayega aur tabhi computer ke Run registry me entry likhi jayegi.
+wake word, mic, port, auto-start, tools. Har line `OK` / `WARN` / `FAIL` hai
+aur aakhir me saaf natija — kya theek karna hai. Ye kuch shuru nahi karta, is
+liye app chalte hue bhi chala sakte ho.
 
 ---
 
 ## 3. Test
 
-Saare 81 suites ek loop me:
+Saare 89 suites ek loop me:
 
 ```powershell
 cd D:\Projects\jarvis\jarvis2.0

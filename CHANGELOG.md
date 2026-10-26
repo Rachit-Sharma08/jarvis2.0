@@ -39,6 +39,20 @@ Ek command me "chalega ya nahi?" ka jawab — brain key, STT provider, wake mode
 mic device, port, tools. Har line OK/WARN/FAIL, aakhir me saaf natija. Kuch
 **shuru nahi** karta (na server na mic), is liye chalte hue app ke saath bhi safe.
 
+### "Hlo Jarvis" ka asli kaaran — app chal hi nahi raha tha
+
+Registry ka auto-start purane folder `D:\prabh` par tha (project
+`D:\Projects\jarvis\jarvis2.0` me shift ho chuka), is liye login par JARVIS
+shuru hi nahi hota tha. Value `python -m desktop.autostart install` se dobara
+likhi gayi. `--doctor` ab auto-start bhi check karta hai: band ho ya purana
+path ho to `WARN` — mara hua path chup-chaap login par fail hone wala bug tha.
+
+Browser raasta (`main.py`) me wake worker **kabhi shuru hi nahi hota tha** —
+sirf `desktop/app.py` usse chalata tha, is liye README ka Raasta B behra tha.
+Ab wahan bhi `Hlo Jarvis` chalta hai, wahi single lock (do mic/do jawab na ho)
+aur exit par worker band. Tests: `test_main_wake.py` + doctor ka auto-start
+check.
+
 ---
 
 ## Wake fix: do command me dusra nahi chalta + mic busy (5 Oct 2026)
