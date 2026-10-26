@@ -6,6 +6,35 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Hearing fix + STARK GOLD HUD (26 Oct 2026)
+
+Do cheezein: JARVIS **sunta nahi tha**, aur HUD purana tha.
+
+### Sunna — free, offline, bina key
+
+`GROQ_API_KEY` khaali hone par har command "Sun nahi paya" par girti thi. Ab
+`voice/stt_local.py` CPU par faster-whisper chalata hai (`small`, int8, 4 threads,
+~2x realtime). Chain: Groq key → local → saaf error. `JARVIS_STT_LOCAL` se force.
+Groq **turant** gira (network/429/5xx) to wahi recording local par chali jaati hai;
+timeout par nahi (budget khatam = turant message).
+
+Mic ka asli bug: shared WASAPI par Realtek ka AEC awaaz daba deta tha (0.9 tone ka
+peak **0.0049 vs 0.0486** exclusive me). `wake/micdev.py` ab p10 par faisla karta
+hai — `JARVIS_MIC_EXCLUSIVE=auto` sirf tab exclusive jab shared bilkul dead ho.
+
+### HUD — ek hi theme, gold
+
+Dono purane theme (`neon` cyan, `arc` orange) hata diye — 12 `arc_*` file, `arc.css`,
+`test_hud_arc.py` aur uske 4 helper. Ab ek hi `gold` theme: plasma orb, orbital
+rings, sparkling filaments, bright donut core. Palette `#FFB43A` / `#FFE9B0` /
+`#6B4713`, font **Michroma** (Orbitron gaya). `?theme=` sirf `gold` leta hai.
+
+### Trust mode
+
+`TRUST_ALL` default ON — Allow/Deny card gaya, tools hamesha ON.
+
+---
+
 ## Wake fix: do command me dusra nahi chalta + mic busy (5 Oct 2026)
 
 Do shikayatein thi: **"ek command ke baad doosra command nahi leta"** aur app
