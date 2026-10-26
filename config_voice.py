@@ -36,6 +36,23 @@ STT_MAX_RETRIES = int(os.getenv("JARVIS_STT_RETRIES", "1") or 1)
 # atak gaya hai (network ya SDK ka apna bug). `voice/stt.py` yahin lagata hai.
 STT_HARD_MARGIN_SECONDS = 4.0
 
+# ---- local STT (faster-whisper) -------------------------------------------
+# Groq key na ho to bhi JARVIS sun sake — free, offline, CPU par. Model
+# `models/` me rehta hai (gitignored, ek baar download).
+# `JARVIS_STT_LOCAL`: auto (default) | local | groq | off
+STT_LOCAL = os.getenv("JARVIS_STT_LOCAL", "auto").strip().lower()
+STT_LOCAL_MODEL = os.getenv("JARVIS_STT_LOCAL_MODEL", "").strip() or os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "models", "faster-whisper-small")
+# 4 physical cores (i5-1145G7). Zyada threads par ye model slow ho jaata hai.
+STT_LOCAL_THREADS = int(os.getenv("JARVIS_STT_THREADS", "4") or 4)
+# CPU par ~2x realtime: 30 s ki max recording ~60 s leti hai, is liye ceiling
+# Groq wale 16 s se alag hai.
+STT_LOCAL_DEADLINE_SECONDS = float(
+    os.getenv("JARVIS_STT_LOCAL_TIMEOUT", "75") or 75)
+# "en" = Hinglish Latin me rehti hai (Devanagari nahi) aur language detection
+# ka ~5 s bachta hai. "hi" jaan-boojh kar nahi — romanized Hinglish bigaadta hai.
+STT_LANGUAGE = os.getenv("JARVIS_STT_LANG", "en").strip()
+
 
 def stt_deadline() -> float:
     """Wake ka STT **kutte** tak wait karega (SDK ka budget + margin).

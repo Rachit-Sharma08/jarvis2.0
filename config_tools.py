@@ -171,6 +171,11 @@ TOOLS_AUTO_OFF_MINUTES = int(os.getenv("JARVIS_TOOLS_AUTOOFF", "0") or 0)
 # andar ka safe kaam chupchaap chalta hai, baaki chupchaap DENY + ek line wajah.
 # 0 = purana raasta (screen par card + ALLOW/DENY button, 60 second timeout).
 NO_CARDS = os.getenv("JARVIS_NO_CARDS", "1") == "1"
+# Trust mode (`JARVIS_TRUST=1`): ASK ko seedha ALLOW karo - koi card, koi
+# "ye allowed nahi" nahi. `gatekeeper/rules.py` ki NEVER_ALLOW list phir bhi
+# lagti hai (gatekeeper/.env delete, password file, registry, encoded
+# download-run) - wo galti se apna hi repo uda dene se bachati hai.
+TRUST_ALL = os.getenv("JARVIS_TRUST", "0") == "1"
 TOOL_MAX_STEPS = 5
 TOOL_MAX_CALLS_PER_MINUTE = 20
 TOOL_CONFIRM_TIMEOUT = 60

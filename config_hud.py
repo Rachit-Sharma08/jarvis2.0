@@ -5,80 +5,39 @@ jaisa hi likhna hai. Is file me koi logic nahi, sirf values aur chhote helpers.
 
 Rules: yahan koi API key nahi. Weather ke liye key chahiye hi nahi (Open-Meteo).
 
-KAAM B (14-Oct): naya "arc" theme yahin se aata hai (`JARVIS_HUD_THEME`).
-Default `"arc"` (owner ka faisla). Purana neela `"neon"` bhi poora hai —
-`JARVIS_HUD_THEME=neon` ya `/?theme=neon` se wapas.
+Ek hi theme: `"gold"` — Iron Man 3 / Age of Ultron ka golden JARVIS hologram.
+Purane do look (neon cyan, arc orange) hata diye gaye (25-Oct, owner ka faisla).
 """
 
 import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
 
-# ---- Colors: reference photo + spec dono se ----
-# Photo washed-out thi, isliye saturation thodi barh kar diya. Exact value
-# design/reference.png ke grid analysis se aayi hai.
-CYAN = "#2ea8ff"
-CYAN_BRIGHT = "#4cc3ff"
-CYAN_DIM = "#1c5f9e"
-AMBER = "#f5a623"
+# ---- Palette: warm black + gold ----
+# Film ka HUD lagbhag kaala hai; gold sirf wahan jahan dhyan jana chahiye.
+VOID = "#060403"
+VOID_2 = "#0d0906"
+GOLD = "#ffb43a"
+GOLD_HOT = "#ffe9b0"
+GOLD_MID = "#c8842a"
+GOLD_DEEP = "#6b4713"
+BONE = "#f4e7ce"
+EMBER = "#ff5c33"          # sirf alert; green bilkul nahi
 
-# ---- Theme: naya "arc" (default) ya purana neela "neon" ----
-# `JARVIS_HUD_THEME` se. Default `"arc"` (owner ka faisla, 14-Oct raat: Arc ko
-# permanent rakhna). Purana neela `"neon"` BILKUL khatam nahi hua — wahi code
-# me hai aur `JARVIS_HUD_THEME=neon` ya `/?theme=neon` se wapas aa jaata hai.
-#
-# Sirf LOOK ka reference <https://jarvis.mukh1.com> se liya gaya hai — unka
-# code/CSS/SVG/asset copy nahi kiya gaya. Chhota credit footer me hai.
-HUD_THEME_DEFAULT = "arc"
-HUD_THEMES = ("neon", "arc")
-# Arc theme ka credit (footer me chhota). Reference ka naam — design bana
-# apna hai, sirf look ka.
-ARC_CREDIT = "Interface style inspired by Mukh.1"
-
-# ---- Arc theme: performance + a11y (i5 laptop ke liye) ----
-# Sirf CSS transform/SVG animation — WebGL ya bhaara canvas NAHI.
-ARC_FPS = 30                 # isse tez raf nahi (i5 par battery)
-ARC_FRAME_MS = int(1000 / ARC_FPS)
-ARC_PAUSE_WHEN_HIDDEN = True # window background me — rAF band
-# Animation CSS hi chalati hai; `prefers-reduced-motion` ko maanta hai.
-# Ye sirf JS raf (typewriter/orbit number) ke liye hai.
-ARC_TYPE_MS = 28             # typewriter: ek character
-ARC_ACTIVITY_MAX = 6         # right panel me kitni purani lines
-ARC_TICK_COUNT = 72          # reactor ke bahar tick-marks
-ARC_HEX_NODES = 6            # hexagon nodes
-ARC_ORBIT_DOTS = 3           # ghoomte dots
-
-# ---- Fonts: Arc theme ----
-# Devanagari **laptop ke maujood font** se. Internet se koi font nahi —
-# CSP `default-src 'self'` hai aur offline bhi chalna hai. Windows 10/11
-# par Nirmala UI hota hi hai; Noto Sans Devanagari tab jab installed ho.
-ARC_FONT_MONO = ('"Share Tech Mono", "Nirmala UI", "Noto Sans Devanagari", '
-                 'Consolas, monospace')
-ARC_FONT_BODY = ('"Rajdhani", "Nirmala UI", "Noto Sans Devanagari", '
-                 '"Segoe UI", sans-serif')
-ARC_FONT_HEAD = ('"Orbitron", "Nirmala UI", "Noto Sans Devanagari", '
-                 '"Segoe UI", sans-serif')
-
-# ---- Arc theme: colours (CSS variables ke andar jayengi) ----
-# Gehra baingani-kaala + patli orange.
-ARC_BG = "#08050e"
-ARC_PANEL = "rgba(19, 12, 28, 0.72)"
-ARC_LINE = "rgba(255, 138, 46, 0.22)"
-ARC_ACCENT = "#ff8a2e"       # patli orange
-ARC_ACCENT_2 = "#ff5e3a"     # garm lali/orange (core ke andar)
-ARC_ACCENT_DIM = "#8a4a16"
-ARC_INK = "#f2e6da"
-ARC_INK_DIM = "#a08a78"
-ARC_GOOD = "#5cffb0"
-ARC_BAD = "#ff6b6b"
-
-# ---- Arc: routing chip (WAKE -> STT -> BRAIN -> TTS) ----
-ARC_ROUTING = ("WAKE", "STT", "BRAIN", "TTS")
-ARC_ROUTING_CHANNEL = "LOCAL"
+# ---- Theme ----
+# `JARVIS_HUD_THEME` se. Ek hi valid value — purane links `?theme=neon`
+# seedha isi par gir jaate hain (koi 404 nahi, koi purana look nahi).
+HUD_THEME_DEFAULT = "gold"
+HUD_THEMES = ("gold",)
 
 # ---- Fonts (ui/fonts.css me load, fallback yahan) ----
-FONT_HEAD = '"Orbitron", "Rajdhani", "Segoe UI", sans-serif'
-FONT_BODY = '"Rajdhani", "Segoe UI", sans-serif'
-FONT_MONO = '"Share Tech Mono", "Consolas", monospace'
+# Michroma = film ka title face (Eurostile Extended jaisa). Devanagari
+# laptop ke maujood font se — internet se nahi, CSP `default-src 'self'` hai.
+FONT_HEAD = ('"Michroma", "Nirmala UI", "Noto Sans Devanagari", '
+             '"Segoe UI", sans-serif')
+FONT_BODY = ('"Rajdhani", "Nirmala UI", "Noto Sans Devanagari", '
+             '"Segoe UI", sans-serif')
+FONT_MONO = ('"Share Tech Mono", "Nirmala UI", "Noto Sans Devanagari", '
+             'Consolas, monospace')
 
 # ---- Left column: CHRONOMETER ----
 CLOCK_DATE_FORMAT = "%A, %d %B %Y"   # Wednesday, 30 September 2026
@@ -149,7 +108,7 @@ def quick_ids() -> tuple:
 
 
 def hud_theme() -> str:
-    """HUD ka theme — `JARVIS_HUD_THEME` env se, default `"arc"`.
+    """HUD ka theme — `JARVIS_HUD_THEME` env se, default `"gold"`.
 
     Kaam jaan-boojh kar nahi maana jaata: koi bhi adhoora ya adhoori value
     seedhi default par gir jaati hai, warna ek typo se poora HUD ka look badal

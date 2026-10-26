@@ -50,3 +50,11 @@ VAD_HANGOVER_BLOCKS = 30     # ~0.9 s — VAD ke dauraan awaaz mat kaato
 INPUT_GAIN = os.getenv("JARVIS_WAKE_GAIN", "auto").strip().lower()
 INPUT_GAIN_TARGET = float(os.getenv("JARVIS_WAKE_GAIN_TARGET", "0.12"))
 INPUT_GAIN_MAX = float(os.getenv("JARVIS_WAKE_GAIN_MAX", "12"))
+
+# Windows "audio enhancements" (Realtek AEC/denoise) shared mode me mic ko daba
+# deta hai: is PC par 0.9 amplitude ke tone ka peak **shared 0.0049** vs
+# **exclusive 0.0486** (10x). Exclusive APO bypass karta hai, par mic doosri
+# apps (Teams/Zoom) se lock ho jaata hai.
+# `auto` (default) = shared theek ho to shared, bilkul dead ho to exclusive.
+# `1` = hamesha exclusive, `0` = hamesha shared. `.env`: JARVIS_MIC_EXCLUSIVE.
+MIC_EXCLUSIVE = os.getenv("JARVIS_MIC_EXCLUSIVE", "auto").strip().lower()
