@@ -60,6 +60,12 @@ async function loadBrain() {
       headers: { "x-jarvis-token": TOKEN },
       cache: "no-store"
     });
+    // 401 = server restart ho gaya, is page ka token purana hai. WS ka onclose
+    // kabhi na aaye (Edge app window) to yeh 15s wala poll reload kar deta hai.
+    if (reply.status === 401) {
+      reconnect();
+      return;
+    }
     if (!reply.ok) throw new Error("http " + reply.status);
     status.render(await reply.json());
   } catch (err) {
@@ -129,7 +135,28 @@ function handleEvent(ev) {
 }
 
 ws.onmessage = (e) => handleEvent(JSON.parse(e.data));
-ws.onclose = () => showNotice("Server se connection toot gaya. Page dobara kholo.");
+
+// Server restart par naya token banta hai. Purana page har /api/state par 401
+// deta hai aur "connection toot gaya" par atak jaata hai (live bug, 26-Oct).
+// Server wapas aate hi page reload karo - naya token HTML ke saath aata hai.
+let reconnecting = false;
+let closing = false;
+window.addEventListener("beforeunload", () => { closing = true; });
+
+function reconnect() {
+  if (reconnecting || closing) return;
+  reconnecting = true;
+  showNotice("Server se connection toot gaya. Reconnect kar raha hoon...");
+  const retry = () => fetch("/", { cache: "no-store" })
+    .then((reply) => {
+      if (!reply.ok) throw new Error("http " + reply.status);
+      location.reload();
+    })
+    .catch(() => setTimeout(retry, 2000));
+  setTimeout(retry, 1000);
+}
+
+ws.onclose = reconnect;
 
 function send() {
   const text = inputEl.value.trim();

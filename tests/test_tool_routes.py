@@ -136,6 +136,9 @@ def test_csp_header(client):
     check("object-src none", "object-src 'none'" in csp, True)
     check("frame-ancestors none", "frame-ancestors 'none'" in csp, True)
     check("nosniff", page.headers.get("x-content-type-options"), "nosniff")
+    # HUD restart par naya token aata hai - cache me atki purani app.js/HTML
+    # token reject deti thi (live bug, 26-Oct). Is liye sab kuch no-store.
+    check("no-store (HUD cache)", page.headers.get("cache-control"), "no-store")
     check(
         "inline script nahi (CSP ke liye)",
         "<script>window.JARVIS_TOKEN" in page.text,

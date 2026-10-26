@@ -53,6 +53,9 @@ async def security_headers(request: Request, call_next):
     # Origin header bhejta hi nahi) par jaanch kar paata hai. `no-referrer` hota
     # to wo jaanch chalti hi nahi thi.
     response.headers["Referrer-Policy"] = "same-origin"
+    # HUD local hai; har reload par token naya hota hai. Cache me atki purani
+    # app.js/HTML token reject deti thi (live bug, 26-Oct) - is liye no-store.
+    response.headers["Cache-Control"] = "no-store"
     return response
 
 
