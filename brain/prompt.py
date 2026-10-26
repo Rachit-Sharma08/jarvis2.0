@@ -7,7 +7,7 @@ Koi doosra format, unknown tool ya extra field — sab reject (kuch nahi chalta)
 import json
 
 import config
-from tools import TOOL_ARGS, TOOL_SUMMARY
+from tools import TOOL_ARGS, TOOL_OPTIONAL
 import tools
 
 RULES = """
@@ -26,6 +26,10 @@ Rules:
 - Delete hamesha Recycle Bin wala tool. Permanent delete koi tool nahi hai.
 - write_file/delete_to_trash me sirf file ka naam do (jaise "aaj.txt") - wo
   Jarvis ke workspace me banti hai. Naya folder ya absolute path nahi.
+- Khaas app/browser me kuch kholna ho to open_app(name, url) use karo (jaise
+  Brave me video). Gaana/video chalana ho to play_media(query).
+- Chal rahe player me aage/peeche/pause ke liye media_control(action):
+  forward, back, play_pause, next, prev.
 - Tool se jawab aane ke baad user ko saaf Hinglish me batao.
 - Tool ka jawab aane ka matlab kaam ho gaya - user ko seedha ek line me batao; wahi tool dobara mat bulao.
 - Agar tumne tool nahi bulaya to kabhi mat bolo ki kaam ho gaya.
@@ -53,8 +57,7 @@ def build(persona: str, tools_on: bool = True) -> str:
     # `tools.visible()` — band (default OFF) tool yahan se nikal jaate hain.
     # Pehle `TOOL_SUMMARY` seedha iterate hota tha, to `_on()` ka filter bekaar
     # tha aur `set_wake_alarm` LLM ko dikhai de raha tha.
-    spec = "\n".join(f"- {name}({', '.join(TOOL_ARGS[name])}): {TOOL_SUMMARY[name]}"
-                     for name in tools.visible())
+    spec = tools.spec()
     ctx = memory.MEM.context(max_turns=10)
     parts = [persona]
     if ctx:
@@ -108,8 +111,10 @@ def parse_action(reply: str) -> tuple:
         return "bad", f"'{name}' naam ka tool nahi hai"
     if not isinstance(args, dict):
         return "bad", "args JSON object hona chahiye"
-    if set(args) != set(TOOL_ARGS[name]):
-        return "bad", f"{name} ke args sirf ye ho sakte hain: {sorted(TOOL_ARGS[name])}"
+    required = set(TOOL_ARGS[name])
+    optional = set(TOOL_OPTIONAL.get(name, {}))
+    if not required <= set(args) or set(args) - required - optional:
+        return "bad", f"{name} ke args sirf ye ho sakte hain: {sorted(required | optional)}"
 
     for key, value in args.items():
         if not isinstance(value, str):

@@ -12,19 +12,55 @@ import webbrowser
 from urllib.parse import urlparse
 
 import config
+from tools.quick import _web_url
+
+try:
+    import winreg
+except ImportError:  # Windows ke bahar
+    winreg = None
 
 
 def _target(name: str) -> str:
     return config.ALLOWED_APPS.get(str(name).strip().lower(), str(name).strip())
 
 
-def open_app(name: str) -> str:
+def _app_paths(exe: str) -> str:
+    """Windows App Paths registry se exe dhoondo — PATH me na ho to bhi.
+
+    Brave isi jagah milta hai (`HKLM\\...\\App Paths\\brave.exe`), PATH me nahi.
+    """
+    if winreg is None:
+        return ""
+    key = rf"Software\Microsoft\Windows\CurrentVersion\App Paths\{exe}"
+    for root in (winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE):
+        try:
+            with winreg.OpenKey(root, key) as handle:
+                path, _ = winreg.QueryValueEx(handle, "")
+        except OSError:
+            continue
+        if path and os.path.isfile(path):
+            return path
+    return ""
+
+
+def _find(target: str) -> str:
+    return (shutil.which(target) or (target if os.path.isfile(target) else "")
+            or _app_paths(target))
+
+
+def open_app(name: str, url: str = "") -> str:
     target = _target(name)
-    exe = shutil.which(target) or (target if os.path.isfile(target) else "")
+    exe = _find(target)
     if not exe:
         return f"{target} is PC par nahi mila."
-    subprocess.Popen([exe], cwd=str(config.ensure_workspace()), shell=False)
-    return f"{target} khol diya."
+    args = [exe]
+    if str(url or "").strip():
+        bad = _web_url(url)
+        if bad:
+            return bad
+        args.append(str(url).strip())
+    subprocess.Popen(args, cwd=str(config.ensure_workspace()), shell=False)
+    return f"{target} khol diya." + (f" {args[-1]}" if len(args) > 1 else "")
 
 
 def open_website(url: str) -> str:

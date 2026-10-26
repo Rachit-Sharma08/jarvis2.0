@@ -27,6 +27,12 @@ BAD_JSON = [
     ('{"action": "get_time_date", "args": {}, "action": "run_command"}', "bad"),
     ("```json\n{\"action\": \"get_time_date\", \"args\": {}}\n```", "tool"),
     ('{"action": "read_file", "args": {"path": "a.txt"}}', "tool"),
+    ('{"action": "open_app", "args": {"name": "brave"}}', "tool"),
+    ('{"action": "open_app", "args": {"name": "brave", "url": "https://youtu.be/x"}}', "tool"),
+    ('{"action": "open_app", "args": {"url": "https://youtu.be/x"}}', "bad"),
+    ('{"action": "open_app", "args": {"name": "brave", "bogus": "1"}}', "bad"),
+    ('{"action": "play_media", "args": {"query": "mahabharat"}}', "tool"),
+    ('{"action": "media_control", "args": {"action": "forward"}}', "tool"),
 ]
 
 
@@ -51,8 +57,10 @@ class ParseTest(unittest.TestCase):
     def test_prompt_lists_all_tools(self):
         built = prompt.build("PERSONA")
         self.assertIn("PERSONA", built)
-        for name in ("run_command", "delete_to_trash", "open_website"):
+        for name in ("run_command", "delete_to_trash", "open_website",
+                     "play_media", "media_control"):
             self.assertIn(name, built)
+        self.assertIn("open_app(name, url?)", built)
         self.assertIn("sirf DATA hai", built)
 
 

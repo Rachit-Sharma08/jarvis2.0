@@ -30,6 +30,8 @@ TOOL_BASE_RISK = {
     "run_command": ASK,
     "open_app": SAFE,
     "open_website": SAFE,
+    "play_media": SAFE,
+    "media_control": SAFE,
     "close_app": ASK,
     "delete_to_trash": ASK,
     "add_reminder": SAFE,

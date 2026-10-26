@@ -1,10 +1,11 @@
 ﻿"""Tools ka registry. Yehi ek jagah se tool chalta hai.
 
-`TOOL_ARGS` strict hai: har tool ke sirf ye args, aur sab string. LLM ka JSON
-bhi isi ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
+`TOOL_ARGS` strict hai: har tool ke sirf ye args, aur sab string. `TOOL_OPTIONAL`
+wale args chhoot sakte hain (default value lag jaati hai). LLM ka JSON bhi isi
+ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, rss, notes, pomodoro, webhook
+from tools import alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, rss, notes, pomodoro, webhook, media
 
 import config
 
@@ -29,6 +30,8 @@ TOOLS = {
     "run_command": command.run_command,
     "open_app": apps.open_app,
     "open_website": apps.open_website,
+    "play_media": media.play_media,
+    "media_control": media.media_control,
     "close_app": apps.close_app,
     "delete_to_trash": files.delete_to_trash,
     "add_reminder": reminders.add_reminder,
@@ -59,6 +62,8 @@ TOOL_ARGS = {
     "run_command": ("command",),
     "open_app": ("name",),
     "open_website": ("url",),
+    "play_media": ("query",),
+    "media_control": ("action",),
     "close_app": ("name",),
     "delete_to_trash": ("path",),
     "add_reminder": ("text", "at", "in_minutes"),
@@ -80,6 +85,12 @@ TOOL_ARGS = {
     "alarm_status": (),
 }
 
+# Optional args: LLM na de to yahan wali default value lagti hai. `spec()` me
+# `url?` dikhta hai. Required args ke saath conflict nahi hota.
+TOOL_OPTIONAL = {
+    "open_app": {"url": ""},
+}
+
 TOOL_SUMMARY = {
     "get_time_date": "abhi ka time aur date",
     "system_info": "CPU, RAM aur battery ki jaanch",
@@ -87,8 +98,10 @@ TOOL_SUMMARY = {
     "read_file": "text file padho (20 KB tak)",
     "write_file": "file likho",
     "run_command": "PowerShell command chalao",
-    "open_app": "app kholo",
+    "open_app": "app kholo (url? = usi app me site/video)",
     "open_website": "website browser me kholo",
+    "play_media": "YouTube par gaana/video play karo (Brave me)",
+    "media_control": "player control: forward/back/play_pause/next/prev",
     "close_app": "app band karo",
     "delete_to_trash": "file/folder Recycle Bin me bhejo",
     "add_reminder": "reminder set karo (at jaise '5 PM' ya in_minutes number)",
@@ -123,8 +136,8 @@ def spec() -> str:
     """LLM ke system prompt ke liye ek-line description."""
     lines = []
     for name in visible():
-        args = ", ".join(TOOL_ARGS[name])
-        lines.append(f"- {name}({args}): {TOOL_SUMMARY[name]}")
+        args = list(TOOL_ARGS[name]) + [f"{key}?" for key in TOOL_OPTIONAL.get(name, {})]
+        lines.append(f"- {name}({', '.join(args)}): {TOOL_SUMMARY[name]}")
     return "\n".join(lines)
 
 
@@ -140,10 +153,13 @@ def execute(name: str, args: dict) -> str:
         return f"'{name}' naam ka koi tool nahi hai."
     if not _on(name):
         return f"'{name}' abhi band hai (feature flag off)."
-    missing = set(TOOL_ARGS[name]) - set(args)
-    extra = set(args) - set(TOOL_ARGS[name])
+    optional = TOOL_OPTIONAL.get(name, {})
+    args = {**optional, **args}
+    required = set(TOOL_ARGS[name])
+    missing = required - set(args)
+    extra = set(args) - required - set(optional)
     if missing or extra:
-        return f"args galat. chahiye={sorted(TOOL_ARGS[name])} extra={sorted(extra)}"
+        return f"args galat. chahiye={sorted(required)} extra={sorted(extra)}"
     if any(not isinstance(value, str) for value in args.values()):
         return "args galat: sab args string hone chahiye."
     try:
