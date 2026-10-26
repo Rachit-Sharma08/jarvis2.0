@@ -8,6 +8,7 @@ from groq import Groq
 import config
 from log_setup import get_logger
 from voice import stt_guard
+from voice import stt_local
 
 log = get_logger("stt")
 
@@ -31,11 +32,18 @@ def _transcribe(audio: bytes) -> str:
     # `language` jaan-boojh kar NAHI bhejte. Romanized Hinglish (English
     # akshar + Hindi shabd) `language="hi"` par bigaad jata tha — saboot
     # ROUND2.md me. Whisper khud dono script pehchanta hai.
+    # Filename `.wav` hai kyunki audio WAV hai (`wake/wav.py`); pehle `.webm`
+    # likha tha — Groq format naam se bhi andaza lagata hai.
     reply = _client().audio.transcriptions.create(
-        file=("mic.webm", io.BytesIO(audio)),
+        file=("mic.wav", io.BytesIO(audio)),
         model=config.GROQ_STT_MODEL,
     )
     return (reply.text or "").strip()
+
+
+def _transcribe_local(audio: bytes) -> str:
+    """Free/offline raasta — `voice/stt_local.py` (faster-whisper, CPU)."""
+    return stt_local.transcribe(audio)
 
 
 def _run_bounded(fn, audio, deadline):
@@ -67,10 +75,32 @@ def _run_bounded(fn, audio, deadline):
     return box.get("text", "")
 
 
+def provider() -> str:
+    """Kaun sunega: `groq` (cloud) | `local` (offline) | `''` (koi nahi).
+
+    `JARVIS_STT_LOCAL` se: `auto` (default) = Groq key ho to Groq, warna local;
+    `local` = hamesha offline; `groq` = sirf cloud; `off` = local band.
+    """
+    mode = config.STT_LOCAL
+    if mode in ("local", "whisper", "offline"):
+        return "local" if stt_local.available() else ""
+    if mode in ("groq", "cloud"):
+        return "groq" if config.has_groq() else ""
+    if config.has_groq():
+        return "groq"
+    if mode in ("0", "off", "false", "no", "disabled"):
+        return ""
+    return "local" if stt_local.available() else ""
+
+
+def _provider_error() -> SttError:
+    if config.STT_LOCAL in ("local", "whisper", "offline"):
+        return SttError("Local STT model nahi mila (models/faster-whisper-small).")
+    return SttError("Koi STT nahi: GROQ_API_KEY khaali hai aur local model bhi nahi mila.")
+
+
 async def transcribe(audio: bytes, duration_ms=None) -> str:
-    """Browser ka recording -> text (Hindi + English dono samajhta hai)."""
-    if not config.has_groq():
-        raise SttError("GROQ_API_KEY missing hai. .env check karo.")
+    """Browser/wake ki recording -> text (Hindi + English dono samajhta hai)."""
     if not audio:
         raise SttError("Recording khaali aayi.")
     # Size guard YAHAN hai, sirf route me nahi. Wake path (`wake/listen.py`)
@@ -86,16 +116,21 @@ async def transcribe(audio: bytes, duration_ms=None) -> str:
         log.info("stt guard: %s", short)
         raise SttError("Bahut chhoti recording. Thodi der bolke try karo.")
 
+    which = provider()
+    if not which:
+        raise _provider_error()
+
+    fn = _transcribe if which == "groq" else _transcribe_local
+    deadline = (config.stt_deadline() if which == "groq"
+                else config.STT_LOCAL_DEADLINE_SECONDS)
     start = time.perf_counter()
     try:
-        # Do parde: `_run_bounded` SDK ke budget ka ceiling rakhta hai, aur
+        # Do parde: `_run_bounded` provider ke budget ka ceiling rakhta hai, aur
         # `to_thread` event loop ko free rakhta hai (HTTP route ke liye).
-        text = await asyncio.to_thread(
-            _run_bounded, _transcribe, audio, config.stt_deadline())
+        text = await asyncio.to_thread(_run_bounded, fn, audio, deadline)
     except TimeoutError as exc:
         took = int((time.perf_counter() - start) * 1000)
-        log.error("stt atka (%dms) - ceiling %.1fs: %s", took,
-                  config.stt_deadline(), exc)
+        log.error("stt atka (%dms) - ceiling %.1fs: %s", took, deadline, exc)
         raise SttError("Sun nahi paya (awaaz bhejne me waqt laga). Dobara boliye.")
     except Exception as exc:
         log.error("stt failed (%dms): %s: %s", int((time.perf_counter() - start) * 1000),
@@ -103,7 +138,7 @@ async def transcribe(audio: bytes, duration_ms=None) -> str:
         raise SttError(f"Sun nahi paya ({exc}).") from exc
 
     if not text:
-        log.warning("stt ne khaali text diya")
+        log.warning("stt ne khaali text diya (%s)", which)
         raise SttError("Sun nahi paya. Thoda loud bolke try karo.")
 
     # Khamoshi ka nishaan ya galat script — user ko text mat dikhao.
@@ -112,6 +147,6 @@ async def transcribe(audio: bytes, duration_ms=None) -> str:
         log.info("stt guard: text reject — %s | %r", bad, text[:60])
         raise SttError("Sun nahi paya (awaz saaf nahi thi). Thoda loud bolke try karo.")
 
-    log.info("TIME stt: %s %dms | %d chars", config.GROQ_STT_MODEL,
+    log.info("TIME stt: %s %dms | %d chars", which,
              int((time.perf_counter() - start) * 1000), len(text))
     return text
