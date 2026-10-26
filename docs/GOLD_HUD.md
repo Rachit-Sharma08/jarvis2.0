@@ -1,6 +1,7 @@
 # HUD redesign — "STARK GOLD" (single theme)
 
-Status: **awaiting owner approval**. Nothing built yet.
+Status: **built (26-Oct-2026)**. Owner ne gold approve kiya; dono purane theme
+(`neon`, `arc`) delete ho gaye. Ye file design ka record hai, live plan nahi.
 
 ## Goal
 
