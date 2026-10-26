@@ -180,6 +180,28 @@ Browser band ho tab bhi kaam karta hai, is liye ye mic **Python** me sunta hai
 | Startup line | `wake: sun raha hai (jarvis)` — ya mic band/model missing ho to wajah |
 | Mic busy | Chrome/Teams mic pakde ho to app **3 koshish** karti hai (`JARVIS_MIC_ATTEMPTS`, beech me `JARVIS_MIC_RETRY` second), phir `wake: nahi chala`. Wajah log me: `MME error 1` = mic kisi aur app ne pakda hua hai |
 
+### Mic device — shared vs exclusive (`wake/micdev.py`)
+
+Is PC par **Realtek ka AEC/denoise shared mode me mic ko daba deta hai**. Napa
+hua: 0.9 amplitude ke tone ka peak **shared 0.0049 vs exclusive 0.0486** — 10x
+farq. Matlab shared WASAPI par JARVIS ko awaaz hi nahi milti thi.
+
+Exclusive mode APO bypass karta hai, par mic doosri apps (Teams/Zoom) se lock ho
+sakta hai. Isliye default `auto` hai:
+
+| `JARVIS_MIC_EXCLUSIVE` | Matlab |
+|---|---|
+| `auto` (default) | Shared par **digital silence** (p10 < 0.00005) mile to exclusive try karo |
+| `1` | Hamesha exclusive |
+| `0` | Hamesha shared |
+
+Faisla **p10** (10th percentile) par hota hai, peak par nahi — ek-do spike
+(chair, notification) se mic galti se shared par chala jata tha. Probe ka code
+`wake/micdev.py` me hai, asli capture `wake/audio.py` me.
+
+WASAPI 48 kHz maangta hai — 16 kHz par PortAudio `Invalid sample rate` deta hai,
+is liye `wake/resample.py` se 16 kHz par aate hain.
+
 ### Trigger ke **teen raaste** (5-Oct ka fix — "ek command ke baad doosra nahi")
 
 Pehle sirf ek raasta tha (Vosk ka `final`). Wahan se do command me bug tha: gate
