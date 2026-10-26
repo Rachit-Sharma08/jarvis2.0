@@ -1,4 +1,4 @@
-# Tests (85 suites)
+# Tests (88 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 85 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 88 suite lagbhag 3–5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -119,6 +119,9 @@ Ek-ek karke:
 | `test_stt_fallback.py` | **Groq gira to local** — `auto` me Groq ka turant error (429/network) par wahi recording local se suni jaati hai; **timeout par fallback nahi** (budget khatam, caller ko turant saaf message); `JARVIS_STT_LOCAL=groq` par fallback nahi; local bhi gira to message me Groq ka asli reason |
 | `test_stt_broken.py` | **Toota local model yaad** — `_load()` ka fail `_BROKEN` me likha jata hai, doosri call 50ms me `RuntimeError`, aur `available()` uske baad `False` (har command par 4 s load barbaad nahi). `faster_whisper` module fake |
 | `test_wake_micdev.py` | **Mic device probe** — shared WASAPI par digital silence (p10 < 0.00005) mile to exclusive, healthy shared par shared hi; peak par faisla **nahi** (ek spike se mic na badle); `JARVIS_MIC_EXCLUSIVE` ke `auto`/`1`/`0`; `hostapi_name`/`native_rate` ke fallback. Asli `sounddevice` kabhi nahi |
+| `test_stt_e2e.py` | **Asli awaaz, asli model** — Windows SAPI se vaakya bolwa ke `stt.transcribe()` se guzarta hai; saare shabd wapas aane chahiye aur 20 s se tez. Model/SAPI na ho to **SKIP** (suite fail nahi) |
+| `test_wake_e2e.py` | **"Hlo Jarvis" ka asli saboot** — SAPI ki awaaz 16 kHz me badal kar **asli Vosk** ko di jaati hai (grammar ke saath); `jarvis` pakda jaye, `hlo jarvis` phrase list me ho, grammar me `hlo` ho. Model/SAPI na ho to **SKIP** |
+| `test_doctor.py` | **`--doctor` ka faisla** — sab OK = 0, ek FAIL = 1, sirf WARN = 0, check crash bhi FAIL; key na ho to brain FAIL; khaali port par "khaali" aur busy port par "chal raha" (dohra server nahi). Asli mic/server kabhi nahi |
 
 ### 14-Oct raat: 6 purane fail + 2 nayi suite
 
