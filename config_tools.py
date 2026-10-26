@@ -188,6 +188,9 @@ TOOL_CONFIRM_TIMEOUT = 60
 DIRECT_REPLY = os.getenv("JARVIS_DIRECT_REPLY", "1") == "1"
 TOOL_OUTPUT_LIMIT = 2000
 TOOL_ARG_LIMIT = 2000
+# write_file ka `content` alag limit: poora HTML/JS file (3D heart) 2 KB se bada
+# hota hai. Baaki args par wahi 2000 ka niyam rehta hai.
+WRITE_ARG_LIMIT = 20000
 COMMAND_TIMEOUT_SECONDS = 30
 READ_FILE_MAX_BYTES = 20 * 1024
 

@@ -6,12 +6,14 @@ sirf `{"action": ..., "args": {...}}` shape me hi maana jaye.
 
 import sys
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+import json
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
+import config
 from brain import prompt
 
 BAD_JSON = [
@@ -47,6 +49,29 @@ class ParseTest(unittest.TestCase):
 
     def test_unknown_tool_never_runs(self):
         kind, _ = prompt.parse_action('{"action": "delete_everything", "args": {}}')
+        self.assertEqual("bad", kind)
+
+    def test_write_file_allows_big_content(self):
+        """3D heart jaisa code 2 KB se bada hota hai — write_file ka content
+        alag limit (`WRITE_ARG_LIMIT`) se guzarta hai, baaki tools nahi."""
+        body = "<html>" + ("x" * 5000) + "</html>"
+        action = {"action": "write_file",
+                  "args": {"path": "heart.html", "content": body}}
+        kind, payload = prompt.parse_action(json.dumps(action))
+        self.assertEqual("tool", kind)
+        self.assertEqual(body, payload[1]["content"])
+
+    def test_write_file_content_limit_enforced(self):
+        action = {"action": "write_file",
+                  "args": {"path": "heart.html",
+                           "content": "x" * (config.WRITE_ARG_LIMIT + 1)}}
+        kind, reason = prompt.parse_action(json.dumps(action))
+        self.assertEqual("bad", kind)
+        self.assertIn("bahut lamba", reason)
+
+    def test_other_args_still_2000(self):
+        action = {"action": "run_command", "args": {"command": "x" * 5000}}
+        kind, _ = prompt.parse_action(json.dumps(action))
         self.assertEqual("bad", kind)
 
     def test_duplicate_key_rejected(self):

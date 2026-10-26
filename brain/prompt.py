@@ -94,7 +94,9 @@ def parse_action(reply: str) -> tuple:
     text = _unfence(reply or "")
     if not text.startswith("{"):
         return "none", None
-    if len(text) > config.TOOL_ARG_LIMIT * 2:
+    # write_file ka content bada ho sakta hai (poori HTML file). Baaki sab par
+    # per-arg 2000 ka niyam neeche hi lagta hai.
+    if len(text) > config.WRITE_ARG_LIMIT * 2:
         return "bad", "JSON bahut bada hai"
 
     try:
@@ -120,6 +122,9 @@ def parse_action(reply: str) -> tuple:
     for key, value in args.items():
         if not isinstance(value, str):
             return "bad", f"args '{key}' string hona chahiye"
-        if len(value) > config.TOOL_ARG_LIMIT:
-            return "bad", f"args '{key}' bahut lamba hai ({config.TOOL_ARG_LIMIT} char max)"
+        limit = (config.WRITE_ARG_LIMIT
+                 if name == "write_file" and key == "content"
+                 else config.TOOL_ARG_LIMIT)
+        if len(value) > limit:
+            return "bad", f"args '{key}' bahut lamba hai ({limit} char max)"
     return "tool", (name, args)
