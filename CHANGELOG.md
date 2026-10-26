@@ -33,6 +33,12 @@ rings, sparkling filaments, bright donut core. Palette `#FFB43A` / `#FFE9B0` /
 
 `TRUST_ALL` default ON — Allow/Deny card gaya, tools hamesha ON.
 
+### Naya: `python main.py --doctor`
+
+Ek command me "chalega ya nahi?" ka jawab — brain key, STT provider, wake model,
+mic device, port, tools. Har line OK/WARN/FAIL, aakhir me saaf natija. Kuch
+**shuru nahi** karta (na server na mic), is liye chalte hue app ke saath bhi safe.
+
 ---
 
 ## Wake fix: do command me dusra nahi chalta + mic busy (5 Oct 2026)
