@@ -13,7 +13,7 @@ rate` deta hai), aur `wake/resample.py` se 16 kHz par aata hai.
 
 Is file me kuch bhi `if __name__` nahi — test me `chunk_to_rms()`, `encode()`,
 `Vad`, `pick_input_device()` aur `wake/resample.py` pure functions se test hote
-hain (`tests/test_wake_resample.py`).
+hain (`tests/test_wake_resample.py`, device probe `tests/test_wake_micdev.py`).
 """
 
 import queue
@@ -24,6 +24,7 @@ import numpy as np
 import config
 from log_setup import get_logger
 from wake import resample
+from wake.micdev import hostapi_name, native_rate, wasapi_extra
 from wake.pcm import (AutoGain, FixedGain, RmsGain, Vad, chunk_to_rms,
                       encode, quality)   # noqa: F401 (re-export)
 
@@ -62,7 +63,7 @@ class MicSource:
         self.dropped = 0
         self._stream = None
         self._stop = threading.Event()
-        self._decimator = resample.Decimator(1)
+        self._resampler = resample.Decimator(1)
         self._blocker = resample.Blocker(self.blocksize)
         self._gain = _make_gain()
 
@@ -73,17 +74,20 @@ class MicSource:
         if self.alive:
             return True
         device = pick_input_device(sd, self.device)
+        extra = wasapi_extra(sd, device)
         try:
-            self.input_rate = _native_rate(sd, device)
-            self._decimator = resample.Decimator(
-                resample.ratio_for(self.input_rate, self.rate))
+            self.input_rate = native_rate(sd, device)
+            self._resampler = resample.make(self.input_rate, self.rate)
             self._blocker = resample.Blocker(self.blocksize)
-            self._stream = sd.InputStream(
-                samplerate=self.input_rate, blocksize=0, device=device,
-                dtype="float32", channels=config.CHANNELS,
-                callback=self._on_audio,
-            )
-            self._stream.start()
+            try:
+                self._stream = self._open(sd, device, extra)
+            except Exception as exc:
+                if extra is None:
+                    raise
+                # Exclusive device busy ho sakta hai (Teams/Zoom) — shared par.
+                log.warning("exclusive mic nahi khula (%s) — shared par", exc)
+                extra = None
+                self._stream = self._open(sd, device, None)
         except Exception as exc:
             self.error = f"{type(exc).__name__}: {exc}"
             log.error("mic nahi khula: %s | PortAudio 'MME error 1' ya "
@@ -92,11 +96,20 @@ class MicSource:
             raise MicUnavailable(self.error) from exc
         self._stop.clear()
         self.alive = True
-        log.info("mic khula: %s in=%d out=%d block=%dms device=%s",
+        log.info("mic khula: %s in=%d out=%d block=%dms device=%s%s",
                  hostapi_name(sd, device), self.input_rate, self.rate,
                  int(self.blocksize * 1000 / self.rate), device if device is not None
-                 else "default")
+                 else "default", " exclusive" if extra is not None else "")
         return True
+
+    def _open(self, sd, device, extra):
+        stream = sd.InputStream(
+            samplerate=self.input_rate, blocksize=0, device=device,
+            dtype="float32", channels=config.CHANNELS,
+            callback=self._on_audio, extra_settings=extra,
+        )
+        stream.start()
+        return stream
 
     def stop(self) -> None:
         self._stop.set()
@@ -121,7 +134,7 @@ class MicSource:
             samples = indata[:, 0]
             if self._gain is not None:
                 samples = self._gain.apply(samples)
-            samples = self._decimator.feed(samples)
+            samples = self._resampler.feed(samples)
             for block in self._blocker.feed(samples):
                 self._push(encode(block))
         except Exception as exc:
@@ -177,21 +190,3 @@ def pick_input_device(sd, wanted=None):
     except Exception as exc:       # enumerate na hua to default par ghisna hai
         log.warning("host api nahi mila: %s: %s", type(exc).__name__, exc)
     return None
-
-
-def hostapi_name(sd, device) -> str:
-    """Log ke liye: device kis host API ka hai (`MME`/`WASAPI`/...)."""
-    try:
-        return str(sd.query_devices(device, kind="input")["hostapi"])
-    except Exception:
-        return "?"
-
-
-def _native_rate(sd, device) -> int:
-    """Device ka apna capture rate. WASAPI 48 kHz maangta hai — 16 kHz par
-    PortAudio `Invalid sample rate` deta hai (5-Oct)."""
-    try:
-        info = sd.query_devices(device, kind="input")
-        return int(info["default_samplerate"]) or config.SAMPLE_RATE
-    except Exception:
-        return config.SAMPLE_RATE

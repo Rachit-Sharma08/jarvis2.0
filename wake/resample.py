@@ -53,6 +53,36 @@ class Blocker:
         return int(self._tail.size)
 
 
+class Fractional:
+    """Kisi bhi rate -> 16 kHz. Linear interpolation (speech ke liye kaafi).
+
+    `Decimator` sirf poore ratio (48k/3) par chalta tha; 44.1 kHz par
+    `ratio_for` 1 deta tha = kuch nahi, aur awaaz 2.75x tez/slow ho jaati thi.
+    Ye class usi gap ko bharta hai. Linear interpolation aliasing nahi rokta
+    (8 kHz se upar ka hissa fold hota hai) — speech ke liye ye theek hai.
+    """
+
+    def __init__(self, input_rate: int, output_rate: int = 16000):
+        self.step = max(1.0, float(input_rate) / float(output_rate))
+        self._tail = np.zeros(0, dtype=np.float32)
+        self._pos = 0.0          # `_tail` ke coordinates me agli sample ki jagah
+
+    def feed(self, samples) -> np.ndarray:
+        data = np.concatenate([self._tail, np.asarray(samples, dtype=np.float32)])
+        if data.size < 2:
+            self._tail = data
+            return np.zeros(0, dtype=np.float32)
+        positions = np.arange(self._pos, data.size - 1, self.step)
+        if positions.size == 0:
+            self._tail = data
+            return np.zeros(0, dtype=np.float32)
+        out = np.interp(positions, np.arange(data.size), data).astype(np.float32)
+        keep = int(np.floor(positions[-1]))
+        self._tail = data[keep:]
+        self._pos = float(positions[-1] - keep) + self.step
+        return out
+
+
 def ratio_for(input_rate: int, output_rate: int = 16000) -> int:
     """48k -> 16k = 3. Poora divide na ho (ya rate chhota ho) to 1 = kuch nahi."""
     try:
@@ -62,3 +92,17 @@ def ratio_for(input_rate: int, output_rate: int = 16000) -> int:
     if high <= low or high % low:
         return 1
     return high // low
+
+
+def make(input_rate, output_rate: int = 16000):
+    """Rate pair ke liye sahi resampler: poora ratio -> `Decimator` (fast)."""
+    try:
+        high, low = int(input_rate), int(output_rate)
+    except (TypeError, ValueError):
+        return Decimator(1)
+    if high == low:
+        return Decimator(1)
+    ratio = ratio_for(high, low)
+    if ratio > 1:
+        return Decimator(ratio)
+    return Fractional(high, low)

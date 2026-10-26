@@ -68,6 +68,33 @@ def test_decimator():
     check("4x480 -> 640", total, 640)
 
 
+def test_fractional():
+    """44.1k -> 16k: pehle `ratio_for` 1 deta tha = kuch nahi (awaaz 2.75x tez)."""
+    rate, secs, hz = 44100, 1.0, 440.0
+    t = np.arange(int(rate * secs)) / rate
+    sine = np.sin(2 * np.pi * hz * t).astype(np.float32)
+    out = resample.Fractional(rate, 16000).feed(sine)
+    check("1s @44.1k -> ~16000 sample", abs(out.size - 16000) <= 2, True)
+    # Frequency bani rahe: 440 Hz sine ke zero-crossings 1 s me ~880.
+    crossings = int(np.sum(np.diff(np.signbit(out))))
+    check("440 Hz bani rahi", abs(crossings - 880) <= 8, True)
+
+    # Chunk-chunk feed par total wahi (tail/position sambhal raha hai).
+    f = resample.Fractional(rate, 16000)
+    total = sum(f.feed(sine[i:i + 441]).size for i in range(0, sine.size, 441))
+    check("chunk-chunk bhi ~16000", abs(total - 16000) <= 2, True)
+    check("khaali input", resample.Fractional(rate, 16000).feed(
+        np.zeros(0, dtype=np.float32)).size, 0)
+
+
+def test_make():
+    check("48k = Decimator(3)", type(resample.make(48000)).__name__, "Decimator")
+    check("48k ratio", resample.make(48000).ratio, 3)
+    check("44.1k = Fractional", type(resample.make(44100)).__name__, "Fractional")
+    check("16k = passthrough", resample.make(16000).ratio, 1)
+    check("bad input = passthrough", resample.make("abc").ratio, 1)
+
+
 def test_blocker():
     b = resample.Blocker(480)
     check("1440 -> 3 blocks", len(b.feed(np.ones(1440, dtype=np.float32))), 3)
