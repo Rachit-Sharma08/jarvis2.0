@@ -21,14 +21,10 @@ def test_xss_safety():
                     "document.write", "eval(", "new Function"):
             check(f"{name}: {bad} nahi", bad in src, False)
         # `textContent` ka check sirf un file par jo dynamic text banati hain.
-        # Teen chhoot: recorder/speaker/voice_ui (purane mic/speaker raaste).
-        # KAAM B ki do aur chhoot:
-        #   `arc_reactor.js` — sirf SVG geometry (attributes), koi text node
-        #   `arc_load.js`    — sirf `<link>`/`<script>` loader, koi text node
-        # In dono me dynamic text hai hi nahi, is liye ye check un par lagu
-        # nahi hota. Baki sab arc files me `textContent` zaroor hai.
+        # Chhoot: recorder/speaker/voice_ui (purane mic/speaker raaste) aur
+        # hud_prime.js (sirf boot ke waqt `<link>`/`<script>` lagata hai).
         if name not in ("recorder.js", "speaker.js", "voice_ui.js",
-                        "arc_reactor.js", "arc_load.js"):
+                        "hud_prime.js"):
             check(f"{name}: textContent hai", "textContent" in src, True)
 
     html = read("index.html")
@@ -68,13 +64,16 @@ def test_hud_structure():
     check("style.css hata diya", (UI / "style.css").exists(), False)
     check("tools.css hata diya", (UI / "tools.css").exists(), False)
 
-    # Fonts local
-    for font in ("orbitron-var.woff2", "rajdhani-400.woff2", "rajdhani-500.woff2",
+    # Fonts local — Orbitron hata kar Michroma (naya gold theme)
+    for font in ("michroma-400.woff2", "rajdhani-400.woff2", "rajdhani-500.woff2",
                  "rajdhani-600.woff2", "share-tech-mono.woff2"):
         check(f"font {font}", (UI / "fonts" / font).is_file(), True)
+    check("orbitron hata diya", (UI / "fonts" / "orbitron-var.woff2").exists(), False)
     check("OFL license hai", (UI / "fonts" / "OFL-LICENSE.txt").is_file(), True)
     check("font manifest hai", (UI / "fonts" / "MANIFEST.txt").is_file(), True)
     check("fonts.css me woff2", read("fonts.css").count(".woff2"), 5)
+    check("fonts.css me Michroma", 'font-family: "Michroma"' in read("fonts.css"), True)
+    check("fonts.css me Orbitron nahi", "Orbitron" in read("fonts.css"), False)
     check("fonts.css me bahar ka URL nahi",
           "https://" in read("fonts.css").replace("fonts.googleapis.com", ""), False)
 
@@ -99,7 +98,7 @@ def test_clock_and_gauges():
     # Ruler ke tick-marks CSS me (ruler top bar ka hissa hai → hud_base.css)
     base = read("hud_base.css")
     check("ruler tick-marks", "repeating-linear-gradient" in base, True)
-    check("ruler ki 1px neeli line", "linear-gradient(var(--cyan-dim)" in base, True)
+    check("ruler ki 1px gold line", "linear-gradient(var(--gold-deep)" in base, True)
 
 
 # ---------------------------------------------------------------- ORB
@@ -112,10 +111,16 @@ def test_orb():
     check("SVG svg tag", "<svg" in html and "viewBox" in html, True)
     for ring in ("ringOuter", "ringSeg", "ringProg", "ringDot", "ringCore"):
         check(f"ring {ring} svg me", f'id="{ring}"' in html, True)
+    check("orb ka id hai", 'id="orb"' in html, True)
     check("tick-marks JS me", "TICKS" in orb and "createElementNS" in orb, True)
-    check("core ka SVG radialGradient define hai",
-          'id="coreGrad"' in html and "<radialGradient" in html, True)
+    check("core ka SVG gradient define hai",
+          'id="coreGrad"' in html and "<linearGradient" in html, True)
+    check("plasma sphere gradient", 'id="plasmaGrad"' in html, True)
+    check("sheen gradient", 'id="sheenGrad"' in html, True)
     check("core usi gradient se bharta hai", "url(#coreGrad)" in css, True)
+    check("sphere plasma se bharta hai", "url(#plasmaGrad)" in css, True)
+    for part in ("sphere", "arcA", "arcB", "arcC", "fil", "sat"):
+        check(f"orb layer {part}", part in html and part in css, True)
     # Sirf declaration dekho, comment nahi (comment me bhi wahi shabd likha hai)
     decls = [ln for ln in css.splitlines() if "radial-gradient" in ln
              and not ln.strip().startswith(("*", "/*", "//"))]
@@ -125,12 +130,13 @@ def test_orb():
     for state in ("idle", "listening", "thinking", "speaking"):
         check(f"{state} CSS animation", f".{state} " in css, True)
     check("idle ulti disha", ".idle .seg" in css and "reverse" in css, True)
-    check("listening amber sweep", ".listening .prog" in css, True)
+    check("listening gold sweep", ".listening .prog" in css, True)
     check("thinking tez", ".thinking .seg" in css, True)
     check("speaking ripple", ".speaking .dotted" in css, True)
-    # Amber rang ka asal source hud_base.css ka --amber variable hai.
-    check("progress arc amber", ".prog" in css and "var(--amber)" in css, True)
-    check("amber value define hai", "--amber: #f5a623" in read("hud_base.css"), True)
+    # Progress arc ka rang hud_base.css ke --gold-hot variable se aata hai.
+    check("progress arc gold", ".prog" in css and "var(--gold-hot)" in css, True)
+    check("gold value define hai", "--gold: #ffb43a" in read("hud_base.css"), True)
+    check("PROG_C 666 hai", "PROG_C = 666" in orb, True)
 
 
 # ---------------------------------------------------------------- ACTIVITY + STOP

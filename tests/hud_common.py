@@ -24,17 +24,14 @@ GOOD_ORIGIN = f"http://localhost:{config.SERVER_PORT}"
 
 UI = config.UI_DIR
 
-# Har UI file — naye Phase 4 files + purane + KAAM B ke arc files.
-# Arc sirf tab boot hota hai jab `data-theme === "arc"` ho, par XSS/line
-# limit ka niyam **dono** theme par lagta hai — is liye ye list me hain.
+# Har UI file — Phase 4 files + purane. Arc theme hata diya (ab sirf "gold"),
+# is liye arc_* files is list me nahi hain.
 UI_JS = ("app.js", "tools.js", "hud_clock.js", "hud_stats.js", "hud_activity.js",
          "hud_status.js", "hud_orb.js", "hud_weather.js", "hud_quick.js",
-         "recorder.js", "speaker.js", "voice_ui.js",
-         "arc_config.js", "arc_reactor.js", "arc_dom.js", "arc_live.js",
-         "arc_shell.js", "arc_wire.js", "arc_boot.js", "arc_load.js")
+         "hud_desktop.js", "hud_prime.js",
+         "recorder.js", "speaker.js", "voice_ui.js")
 UI_CSS = ("hud_base.css", "hud_panel.css", "hud_left.css", "hud_center.css",
-          "hud_right.css", "hud_bottom.css", "hud_card.css", "fonts.css",
-          "arc.css", "arc_layout.css", "arc_core.css", "arc_bottom.css")
+          "hud_right.css", "hud_bottom.css", "hud_card.css", "fonts.css")
 
 
 def check(name, got, want):

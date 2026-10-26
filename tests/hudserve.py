@@ -35,8 +35,7 @@ FAKE_WEATHER = {
 # (`config.hud_theme()` se), taaki nakli server bhi asli default serve kare.
 # Yahan hard-code rakhne ka koi fayda nahi: default flip hote hi test asal
 # config ke bajaye khayali value check karta, aur asli bug chhoot jaata.
-# Neeche `filled_html()` isko PLACEHOLDERS me dhal deta hai.
-DEFAULT_THEME = "neon"
+DEFAULT_THEME = "gold"
 
 PLACEHOLDERS = (
     ("__JARVIS_TOKEN__", "nakli-token"),
@@ -44,27 +43,14 @@ PLACEHOLDERS = (
     ("__JARVIS_ASSISTANT_NAME__", "Jarvis"),
     ("__JARVIS_DISPLAY_NAME__", "Jarvis"),
     ("__JARVIS_BRAIN_WARN__", ""),
-    # --- KAAM B: arc theme. Rang/number `config_hud.py` ke hain (nakli
-    # constants nahi — asli values, taaki test bhi asli config check kar
-    # sake). Theme `DEFAULT_THEME` se aata hai, upar dekho. ---
     ("__JARVIS_HUD_THEME__", DEFAULT_THEME),
-    ("__ARC_ACCENT__", "#ff8a2e"),
-    ("__ARC_ACCENT_2__", "#ff5e3a"),
-    ("__ARC_ROUTING__", '["WAKE", "STT", "BRAIN", "TTS"]'),
-    ("__ARC_CHANNEL__", '"LOCAL"'),
-    ("__ARC_CREDIT__", '"Interface style inspired by Mukh.1"'),
-    ("__ARC_TICKS__", "72"),
-    ("__ARC_HEX__", "6"),
-    ("__ARC_ACT_MAX__", "6"),
-    ("__ARC_TYPE_MS__", "28"),
-    ("__ARC_FRAME_MS__", "33"),
 )
 
 CSS = "text/css"
 JS = "application/javascript"
 
-# Sirf ye do theme — `server/app.py` ke `resolve_theme()` ka wahi whitelist.
-THEMES = ("neon", "arc")
+# Sirf ek theme — `server/app.py` ke `resolve_theme()` ka wahi whitelist.
+THEMES = ("gold",)
 
 
 def filled_html(theme: str = "") -> str:
@@ -110,10 +96,9 @@ class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):                    # noqa: N802 - stdlib ka naam
         path, _, query = self.path.partition("?")
         if path == "/":
-            # `?theme=arc` — asli server jaisa (`server/app.py` ka
-            # `resolve_theme`: lowercase + whitelist). Test yahi rule maangta
-            # hai, is liye nakli server bhi WAHI kare — warna test asli
-            # server se alag behave karega.
+            # `?theme=` — asli server jaisa (`server/app.py` ka `resolve_theme`:
+            # lowercase + whitelist). Test yahi rule maangta hai, is liye nakli
+            # server bhi WAHI kare — warna test asli server se alag behave karega.
             theme = ""
             for part in query.split("&"):
                 if part.startswith("theme="):
@@ -154,12 +139,12 @@ class Server(http.server.ThreadingHTTPServer):
 class FakeHud:
     """`with FakeHud() as hud:` — background me chalta hai, baad me band.
 
-    `theme="neon"` ya `"arc"` dene par usi theme ko **pin** kar deta hai
-    (chahe asli default kuch bhi ho), aur `__exit__` par wapas asli default.
-    Ye zaroori hai: ek test jo neele HUD ke selectors check karta hai, use
-    saaf-saaf `neon` pin karna chahiye — warna default flip karte hi wo
-    chup-chaap "sab theek" bolne lagta hai jabki uske saare selectors maujood
-    hi nahi rahte. Ye wahi galti hai jo Phase 4 me 8 baar hui thi.
+    `theme="gold"` dene par usi theme ko **pin** kar deta hai (chahe asli
+    default kuch bhi ho), aur `__exit__` par wapas asli default. Ye zaroori
+    hai: ek test jo gold HUD ke selectors check karta hai, use saaf-saaf
+    `gold` pin karna chahiye — warna default flip karte hi wo chup-chaap
+    "sab theek" bolne lagta hai jabki uske saare selectors maujood hi nahi
+    rahte. Ye wahi galti hai jo Phase 4 me 8 baar hui thi.
     """
 
     def __init__(self, port=None, theme: str = ""):

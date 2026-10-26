@@ -13,12 +13,11 @@ Jo check hota hai:
 Screenshot `%TEMP%\\opencode\\hudshots` me. Playwright na ho to SKIP
 (suite fail nahi hota) — browser-free check `hud_check_ui.py` me hai.
 
-**Theme PIN kiya hai (`"neon"`):** ye test neele HUD ke hi selectors
+**Theme PIN kiya hai (`"gold"`):** ye test gold HUD ke hi selectors
 (`.bottombar`, `.remind-pill`, `.qlbl`, `.composer`, `.brainwarn`, ...) check
-karta hai. Arc me ye hote hi nahi. Is liye `FakeHud(theme="neon")` — warna
-config ka default `arc` karte hi ye test chup-chaap "sab theek" bolne lagta
-aur apne aap hi chup ho jaata. Default change ka test yahin se nahi hona
-chahiye — alag (`test_hud_arc.py`) uska kaam hai.
+karta hai. Is liye `FakeHud(theme="gold")` — warna config ka default kuch aur
+karte hi ye test chup-chaap "sab theek" bolne lagta. Default change ka test
+yahin se nahi hona chahiye — alag (`test_hud_arc.py`) uska kaam hai.
 """
 
 import tempfile
@@ -30,7 +29,7 @@ FAILED = []
 
 # Ye test inhi selectors ka hai -> inhi theme ko pin karo. Nahe to default
 # badalne par test chup-chaap fail/pass hoga (don hi buri baat hai).
-THEME = "neon"
+THEME = "gold"
 
 # Jo viewport check karne hain. 1366x768 asli kaam wala hai.
 SIZES = ((1366, 768), (1280, 720), (1920, 1080), (1200, 688), (1024, 700))
