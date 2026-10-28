@@ -73,7 +73,7 @@ _NO_WINDOW = 0x08000000
 
 
 def child_python() -> str:
-    """Child **usi** python se chalta hai jis se supervisor chala.
+    r"""Child **usi** python se chalta hai jis se supervisor chala.
 
     4-Oct ko S6 step 6 (base `python.exe` pin) **try kiya aur chhoda**: base
     `D:\Python312\python.exe` me `uvicorn` hai hi nahi (`include-system-site-

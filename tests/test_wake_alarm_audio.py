@@ -1,4 +1,4 @@
-"""Alarm ki **awaaz** aur flag file — koi asli awaaz nahi.
+r"""Alarm ki **awaaz** aur flag file — koi asli awaaz nahi.
 
 `test_wake_alarm.py` (loop + ruke) ka saathi. Raat hai, is liye PowerShell,
 edge-tts aur speaker **sab fake**:

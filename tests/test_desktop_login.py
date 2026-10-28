@@ -1,4 +1,4 @@
-"""STEP 3: **login par cwd** ka asli pakkaura (4 Oct 2026).
+r"""STEP 3: **login par cwd** ka asli pakkaura (4 Oct 2026).
 
 Ye test `tests/test_desktop_autostart.py` se pada hai — file 200 se badi ho
 gayi thi (AGENTS ka niyam).

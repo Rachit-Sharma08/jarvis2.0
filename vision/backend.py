@@ -1,4 +1,4 @@
-"""Face backend — asal computer-vision library yahan aati hai, aur **sirf** yahan.
+r"""Face backend — asal computer-vision library yahan aati hai, aur **sirf** yahan.
 
 Is module ka ek kaam hai: `detect(frame)` se face bounding boxes, aur
 `embed(face_img)` se 128-float ka vector. Baaki sab (`identity.py`,

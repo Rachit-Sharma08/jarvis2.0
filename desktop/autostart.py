@@ -49,7 +49,7 @@ def pythonw() -> str:
 
 
 def script() -> Path:
-    """`desktop/launcher.py` ka full path. **Script** `-m` se nahi, file se:
+    r"""`desktop/launcher.py` ka full path. **Script** `-m` se nahi, file se:
     Windows login par Run key ka cwd `C:\Windows\System32` hota hai, aur wahin
     se `-m desktop.launcher` import hi nahi hota (ModuleNotFoundError) — isi
     liye login par app chup-chaap mar jaata. `launcher.py` apne aap BASE_DIR ko
