@@ -15,7 +15,7 @@ import time
 from pathlib import Path
 
 import config
-from brain import openai_pool, pool_config
+from brain import gemini_client, groq_client, openai_pool, pool_config
 from log_setup import get_logger
 
 log = get_logger("probe")
@@ -61,12 +61,17 @@ def probe_model(provider: dict, model: str, calls: int = MAX_CALLS) -> dict:
         used += 1
         start = time.monotonic()
         try:
-            text = openai_pool.chat(
-                provider, [{"role": "user", "content": PROBE_MSG}], "probe",
-                model, max_tokens=pool_config.MAX_TOKENS, temperature=0,
-                reasoning_effort=pool_config.REASONING_EFFORT)
-        except openai_pool.CallError as exc:
-            reason = f"{exc.kind}: {exc}"
+            if provider.get("api_style") in ("groq", "gemini"):
+                # Inka client model-list khud chalta hai — pool ka asli raasta yahi
+                client = gemini_client if provider["api_style"] == "gemini" else groq_client
+                text = client.ask([{"role": "user", "content": PROBE_MSG}], "probe")
+            else:
+                text = openai_pool.chat(
+                    provider, [{"role": "user", "content": PROBE_MSG}], "probe",
+                    model, max_tokens=pool_config.MAX_TOKENS, temperature=0,
+                    reasoning_effort=pool_config.REASONING_EFFORT)
+        except Exception as exc:
+            reason = f"{getattr(exc, 'kind', type(exc).__name__)}: {exc}"
             total += int((time.monotonic() - start) * 1000)
             continue
         total = int((time.monotonic() - start) * 1000)
@@ -99,10 +104,17 @@ def run(provider_name: str = "nvidia", limit: int = 3, force: bool = False) -> d
         return {"error": f"{provider_name} ki key nahi hai"}
 
     rows = []
-    for model in provider["models"][:limit]:
-        row = probe_model(provider, model)
+    if provider["api_style"] in ("groq", "gemini"):
+        # Inka client model-list khud chalta hai — per-model loop redundant hai
+        row = probe_model(provider, provider["model"], calls=1)
         rows.append(row)
-        log.info("probe %s: ok=%s %sms %s", model, row["ok"], row["latency_ms"], row["reason"])
+        log.info("probe %s: ok=%s %sms %s", provider["name"], row["ok"],
+                 row["latency_ms"], row["reason"])
+    else:
+        for model in provider["models"][:limit]:
+            row = probe_model(provider, model)
+            rows.append(row)
+            log.info("probe %s: ok=%s %sms %s", model, row["ok"], row["latency_ms"], row["reason"])
 
     winner = _pick(rows)
     result = {

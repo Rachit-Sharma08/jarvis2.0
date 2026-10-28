@@ -141,7 +141,9 @@ def ask(history: list, persona: str) -> tuple:
                 log.info("TIME pool: T%d %s %s total %dms", tier, provider["name"], model, took)
                 return answer, provider["name"]
         if problems:
-            log.warning("Tier %d ke sab fail — agla tier", tier)
+            # Reason zaroori hai — warna T2 chal jaaye to T1 ki galti chup reh jaati hai
+            # (28-Oct: groq ki key khaali thi, kisi ko pata nahi chala).
+            log.warning("Tier %d ke sab fail: %s", tier, " | ".join(problems))
 
     # Health warnings bhi dikhao, par wahi provider dobara mat likho.
     for warning in health.warnings():
