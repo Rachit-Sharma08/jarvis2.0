@@ -53,7 +53,7 @@ OFF nahi hota (awaaz se sirf ALLOW nahi hota, tools bhi nahi).
 | `run_command` | PowerShell command (30 second limit) | ASK |
 | `open_website` | Browser me site kholta hai | SAFE (`http`/`https`) |
 | `open_app` | Config ki list me se app | SAFE (list me) / ASK (nahi) |
-| `close_app` | App band karta hai | ASK |
+| `close_app` | App band karta hai (graceful; `name="all"` = saare khule app + browser tabs) | ASK |
 | `delete_to_trash` | File/folder **Recycle Bin** me bhejta hai | ASK |
 
 - Delete **hamesha Recycle Bin** me jaata hai. Permanent delete ka koi tool hi nahi hai.

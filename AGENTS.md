@@ -1392,3 +1392,21 @@ green**, sab file `<200`.
   `test_tts_auth.py`, `test_wake_levels.py`; `test_speed_fix.py` ka 0.9 ka pakkaura
   update. Suite **63 = 57 pass + 6 purane fail** (naya nahi). **Live:** naye
   path se 3/3 sahi transcription (1.4-3.0 s). Rules section **8.1.5**.
+- **close_app graceful + "sab band karo" (29 Oct 2026)** — user ki shikayat: "close
+  all apps and chrome tabs" par Jarvis 4 baar refuse/poochhta tha. **Asli wajah
+  do thi:** `gatekeeper/nocards.py` ka `_close_app()` hamesha DENY karta tha
+  ("wo force kill karta hai"), aur `close_app(name)` me "sab" ka koi raasta hi
+  nahi tha. Ab: (1) `tools/apps.py` ka `close_app` **graceful** (`taskkill` bina
+  `/F` = WM_CLOSE, wahi jo window ka X karta hai), force **sirf fallback** jab
+  app normal close se na maane; (2) `name="all"` = saare visible-window app, ek
+  hi call me — kaun chhodna hai wo pure `_closable()` me (`explorer`, system
+  shell, `python`/`pythonw` = khud Jarvis kabhi nahi); (3) `nocards._close_app`
+  ab ALLOW (sirf `PROTECTED_APPS` par DENY, `python`/`pythonw` bhi wahan jode);
+  (4) persona/spec me "sab band karo" ka raasta + `brain/prompt.py` RULES me
+  saaf line ki close_app khatarnak nahi. **Live proof:** asli Groq ne
+  `{"action":"close_app","args":{"name":"all"}}` diya; `would-close` =
+  code/chrome/whatsapp/systemsettings (explorer+textinputhost chhode), Notepad
+  asli test me band hua. Test: `test_apps` (4 pure naye), `test_nocards`,
+  `test_directreply`, `test_persona_nocards` (budget 950). Suite **92/92
+  GREEN**. ⚠️ `close_app("all")` test me kabhi mat chalao — opencode/Hermes
+  terminal bhi band ho jayega.

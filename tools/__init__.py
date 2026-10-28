@@ -105,7 +105,7 @@ TOOL_SUMMARY = {
     "vscode_terminal": "VS Code me terminal kholo (window pehle khuli ho)",
     "play_media": "YouTube par gaana/video play karo (Brave me)",
     "media_control": "player control: forward/back/play_pause/next/prev",
-    "close_app": "app band karo",
+    "close_app": "app band karo (name='all' = saare khule app + browser tabs)",
     "delete_to_trash": "file/folder Recycle Bin me bhejo",
     "add_reminder": "reminder set karo (at jaise '5 PM' ya in_minutes number)",
     "list_reminders": "pending reminders dikhao",

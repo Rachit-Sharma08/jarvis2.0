@@ -38,7 +38,7 @@ SOURCE_FILES = ("desktop/app.py", "desktop/launcher.py", "desktop/tray.py",
                 "config_desktop.py", "config_wake.py", "log_setup.py",
                 # 14-Oct: config_wake.py 200 cross tha -> config_lines.py +
                 # config_audio.py. Naya file banate hi list me daalna zaroori.
-                "config_lines.py", "config_audio.py")
+                "config_lines.py", "config_audio.py", "tools/closeall.py")
 
 
 def test_config():

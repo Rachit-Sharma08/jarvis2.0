@@ -133,10 +133,9 @@ class NoCardsTest(unittest.TestCase):
         verdict, _reason = self.ask("delete_to_trash", {"path": str(TEMP / "a.exe")})
         self.assertEqual("DENY", verdict)
 
-    def test_close_app_denied_even_allowed_name(self):
-        verdict, reason = self.ask("close_app", {"name": "notepad"})
-        self.assertEqual("DENY", verdict)
-        self.assertIn("close_app", reason)
+    def test_close_app_allowed(self):
+        for name in ("notepad", "all"):
+            self.assertEqual("ALLOW", self.ask("close_app", {"name": name})[0])
 
     def test_close_app_protected_denied(self):
         verdict, reason = self.ask("close_app", {"name": "explorer"})

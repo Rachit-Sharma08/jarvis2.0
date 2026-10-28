@@ -2,7 +2,9 @@
 
 - open_app: sirf config.ALLOWED_APPS me SAFE, baaki ASK
 - open_website: sirf http/https, baaki scheme BLOCKED
-- close_app: hamesha ASK
+- close_app: graceful band (WM_CLOSE, jaisa window ka X). `name="all"` =
+  saare khule app ek saath. Force kill sirf tab jab app normal band hone se
+  na maane. ASK ka faisla `gatekeeper/nocards.py` deta hai.
 """
 
 import os
@@ -12,6 +14,7 @@ import webbrowser
 from urllib.parse import urlparse
 
 import config
+from tools import closeall
 from tools.keys import send_key
 from tools.quick import _web_url
 
@@ -79,20 +82,33 @@ def open_website(url: str) -> str:
     return f"browser me khul gaya: {parsed.scheme}://{parsed.netloc}"
 
 
-def close_app(name: str) -> str:
-    target = _target(name)
-    result = subprocess.run(
-        ["taskkill", "/IM", target, "/F"],
-        cwd=str(config.ensure_workspace()),
-        shell=False,
-        capture_output=True,
-        text=True,
-        timeout=20,
-    )
+def _image(target: str) -> str:
+    """taskkill ko image naam chahiye (`notepad.exe`, `notepad` nahi)."""
+    raw = target if target.lower().endswith(".exe") else f"{target}.exe"
+    found = _find(raw) or _find(target)
+    return os.path.basename(found) if found else raw
+
+
+def _close_one(name: str) -> str:
+    image = _image(_target(name))
+    result = closeall.kill(["/IM", image])
     out = (result.stdout or "") + (result.stderr or "")
-    lines = [line.strip() for line in out.splitlines() if line.strip()]
+    low = out.lower()
     if result.returncode == 0:
-        return f"{target} band kar diya. {lines[-1] if lines else ''}".strip()
-    if "not found" in out or "No running instance" in out:
-        return f"{target} to pehle se chal nahi raha tha."
-    return f"{target} band nahi hua: {' '.join(lines[:2])}"
+        return f"{image} band kar diya."
+    if "not found" in low or "no running instance" in low:
+        return f"{image} to pehle se chal nahi raha tha."
+    if "could not be terminated" in low or "forcefully" in low:
+        forced = closeall.kill(["/IM", image, "/F"])
+        if forced.returncode == 0:
+            return f"{image} force band kiya (normal close se nahi maana)."
+    lines = [line.strip() for line in out.splitlines() if line.strip()]
+    return f"{image} band nahi hua: {' '.join(lines[:2])[:160]}"
+
+
+def close_app(name: str) -> str:
+    """App band karo. `all` = saare khule app + browser tabs (system chhod ke)."""
+    text = str(name).strip()
+    if text.lower() in closeall.ALL_WORDS:
+        return closeall.close_all()
+    return _close_one(text)

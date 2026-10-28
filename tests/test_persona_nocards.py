@@ -11,8 +11,9 @@ from datasafe import isolated_data
 
 FAILED = []
 BASE = 3256  # P-2b-2b se pehle naapa gaya prompt (tools ON, khaali memory)
-MAX_GROW = 800  # P-2b-2b + E-1 (+106) + E-2 (+50); 28-Oct: media suite (play_media
-# + media_control + vscode_terminal — spec 3 line + rules 5 line) (+335).
+MAX_GROW = 950  # P-2b-2b + E-1 (+106) + E-2 (+50); 28-Oct: media suite (play_media
+# + media_control + vscode_terminal - spec 3 line + rules 5 line) (+335);
+# 29-Oct: close_app name='all' (spec + RULES line, +142).
 
 
 def check(name, got, want):

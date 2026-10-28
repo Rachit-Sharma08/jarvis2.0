@@ -64,12 +64,12 @@ def test_direct_single_step():
 
 def test_direct_deny_no_lie():
     print("DIRECT: DENY par asli wajah")
-    events, calls, tools = run("notepad band karo", [act("close_app", name="notepad")])
+    events, calls, tools = run("explorer band karo", [act("close_app", name="explorer")])
     check("tool chala hi nahi", tools, [])
     check("LLM sirf 1 baar", calls, 1)
     text = last_answer(events)
     check("'Ye nahi kar sakta:' shuru", text.startswith("Ye nahi kar sakta:"), True)
-    check("gatekeeper ki wajah hai", "close_app abhi band hai" in text, True)
+    check("gatekeeper ki wajah hai", "allowed nahi" in text, True)
     check("jhooth nahi (already closed)", "already closed" in text.lower(), False)
 
 

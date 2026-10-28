@@ -4,9 +4,10 @@ Jab `gatekeeper/rules.py` ne ASK kaha aur card band hai, `keeper.review()`
 yahan se faisla leta hai: ("ALLOW", None) ya ("DENY", "ek line Hinglish wajah").
 Card banta hi nahi, koi naya UI nahi - DENY ka raasta engine ka wahi purana hai.
 
-Sirf `config.WORKSPACE` ke andar ka safe kaam chupchaap chalta hai. Baaki sab
-(shell command, force kill, workspace ke bahar, path trick, secret/executable)
-chupchaap mana. Ye list `TOOLS.md` me likhi hai; badalna ho to pehle owner se.
+Sirf `config.WORKSPACE` ke andar ka safe kaam, aur **graceful app band karna**
+(`close_app`) chupchaap chalta hai. Baaki sab (shell command, workspace ke bahar,
+path trick, secret/executable) chupchaap mana. Ye list `TOOLS.md` me likhi hai;
+badalna ho to pehle owner se.
 """
 
 import os
@@ -25,7 +26,8 @@ EXEC_SUFFIXES = (".exe", ".dll", ".bat", ".cmd", ".ps1", ".vbs",
 
 SECRET_SUFFIXES = (".pem", ".key")
 
-PROTECTED_APPS = ("explorer", "winlogon", "csrss", "services", "lsass", "system")
+PROTECTED_APPS = ("explorer", "winlogon", "csrss", "services", "lsass", "system",
+                  "python", "pythonw")
 
 
 def _short(text: str) -> str:
@@ -126,7 +128,9 @@ def _close_app(args: dict) -> tuple:
         return DENY, "app ka naam do"
     if name in PROTECTED_APPS:
         return DENY, f"{name} band karna allowed nahi"
-    return DENY, "close_app abhi band hai (wo force kill karta hai)"
+    # 29-Oct: pehle yahan hamesha DENY tha (force kill ki wajah se). Ab
+    # close graceful hai (`tools/apps.py` - WM_CLOSE, force sirf fallback).
+    return ALLOW, None
 
 
 def resolve_ask(tool: str, args: dict) -> tuple:

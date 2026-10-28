@@ -5,6 +5,7 @@ Koi app asli me khulti nahi — sirf fakes/deny raaste.
 
 import sys
 if hasattr(sys.stdout, "reconfigure"): sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+import os
 import unittest
 from pathlib import Path
 from unittest import mock
@@ -12,7 +13,7 @@ from unittest import mock
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
-from tools import apps, keys, quick
+from tools import apps, closeall, keys, quick
 
 
 class AppsTest(unittest.TestCase):
@@ -115,6 +116,28 @@ class AppsTest(unittest.TestCase):
             quick.open_url("https://example.com")
             quick.open_url("http://example.com")
         self.assertEqual(["https://example.com", "http://example.com"], opened)
+
+
+class CloseAllTest(unittest.TestCase):
+    """`all` ka faisla pure hai - test me koi asli app band nahi hota."""
+
+    def test_system_aur_khud_nahi(self):
+        pairs = [(1, "chrome.exe"), (2, "explorer.exe"), (3, "python.exe"),
+                 (4, "notepad.exe"), (5, "chrome.exe"), (6, "")]
+        self.assertEqual(["chrome", "notepad"], closeall.closable(pairs))
+
+    def test_apna_pid_nahi(self):
+        self.assertEqual([], closeall.closable([(os.getpid(), "someapp.exe")]))
+
+    def test_image_me_exe(self):
+        self.assertEqual("notepad.exe", apps._image("notepad"))
+        self.assertEqual("definitely_not_running_xyz.exe",
+                         apps._image("definitely_not_running_xyz"))
+
+    def test_sab_par_close_all(self):
+        with mock.patch.object(closeall, "close_all", return_value="ok") as all_:
+            self.assertEqual("ok", apps.close_app("sab"))
+        all_.assert_called_once()
 
 
 if __name__ == "__main__":
