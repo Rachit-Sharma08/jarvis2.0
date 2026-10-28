@@ -6,6 +6,38 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Size niyam ka safai + voice-test raaz (28 Oct 2026)
+
+26-Oct ka adhoora voice-test (3D heart) phir se chalaya. Do sach nikle:
+
+1. **Speakers ki awaaz mic tak nahi pahunchti** — naapo (`%TEMP%\opencode`):
+   playback ke dauraan mic RMS 0.0028 (peak 0.0468), jabki user ki asli awaaz
+   0.175. Laptop ka mic apne speakers nahi sun paata — **test WAV play karke
+   wake hit kabhi nahi hoga**. Voice test ab sirf user ke bole se hota hai.
+2. **11:44 par wake hit hua tha** par STT khaali aaya — us waqt DNS down tha
+   (weather + edge-tts bhi `getaddrinfo failed`). Network wapas aane par rasta
+   khula hai. ElevenLabs `.env` me ab key nahi — TTS Edge par chalega.
+
+### 200-line/budget safai (sirf split, koi logic nahi badla)
+
+- `config_tools.py` (206) → WhatsApp/CDP constants naye **`config_cdp.py`** me
+  (config.py re-export badal gaya; `config.CDP_PORT` waisa hi chalta hai).
+- `tests/test_tools.py` (261) → apps/browser tests naye **`tests/test_apps.py`** me.
+- `tests/test_tool_routes.py` (202) → UI source-guard naye
+  **`tests/test_tool_ui_guard.py`** me (textContent + isTrusted + endpoint naqsha).
+- `ui/app.js` (220) → brain-pill poll + server-reload naye **`ui/hud_conn.js`**
+  (`window.JARVIS_CONN`); index.html me script joda, 1 khali line hatai.
+- `tests/test_persona_nocards.py`: `MAX_GROW` 460 → **800** (media suite ke
+  prompt additions — play_media/media_control/vscode_terminal ka rules+spec).
+
+### Baki state
+
+- VS Code wali 4 extra "Welcome" windows nahi hain — PC restart me khud chali
+  gayin (ab sirf 1 window: pid 3612). Kuch band nahi kiya gaya.
+- Suite 92 ho gayi (2 nayi split files + purani 90). TESTS.md update.
+
+---
+
 ## Hearing fix + STARK GOLD HUD (26 Oct 2026)
 
 Do cheezein: JARVIS **sunta nahi tha**, aur HUD purana tha.

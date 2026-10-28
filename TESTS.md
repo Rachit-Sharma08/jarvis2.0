@@ -1,4 +1,4 @@
-# Tests (89 suites)
+# Tests (92 suites)
 
 Sab suite **standalone** hain — ek-ek karke ya loop me. Koi **asli API call nahi**
 karta, koi **khatarna command** nahi chalta, aur key ki zarurat nahi padti.
@@ -20,7 +20,7 @@ Get-ChildItem tests\test_*.py | ForEach-Object {
 if ($fail) { "FAILED: $($fail -join ', ')" } else { "SUITE GREEN" }
 ```
 
-> **Dhyan do:** 89 suite lagbhag 3-5 minute lete hain. Terminal ka timeout na ho
+> **Dhyan do:** 92 suite lagbhag 3-5 minute lete hain. Terminal ka timeout na ho
 > isliye sabse aasan raasta — background me chala kar result file padho:
 >
 > ```powershell
@@ -49,8 +49,10 @@ Ek-ek karke:
 | `test_paths.py` | Traversal, case, 8.3 naam, junction, drive root |
 | `test_gatekeeper.py` | SAFE/ASK/BLOCKED cases, path tricks, mode parity |
 | `test_gatekeeper_approval.py` | Card hash, single use, 60s timeout, kill switch, rate limit, log masking |
-| `test_tools.py` | 10 tools (temp folder me), 20 KB limit, scrubbed env, timeout |
-| `test_tool_routes.py` | Tool endpoints, CSP, UI source safety |
+| `test_tools.py` | Tools files/command/system (temp folder me), 20 KB limit, scrubbed env, timeout |
+| `test_apps.py` | Apps/browser tool: open_url sirf http, vscode_terminal, send_key, open_app+url (28-Oct split) |
+| `test_tool_ui_guard.py` | UI source safety (textContent/isTrusted) + khatarnak endpoint naqsha (28-Oct split) |
+| `test_tool_routes.py` | Tool endpoints (token/host/origin), Allow/Deny 409, kill switch, CSP, claim |
 | `test_prompt_strict.py` | LLM JSON strict validation + duplicate key reject |
 | `test_engine_tools.py` | 5-step loop, ASK/BLOCKED, kill switch, mode parity |
 | `test_engine_detail.py` | Tool output aur confirm card ki masking |
