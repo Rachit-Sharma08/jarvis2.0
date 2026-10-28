@@ -1,9 +1,9 @@
-"""PLAYBACK_MUTE_MIC audit + drain ki hadd — KAAM 2 ka saboot.
+"""Dead voice-flag audit + drain ki hadd — KAAM 2 ka saboot.
 
 `test_self_hearing.py` (tail guard ka kaam) se alag, sirf yahi teen sawaal:
 
-1. `config.PLAYBACK_MUTE_MIC` **kahin use nahi hota** — production me koi file
-   ise nahi padhti. Asli rok ka raasta `wake/worker.py` ka
+1. `PLAYBACK_MUTE_MIC` (dead flag) **hataya ja chuka hai** — koi file na define
+   karti hai na padhti hai (29-Oct). Asli rok ka raasta `wake/worker.py` ka
    `hold_for_command()` / `release_from_command()` hai.
 2. `listen.drain()` 400 chunk (~12 s) tak bounded hai — jabki jawab ka TTS
    18 s tak chalta hai. **Yahi self-hearing ki asli wajah hai.**
@@ -29,20 +29,17 @@ from wake import listen
 
 
 class TestPlaybackMuteMicAudit(unittest.TestCase):
-    """`PLAYBACK_MUTE_MIC` sach me lagta hai ya nahi — audit ka hissa."""
+    """Dead flag wapas na aaye — audit ka hissa."""
 
-    def test_flag_exists_but_unused(self):
-        check("flag maujood hai", config.PLAYBACK_MUTE_MIC, True)
+    def test_flag_removed(self):
+        check("config me nahi", hasattr(config, "PLAYBACK_MUTE_MIC"), False)
         used = []
-        for path in list((ROOT / "wake").glob("*.py")) + \
-                list((ROOT / "desktop").glob("*.py")):
-            body = path.read_text(encoding="utf-8")
-            if "PLAYBACK_MUTE_MIC" in body:
+        paths = list((ROOT / "wake").glob("*.py")) + \
+            list((ROOT / "desktop").glob("*.py")) + [ROOT / "config_wake.py"]
+        for path in paths:
+            if "PLAYBACK_MUTE_MIC" in path.read_text(encoding="utf-8"):
                 used.append(path.name)
-        check("production me koi use nahi karta", used, [])
-        check("sirf config me define hai",
-              "PLAYBACK_MUTE_MIC = True" in
-              (ROOT / "config_wake.py").read_text(encoding="utf-8"), True)
+        check("kahin define/use nahi", used, [])
 
     def test_real_mechanism_is_hold(self):
         """Asli rok ka raasta `hold_for_command` / `release_from_command` hai."""

@@ -93,13 +93,9 @@ HOT_WINDOW_SECONDS = float(os.getenv("JARVIS_HOT_WINDOW_SECONDS", "12") or 12)
 
 # Bolne ke waqt sunna band rakhna. Apni hi awaaz wapas na aaye — is liye
 # "Jarvis, WhatsApp kholo" sunne se pehle "Ji, boliye" bolna zaroori hai.
-#
-# â„ `PLAYBACK_MUTE_MIC` **kahin use nahi hota** (13-Oct ka audit: sirf define
-# hai, koi code nahi padhta). Asli rok ka raasta `wake/worker.py` ka
-# `hold_for_command()` / `release_from_command()` hai - command poore chalte
-# tak sunna band, phir chhod dena. Ye flag abhi bhi pada hai taaki purana
-# `.env` me koi use na toot jaaye; naya kaam is par nahi banaya.
-PLAYBACK_MUTE_MIC = True
+# Asli rok ka raasta `wake/worker.py` ka `hold_for_command()` /
+# `release_from_command()` hai - command poore chalte tak sunna band, phir
+# chhod dena. (Purana dead `PLAYBACK_MUTE_MIC` flag 29-Oct ko hata diya.)
 
 # ---- tail guard (13-Oct, KAAM 2) -------------------------------------------
 # **Apni hi awaaz se WAKE HIT** ka asli nuksan yahi hai. Command ke dauraan
