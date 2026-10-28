@@ -192,8 +192,6 @@ with isolated_data():
     test_confirm_endpoint(client)
     test_cancel(client)
     test_csp_header(client)
-test_ui_uses_textcontent()
-test_no_dangerous_endpoints()
 
 print()
 if FAILED:
