@@ -110,8 +110,19 @@ def test_tool_error_direct():
     check("error seedha bola", last_answer(events), "chrome.exe is PC par nahi mila.")
 
 
+def test_remember_direct():
+    print("DIRECT: remember (profile Hinglish output seedha)")
+    events, calls, tools = run("yaad rakho mujhe chai pasand hai",
+                               [act("remember", key="drink", value="chai")],
+                               out="Yaad rakh liya: drink = chai")
+    check("tool chala", tools, ["remember"])
+    check("LLM sirf 1 baar", calls, 1)
+    check("Hinglish jawab seedha", last_answer(events), "Yaad rakh liya: drink = chai")
+
+
 for fn in (test_direct_single_step, test_direct_deny_no_lie, test_multi_step_old_path,
-           test_other_tool_old_path, test_flag_off_old_path, test_tool_error_direct):
+           test_other_tool_old_path, test_flag_off_old_path, test_tool_error_direct,
+           test_remember_direct):
     with isolated_data():
         fn()
 

@@ -11,10 +11,11 @@ from datasafe import isolated_data
 
 FAILED = []
 BASE = 3256  # P-2b-2b se pehle naapa gaya prompt (tools ON, khaali memory)
-MAX_GROW = 1550  # P-2b-2b + E-1 (+106) + E-2 (+50); 28-Oct: media suite (play_media
+MAX_GROW = 1680  # P-2b-2b + E-1 (+106) + E-2 (+50); 28-Oct: media suite (play_media
 # + media_control + vscode_terminal - spec 3 line + rules 5 line) (+335);
 # 29-Oct: close_app name='all' (+142); personal profile (remember/forget spec
-# 2 line + rules 2 line) (+314); Avenger persona (Sir/protocol/profile lines) (+230).
+# 2 line + rules 2 line) (+314); Avenger persona (Sir/protocol/profile lines) (+230);
+# Hinglish jawab rule (+98).
 
 
 def check(name, got, want):

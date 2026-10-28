@@ -20,6 +20,7 @@ from core import turnguard
 DIRECT_TOOLS = frozenset({
     "get_time_date", "open_app", "open_website", "open_url", "write_file",
     "delete_to_trash", "add_todo", "add_reminder", "copy_text", "focus_app",
+    "remember", "forget",
 })
 
 # In shabdon wale command me ek se zyada kaam ho sakta hai — multi-step chain
