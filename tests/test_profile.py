@@ -74,6 +74,14 @@ class ProfileTest(unittest.TestCase):
         profile.remember("x", "y")
         self.assertNotEqual(Path(config.BASE_DIR) / "data", profile.PFILE.parent)
 
+    def test_brief_uses_name(self):
+        from tools import brief
+
+        self.assertIn(", Sir", brief.daily_brief())
+        self.assertNotIn("Rachit", brief.daily_brief())
+        profile.remember("user_name", "Rachit")
+        self.assertIn("Rachit Sir", brief.daily_brief())
+
     def test_nocards_allows(self):
         from unittest import mock
 
