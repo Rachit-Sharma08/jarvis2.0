@@ -38,7 +38,8 @@ ACK_BEEP_HZ, ACK_BEEP_MS, ACK_BEEP_DROP_SECONDS = 880, 120, 0.2
 
 # ---- wake ke jawab ---------------------------------------------------------
 # Ye chaaron line sirf `wake/command.py` bolti hai. UI me text nahi — awaaz.
-ACK_ON_WAKE = ("Ji, boliye.", "On it.", "Got it.", "Right away.", "Working on it.")
+ACK_ON_WAKE = ("Ji Sir, boliye.", "At your service, Sir.", "Haan Sir.",
+               "Right away, Sir.", "Sun raha hoon, Sir.")
 NOT_HEARD = "Kuch sun nahi aaya. Dobara boliye."
 # Awaaz saaf nahi aayi: kuch bola hi nahi, bahut chhota bola, ya STT guard ne
 # ("Thank you." jaisa) reject kar diya. TEENO ka jawab ek hi line.
