@@ -30,3 +30,6 @@ models/
 
 # system backups (registry .reg etc) - machine-specific, code nahi
 backup/
+
+# agent ka working checkpoint - machine-specific notes, repo me nahi
+.opencode/progress.md

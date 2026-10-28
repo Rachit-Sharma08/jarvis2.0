@@ -6,7 +6,7 @@ tha — to ye usi tarike se nikala gaya hai.
 
 **Is file me kya hai:** sirf woh cheezein jo user **sunta** hai.
 - Wake ke jawab: `ACK_ON_WAKE`, `NOT_HEARD`, `NOT_UNDERSTOOD`, `BRAIN_FAILED`,
-  `CONFIRM_VOICE`, `STOP_WORD`
+  `CONFIRM_VOICE`
 - "So jao": `SLEEP_WORDS`, `SLEEP_ACK`, `SLEEP_FROM_TRAY`
 - Ack beep + ack peek (`COMMAND_ACK_PEEK_SECONDS`)
 
@@ -49,7 +49,6 @@ BRAIN_FAILED = "Abhi jawab nahi mil pa raha."
 # ASK wala tool: card screen par aayega. **Awaaz se Allow kabhi nahi** — sirf
 # screen ka button. Ye line sirf itni batati hai ki screen dekh lo.
 CONFIRM_VOICE = "Screen par confirm kijiye."
-STOP_WORD = ("ruk jao", "band karo", "shukriya", "thanks", "stop")
 
 # ---- "so jao" (battery) ---------------------------------------------------
 # Mic sunna **kabhi band nahi** hota (warna "Jarvis" sunai hi nahi dega). Is

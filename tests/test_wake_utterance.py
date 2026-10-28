@@ -115,13 +115,10 @@ def test_capture_dead_mic():
 
 
 def test_helpers():
-    show("helpers: duration_ms / pcm / is_stop_command")
+    show("helpers: duration_ms / pcm")
     chunks = [loud(1)] * 10
     check("duration 10 chunk = 300ms", utterance.duration_ms(chunks), 10 * BLOCK_MS)
     check("pcm jodi", len(utterance.pcm(chunks)), len(chunks[0]) * 10)
-    check("ruk jao", utterance.is_stop_command("ruk jao bhai"), True)
-    check("thanks", utterance.is_stop_command("Thanks!"), True)
-    check("normal command", utterance.is_stop_command("WhatsApp kholo"), False)
 
 
 def test_wav():

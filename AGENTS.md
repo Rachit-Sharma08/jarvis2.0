@@ -488,7 +488,7 @@ endpoint mat likho.
 - **Test asli `data/` ko kabhi nahi chhoo sakta (E-1b) — `tests/datasafe.py` ka
   `isolated_data()` (plain test) ya `DataSafeCase` (unittest setUp/tearDown).**
   Helper test ke dauran `config.DATA_DIR`, `config.ACTION_LOG`,
-  `core.memory` (DATA_DIR/MEM_FILE/SUM_FILE), `core.summarizer`, aur
+  `core.memory` (DATA_DIR/MEM_FILE/SUM_FILE), `core.profile`, aur
   `tools/` ke `todo/reminders/notes/rss/pomodoro/kb` path ek **tmp** folder par
   daalta hai, `MEM._items` khaali karta hai (asli file ko chhue bina), aur tearDown
   par sab wapas. Guard: koi path asli `data/` me gir gaya to **AssertionError**.

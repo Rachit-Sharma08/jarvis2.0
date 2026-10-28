@@ -37,13 +37,6 @@ log = get_logger("vision.gate")
 COOLDOWN_SECONDS = 0.8
 
 _last_check = None          # (monotonic, verdict)
-_capture = None             # test me inject karne ka raasta (closure)
-
-
-def set_capture(fn):
-    """Sirf test: camera capture badal do. `None` = wapas asli."""
-    global _capture
-    _capture = fn
 
 
 def _grab():
@@ -51,8 +44,6 @@ def _grab():
 
     Yahan `cv2.VideoCapture` khulta hai — aur **har** failure `None` deta hai
     (device busy, permission nahi, driver nahi). Exception nahi nikalti."""
-    if _capture is not None:
-        return _capture()
     try:
         import cv2
     except Exception:

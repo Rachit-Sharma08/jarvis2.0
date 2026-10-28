@@ -114,9 +114,3 @@ def duration_ms(chunks: list) -> int:
 def pcm(chunks: list) -> bytes:
     """Chunk list ko ek jodi PCM bytes me mila do."""
     return b"".join(chunks)
-
-
-def is_stop_command(text: str) -> bool:
-    """'ruk jao' / 'band karo' jaisa command? Step 2.5 ke liye taiyaar."""
-    low = (text or "").strip().lower()
-    return any(word in low for word in config.STOP_WORD)
