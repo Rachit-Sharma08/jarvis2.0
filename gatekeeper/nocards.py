@@ -151,6 +151,9 @@ def resolve_ask(tool: str, args: dict) -> tuple:
         return DENY, "shell command abhi band hai, mujhe specific tool chahiye"
     if tool in ("list_dir", "read_file"):
         return _readish(args)
+    if tool in ("remember", "forget"):
+        # Sirf `data/profile.json` - koi path arg nahi, is liye likhna safe hai.
+        return ALLOW, None
     if tool == "open_app":
         name = _short(args.get("name", ""))
         return DENY, f"'{name}' allowed apps ki list me nahi hai"

@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import config  # noqa: E402
 from core import memory as _mem, summarizer as _sum  # noqa: E402
+from core import profile as _prof  # noqa: E402
 from tools import kb as _kb, notes as _nt, pomodoro as _pm  # noqa: E402
 from tools import reminders as _rm, rss as _rs, todo as _td  # noqa: E402
 
@@ -28,7 +29,8 @@ def isolated_data():
     plan = [(config, "DATA_DIR", tmp), (config, "ACTION_LOG", tmp / "actions.log"),
             (_mem, "DATA_DIR", tmp), (_mem, "MEM_FILE", tmp / "memory.json"),
             (_mem, "SUM_FILE", tmp / "memory_summary.txt"), (_sum, "SUM_FILE", tmp / "memory_summary.txt"),
-            (_kb, "KB_DIR", tmp / "kb")]
+            (_kb, "KB_DIR", tmp / "kb"),
+            (_prof, "DATA_DIR", tmp), (_prof, "PFILE", tmp / "profile.json")]
     for mod, fname, attr in ((_td, "todos.json", "TFILE"), (_rm, "reminders.json", "RFILE"),
                              (_nt, "notes.json", "NFILE"), (_rs, "rss_feeds.json", "RFILE"),
                              (_pm, "pomodoro.json", "PFILE")):

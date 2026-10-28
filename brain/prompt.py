@@ -33,6 +33,8 @@ Rules:
   forward, back, play_pause, next, prev.
 - VS Code me terminal kholna ho to vscode_terminal() chalao.
 - Tool se jawab aane ke baad user ko saaf Hinglish me batao.
+- User apne baare kuch bataye (naam, sheher, pasand, routine) to `remember` se
+  yaad rakho - wo agle prompt me khud aata hai. Purani ghalat baat `forget` se hatao.
 - Tool ka jawab aane ka matlab kaam ho gaya - user ko seedha ek line me batao; wahi tool dobara mat bulao.
 - Agar tumne tool nahi bulaya to kabhi mat bolo ki kaam ho gaya.
 """
@@ -46,6 +48,7 @@ command se hoga, to seedha bata do ki tools band hain. Tool JSON mat likho.]
 
 
 from core import memory
+from core import profile
 
 
 def build(persona: str, tools_on: bool = True) -> str:
@@ -62,6 +65,9 @@ def build(persona: str, tools_on: bool = True) -> str:
     spec = tools.spec()
     ctx = memory.MEM.context(max_turns=10)
     parts = [persona]
+    prof = profile.block()
+    if prof:
+        parts.append(prof)
     if ctx:
         parts.append(ctx)
     parts.append(RULES.format(spec=spec, steps=config.TOOL_MAX_STEPS))

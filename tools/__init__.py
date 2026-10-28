@@ -5,7 +5,7 @@ wale args chhoot sakte hain (default value lag jaati hai). LLM ka JSON bhi isi
 ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, rss, notes, pomodoro, webhook, media
+from tools import aboutme, alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, rss, notes, pomodoro, webhook, media
 
 import config
 
@@ -49,6 +49,8 @@ TOOLS = {
     "focus_app": quick.focus_app,
     "kb_add": kb.kb_add,
     "kb_search": kb.kb_search,
+    "remember": aboutme.remember,
+    "forget": aboutme.forget,
     "daily_brief": brief.daily_brief,
     "set_wake_alarm": alarm.set_wake_alarm,
     "alarm_status": alarm.alarm_status,
@@ -82,6 +84,8 @@ TOOL_ARGS = {
     "focus_app": ("name",),
     "kb_add": ("text", "filename"),
     "kb_search": ("query",),
+    "remember": ("key", "value"),
+    "forget": ("key",),
     "daily_brief": (),
     "set_wake_alarm": ("at", "repeat_minutes"),
     "alarm_status": (),
@@ -121,6 +125,8 @@ TOOL_SUMMARY = {
     "focus_app": "ek app par focus do",
     "kb_add": "knowledge base me text save karo",
     "kb_search": "knowledge base me search karo",
+    "remember": "user ke baare me baat yaad rakho (key: user_name, value: ...)",
+    "forget": "user ke baare me yaad rakhi baat bhula do (key)",
     "daily_brief": "daily brief dikhao (reminders+todos)",
     "set_wake_alarm": "uthne ka alarm set karo (at jaise '7:00 am')",
     "alarm_status": "abhi ka alarm batao",

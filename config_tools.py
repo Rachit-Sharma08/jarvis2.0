@@ -48,6 +48,8 @@ TOOL_BASE_RISK = {
     "focus_app": SAFE,
     "kb_add": SAFE,
     "kb_search": SAFE,
+    "remember": SAFE,
+    "forget": SAFE,
     "daily_brief": SAFE,
     # Alarm (13-Oct). `set_wake_alarm` sirf `data/alarm_request.json` likhta hai
     # — Task Scheduler se kuch nahi chhoota. Task banana hamesha haath se hota
