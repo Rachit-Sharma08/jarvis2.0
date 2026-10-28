@@ -1,6 +1,6 @@
 """Tests ko asli `data/` se door rakhne wala helper (E-1b).
 
-Test ke dauran data-folder + memory/audit/todos/reminders/kb/notes ke path ek
+Test ke dauran data-folder + memory/audit/todos/reminders/kb/profile ke path ek
 temp folder par; khatam hote hi wapas. Guard: koi path asli `data/` ke andar
 gir gaya to AssertionError - taaki test chup-chaap asli memory.json na mita sake.
 
@@ -17,8 +17,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import config  # noqa: E402
 from core import memory as _mem  # noqa: E402
 from core import profile as _prof  # noqa: E402
-from tools import kb as _kb, notes as _nt, pomodoro as _pm  # noqa: E402
-from tools import reminders as _rm, rss as _rs, todo as _td  # noqa: E402
+from tools import kb as _kb  # noqa: E402
+from tools import reminders as _rm, todo as _td  # noqa: E402
 
 
 @contextmanager
@@ -31,9 +31,7 @@ def isolated_data():
             (_mem, "SUM_FILE", tmp / "memory_summary.txt"),
             (_kb, "KB_DIR", tmp / "kb"),
             (_prof, "DATA_DIR", tmp), (_prof, "PFILE", tmp / "profile.json")]
-    for mod, fname, attr in ((_td, "todos.json", "TFILE"), (_rm, "reminders.json", "RFILE"),
-                             (_nt, "notes.json", "NFILE"), (_rs, "rss_feeds.json", "RFILE"),
-                             (_pm, "pomodoro.json", "PFILE")):
+    for mod, fname, attr in ((_td, "todos.json", "TFILE"), (_rm, "reminders.json", "RFILE")):
         plan += [(mod, "DATA_DIR", tmp), (mod, attr, tmp / fname)]
     saved = []
     try:

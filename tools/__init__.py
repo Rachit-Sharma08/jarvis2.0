@@ -5,7 +5,7 @@ wale args chhoot sakte hain (default value lag jaati hai). LLM ka JSON bhi isi
 ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import aboutme, alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, rss, notes, pomodoro, media
+from tools import aboutme, alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, media
 
 import config
 
