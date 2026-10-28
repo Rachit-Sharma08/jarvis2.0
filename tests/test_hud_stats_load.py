@@ -39,6 +39,7 @@ import config
 from tests.wakehelp import check, finish
 
 APP_JS = ROOT / "ui" / "app.js"
+CONN_JS = ROOT / "ui" / "hud_conn.js"   # 28-Oct split: WS reconnect/reload yahan hai
 PRIME_JS = ROOT / "ui" / "hud_prime.js"
 STATS_JS = ROOT / "ui" / "hud_stats.js"
 WEATHER_JS = ROOT / "ui" / "hud_weather.js"
@@ -124,12 +125,18 @@ class TestLoadPriming(unittest.TestCase):
         Live bug (26-Oct): purani HUD purane token ke saath atki rehti thi,
         is liye har 15s `token reject` aur screen par "connection toot gaya".
         """
-        src = APP_JS.read_text(encoding="utf-8")
-        check("onclose reconnect par", "ws.onclose = reconnect;" in src, True)
+        src = CONN_JS.read_text(encoding="utf-8")
+        app_src = APP_JS.read_text(encoding="utf-8")
+        check("onclose reconnect par",
+              "ws.onclose = () => window.JARVIS_CONN.reload();" in app_src, True)
+        check("conn shuru hota hai", "window.JARVIS_CONN.start(TOKEN);" in app_src, True)
         check("server up hone par reload", "location.reload();" in src, True)
         check("window band hone par reload nahi",
               "beforeunload" in src and "closing" in src, True)
         check("401 par bhi reconnect", "reply.status === 401" in src, True)
+        check("index.html me script tag",
+              "hud_conn.js" in (ROOT / "ui" / "index.html").read_text(
+                  encoding="utf-8"), True)
 
     def test_render_still_driven_by_ws(self):
         """Purana WS raasta bhi chahiye — `primePanels` sirf shuruaat bharta hai."""

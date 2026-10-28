@@ -52,27 +52,6 @@ function setStatus(value) {
   if (key === "idle") busy = false;
 }
 
-// ---- /brain/status: SYSTEM ONLINE/DEGRADED + provider/model ----
-let brainTimer = null;
-async function loadBrain() {
-  try {
-    const reply = await fetch("/brain/status", {
-      headers: { "x-jarvis-token": TOKEN },
-      cache: "no-store"
-    });
-    // 401 = server restart ho gaya, is page ka token purana hai. WS ka onclose
-    // kabhi na aaye (Edge app window) to yeh 15s wala poll reload kar deta hai.
-    if (reply.status === 401) {
-      reconnect();
-      return;
-    }
-    if (!reply.ok) throw new Error("http " + reply.status);
-    status.render(await reply.json());
-  } catch (err) {
-    status.clearProvider();
-  }
-}
-
 const ws = new WebSocket(`ws://${location.host}/ws?token=${encodeURIComponent(TOKEN)}`);
 const seenMessages = new Set();
 
@@ -136,27 +115,7 @@ function handleEvent(ev) {
 
 ws.onmessage = (e) => handleEvent(JSON.parse(e.data));
 
-// Server restart par naya token banta hai. Purana page har /api/state par 401
-// deta hai aur "connection toot gaya" par atak jaata hai (live bug, 26-Oct).
-// Server wapas aate hi page reload karo - naya token HTML ke saath aata hai.
-let reconnecting = false;
-let closing = false;
-window.addEventListener("beforeunload", () => { closing = true; });
-
-function reconnect() {
-  if (reconnecting || closing) return;
-  reconnecting = true;
-  showNotice("Server se connection toot gaya. Reconnect kar raha hoon...");
-  const retry = () => fetch("/", { cache: "no-store" })
-    .then((reply) => {
-      if (!reply.ok) throw new Error("http " + reply.status);
-      location.reload();
-    })
-    .catch(() => setTimeout(retry, 2000));
-  setTimeout(retry, 1000);
-}
-
-ws.onclose = reconnect;
+ws.onclose = () => window.JARVIS_CONN.reload();
 
 function send() {
   const text = inputEl.value.trim();
@@ -213,8 +172,8 @@ stopBtn.addEventListener("click", stopEverything);
 document.getElementById("send").addEventListener("click", send);
 inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
 
-// Mode + brain pill load; brain har 15s refresh (pool badal sakta hai).
+// Mode + brain pill load; brain har 15s refresh (pool badal sakta hai) —
+// poll + reload 401 fix sab `hud_conn.js` (JARVIS_CONN) me hai.
 status.setMode(LABEL);
 orb.setMode(LABEL);
-loadBrain();
-brainTimer = setInterval(loadBrain, 15000);
+window.JARVIS_CONN.start(TOKEN);
