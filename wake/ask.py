@@ -54,6 +54,23 @@ def speak(text: str, stop=None) -> int:
 PREWARM_TEXTS = ("ACK_ON_WAKE", "CONFIRM_VOICE")
 
 
+def _texts() -> list:
+    """PREWARM_TEXTS ke asli lines — constant tuple ho to uske saare variants.
+
+    `ACK_ON_WAKE` tuple hai (`random.choice` se ek chunta hai). Pehle poora
+    tuple `speak_cached()` me jaata tha aur asli TTS `clean()` par
+    `TypeError` deta tha — matlab ack kabhi cache nahi hota tha.
+    """
+    out = []
+    for name in PREWARM_TEXTS:
+        value = getattr(config, name, "")
+        if isinstance(value, (list, tuple)):
+            out.extend(str(v) for v in value if v)
+        elif value:
+            out.append(str(value))
+    return out
+
+
 def prewarm_async(mode: str = None) -> None:
     """`prewarm()` ko background thread me chalao - startup **rukna nahi** chahiye.
 
@@ -84,8 +101,7 @@ def prewarm(mode: str = None) -> int:
     from voice import tts
 
     mode = mode or config.DEFAULT_MODE
-    texts = [getattr(config, name, "") for name in PREWARM_TEXTS]
-    texts = [text for text in texts if text]
+    texts = _texts()
     if not texts:
         return 0
 

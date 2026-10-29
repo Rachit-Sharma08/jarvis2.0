@@ -49,6 +49,7 @@ class FakeSpeak:
         self.delay = delay
 
     async def __call__(self, text, mode):
+        assert isinstance(text, str), f"text str nahi: {type(text).__name__}"
         self.calls.append((text, mode))
         if self.delay:
             await asyncio.sleep(self.delay)
@@ -75,12 +76,12 @@ class TestPrewarm(unittest.TestCase):
         fake = FakeSpeak()
         tts.speak = fake
         done = ask.prewarm("sunday")
-        check("dono text cache hue", done, len(ask.PREWARM_TEXTS))
+        check("saare text cache hue", done, len(ask._texts()))
         check("sirf prewarm ke text banaye",
-              len(fake.calls), len(ask.PREWARM_TEXTS))
+              len(fake.calls), len(ask._texts()))
         check("awaaz nahi baji", played, [])
-        check("ack cache me hai",
-              (config.ACK_ON_WAKE, "sunday") in tts._CACHE, True)
+        check("ack (string) cache me hai",
+              (config.ACK_ON_WAKE[0], "sunday") in tts._CACHE, True)
 
     def test_second_wake_will_hit_cache(self):
         """Yahi asli faida hai: prewarm ke baad pehli wake ka `ack` 0 ms.
@@ -91,10 +92,10 @@ class TestPrewarm(unittest.TestCase):
         tts.speak = fake
         ask.prewarm("sunday")
         before = len(fake.calls)
-        tts._CACHE.pop((config.ACK_ON_WAKE, "sunday"), None)   # noqa: proof ke liye
+        tts._CACHE.pop((config.ACK_ON_WAKE[0], "sunday"), None)   # noqa: proof ke liye
         ask.prewarm("sunday")
-        check("cache me hone se call nahi hua",
-              len(fake.calls) - before, len(ask.PREWARM_TEXTS) - 1)
+        check("sirf hataya hua text dobara bana",
+              len(fake.calls) - before, 1)
 
     def test_survives_provider_failure(self):
         """Provider mar gaya to 0 cache, app startup nahi rukega."""
@@ -114,11 +115,11 @@ class TestPrewarm(unittest.TestCase):
         elapsed = time.perf_counter() - start
         check("block nahi kiya (<0.1s)", elapsed < 0.1, True)
         for _ in range(60):
-            if len(tts._CACHE) >= len(ask.PREWARM_TEXTS):
+            if len(tts._CACHE) >= len(ask._texts()):
                 break
             time.sleep(0.05)
         check("background me poora cache hua",
-              len(tts._CACHE), len(ask.PREWARM_TEXTS))
+              len(tts._CACHE), len(ask._texts()))
 
     def test_app_calls_prewarm_on_start(self):
         """`desktop/app.py` startup par prewarm **chahta** hai - wiring pakadte
