@@ -17,13 +17,15 @@ main loop (state change + reminder broadcast). Baaki startup/shutdown ka faisla
 """
 
 import sys
+import threading
 
 import config
 from core import sysstats
-from desktop import micperm
+from desktop import micperm, playback
 from desktop.state import STATE
 from log_setup import get_logger
 from server import hud_reminders
+from tools import reminders
 
 log = get_logger("app")
 
@@ -68,8 +70,36 @@ class AppLoop:
             if STATE.version() != last:      # state badli + tray icon refresh
                 last = STATE.version()
                 self.tray.refresh()
+            if ticks % 20 == 0:  # ~10s: due reminder bolo + HUD ko batao
+                try:
+                    self._fire_reminders()
+                except Exception:
+                    pass
             if ticks % 10 == 0:  # ~5s
                 try:
                     hud_reminders.broadcast()
                 except Exception:
                     pass
+
+    def _fire_reminders(self) -> None:
+        """Due reminder ek hi baar bolo (speaker thread par, loop na ruke).
+
+        `mark_done()` **bolne se pehle** — warna TTS 10s se zyada le to wahi
+        reminder agle tick par dobara bolta. TTS fail ho to reminder chup ho
+        jaata hai, par `logs/jarvis.log` me "reminder baj raha hai" line rehti
+        hai (shortcut: awaaz fail par retry nahi, chahiye to yahan add karo).
+        """
+        items = reminders.due()
+        if not items or not reminders.mark_done([x.get('id') for x in items]):
+            return
+        lines = ["Sir, reminder: " + str(x.get('text') or 'Reminder') for x in items]
+        log.info("reminder baj raha hai: %s", ", ".join(
+            "#%s" % x.get('id') for x in items))
+        threading.Thread(target=_speak_all, args=(lines,), daemon=True).start()
+        hud_reminders.broadcast()
+
+
+def _speak_all(lines: list) -> None:
+    """Ek hi thread me saare lines (do thread ek saath bolne lag jaate)."""
+    for line in lines:
+        playback.say(line)

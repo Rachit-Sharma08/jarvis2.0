@@ -61,9 +61,10 @@ def add_reminder(text: str = "", at: str = "", in_minutes: int | None = None) ->
                 pass
     if not when:
         return 'Samajh nahi aaya (example: "remind me in 5 minutes to call home" ya "remind me at 5 PM to water plants")'
-    items.append({'id': len(items) + 1, 'text': text or 'Reminder', 'when': when.isoformat(), 'done': False})
+    nid = max((x.get('id', 0) for x in items), default=0) + 1
+    items.append({'id': nid, 'text': text or 'Reminder', 'when': when.isoformat(), 'done': False})
     _save(items)
-    return f'Reminder set #{len(items)}: "{text or "Reminder"}" at {_fmt(when)}'
+    return f'Reminder set #{nid}: "{text or "Reminder"}" at {_fmt(when)}'
 
 
 def list_reminders() -> str:
@@ -90,3 +91,34 @@ def clear_reminder(id: int | None = None) -> str:
     items = [x for x in items if x.get('done')]
     _save(items)
     return 'All pending reminders cleared? (use id to clear one)'
+
+
+def due():
+    """Abhi bajne wale reminders — `when` nikal chuka aur `done` nahi."""
+    now = _now()
+    out = []
+    for x in _load():
+        if x.get('done'):
+            continue
+        try:
+            if datetime.fromisoformat(x['when']) <= now:
+                out.append(x)
+        except Exception:
+            continue
+    return out
+
+
+def mark_done(ids) -> int:
+    """In ids ko done karo. -> kitne badle (app ek hi reminder do baar na bole)."""
+    want = {int(i) for i in ids or []}
+    if not want:
+        return 0
+    items = _load()
+    n = 0
+    for x in items:
+        if x.get('id') in want and not x.get('done'):
+            x['done'] = True
+            n += 1
+    if n:
+        _save(items)
+    return n

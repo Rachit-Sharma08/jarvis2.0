@@ -26,7 +26,8 @@ def due_soon(max_minutes: int = 5):
             w = datetime.fromisoformat(x['when'])
         except Exception:
             continue
-        if w < now:
+        if w <= now:                     # nikal gaya - HUD par overdue (m=0)
+            soon.append({'id': x['id'], 'text': x['text'], 'when': _fmt(w), 'm': 0})
             continue
         delta = (w - now).total_seconds() / 60.0
         if delta <= max_minutes:
