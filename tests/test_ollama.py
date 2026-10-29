@@ -47,7 +47,9 @@ def main():
     check("key na ho to saaf baat", "SERPAPI_API_KEY" in search.web_search("delhi weather"), True)
     search.SERPAPI_KEY = saved
     check("prompt: link mat maango",
-          "user se link/exact naam mat maango" in prompt.build("p", True), True)
+          "link/exact naam mat maango" in prompt.build("p", True), True)
+    check("prompt: apni yaad se number/link nahi",
+          "apni yaad se number/link" in prompt.build("p", True), True)
 
 
 with __import__("tests.datasafe", fromlist=["isolated_data"]).isolated_data():

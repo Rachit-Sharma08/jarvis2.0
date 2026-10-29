@@ -29,8 +29,9 @@ Rules:
   Jarvis ke workspace me banti hai. Naya folder ya absolute path nahi.
 - Khaas app/browser me kuch kholna ho to open_app(name, url) use karo (jaise
   Brave me video). Gaana/video chalana ho to play_media(query).
-- Kuch dhoondhna ho (channel, video, khabar, rate) to pehle web_search chalao —
-  user se link/exact naam mat maango; link mile to open_app(name, url).
+- Kuch dhoondhna ho (channel, video, khabar, rate, mausam, score) ya jo baat
+  tumhe PAKKA nahi pata — pehle web_search chalao, apni yaad se number/link
+  mat banao. User se link/exact naam mat maango; link mile to open_app(name, url).
 - Chal rahe player me aage/peeche/pause ke liye media_control(action):
   forward, back, play_pause, next, prev.
 - VS Code me terminal kholna ho to vscode_terminal() chalao.
@@ -130,7 +131,12 @@ def parse_action(reply: str) -> tuple:
         return "bad", f"{name} ke args sirf ye ho sakte hain: {sorted(required | optional)}"
 
     for key, value in args.items():
-        if not isinstance(value, str):
+        if isinstance(value, (int, float, bool)):
+            # LLM kabhi number bhejta hai (`web_search` me num=5). Tool khud
+            # int() karta hai, is liye poora jawab reject karna galat tha
+            # (live bug 29-Oct: "args 'num' string hona chahiye").
+            value = args[key] = str(value)
+        elif not isinstance(value, str):
             return "bad", f"args '{key}' string hona chahiye"
         limit = (config.WRITE_ARG_LIMIT
                  if name == "write_file" and key == "content"

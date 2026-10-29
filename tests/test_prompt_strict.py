@@ -22,7 +22,8 @@ BAD_JSON = [
     ('{"action": "get_time_date", "args": {}, "extra": 1}', "bad"),
     ('{"action": "hack_now", "args": {}}', "bad"),
     ('{"action": "read_file", "args": {"path": "a", "dir": "b"}}', "bad"),
-    ('{"action": "read_file", "args": {"path": 5}}', "bad"),
+    ('{"action": "read_file", "args": {"path": 5}}', "tool"),  # 5 -> "5"
+    ('{"action": "read_file", "args": {"path": ["a"]}}', "bad"),
     ('{"action": "run_command", "args": {"command": "x" * 5000}}', "bad"),
     ('{"action": "run_command", "args": {"command": "Get-Date"', "bad"),
     ('["action", "read_file"]', "none"),
@@ -50,6 +51,13 @@ class ParseTest(unittest.TestCase):
     def test_unknown_tool_never_runs(self):
         kind, _ = prompt.parse_action('{"action": "delete_everything", "args": {}}')
         self.assertEqual("bad", kind)
+
+    def test_number_arg_becomes_text(self):
+        """`web_search` me num=5 (number) aata hai — poora jawab reject nahi hona chahiye."""
+        kind, payload = prompt.parse_action(
+            '{"action": "web_search", "args": {"query": "coldplay", "num": 5}}')
+        self.assertEqual("tool", kind)
+        self.assertEqual({"query": "coldplay", "num": "5"}, payload[1])
 
     def test_write_file_allows_big_content(self):
         """3D heart jaisa code 2 KB se bada hota hai — write_file ka content
