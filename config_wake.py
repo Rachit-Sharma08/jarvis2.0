@@ -170,6 +170,7 @@ from config_lines import (  # noqa: E402,F401
     ACK_BEEP, ACK_BEEP_DROP_SECONDS, ACK_BEEP_HZ, ACK_BEEP_MS,
     ACK_ON_WAKE, BRAIN_FAILED, COMMAND_ACK_PEEK_SECONDS, CONFIRM_VOICE,
     NOT_HEARD, NOT_UNDERSTOOD, SLEEP_ACK, SLEEP_FROM_TRAY, SLEEP_WORDS,
+    QUIET_HOURS, quiet_now,
 )
 
 # ---- audio (14-Oct: file 200 cross) ---------------------------------------

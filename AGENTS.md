@@ -1452,3 +1452,21 @@ green**, sab file `<200`.
   se (kahin aur `playback.say` ka reminder loop mat banao). Profile padhna
   sirf `core/profile.load()` se (naya JSON path hard-code mat karo), aur
   `remember`/`forget` ko DIRECT_TOOLS me hi rakho.
+- **Parivaar + offline brain + search (29 Oct 2026)** — quiet hours `(23, 7)`
+  (`config_lines.QUIET_HOURS` + pure `quiet_now()`, gate sirf
+  `app_loop._fire_reminders()` me: raat me reminder pending rehta hai, HUD par
+  overdue dikhta hai, subah pehle tick par khud bolta hai). Persona me
+  "Parivaar" block (Sir ka khayal, ek line phir unka faisla, bina baat alarm
+  nahi). `brain/prompt.py` me search rule: dhoondhna ho to pehle `web_search`,
+  user se link/exact naam mat maango. Ollama `qwen2.5:3b-instruct` pool ke
+  **aakhir** me (`config_brain.OLLAMA_*`, models `D:\ollama\models` via
+  `OLLAMA_MODELS`) — internet band ho to bhi jawab; entry conditional hai
+  (`JARVIS_OLLAMA=0` par gayab). Cartesia female allowlist me Skylar
+  (`db6b0ed5-…c2b4`). Test: `test_ollama.py` (naya), `test_reminders.py`
+  (quiet hours + math), `test_persona_nocards.py` budget 2050.
+- **Hermes (alag project, `D:\hermes`)** — SerpAPI plugin
+  `plugins\serpapi` (bundled backends me SerpAPI nahi hai), `.env` me key,
+  `config.yaml`: `web.search_backend: serpapi` + model
+  `nvidia/nemotron-3-ultra-550b-a55b:free` provider `openrouter`.
+  `hermes plugins enable web-serpapi` ke baad live search ok.
+

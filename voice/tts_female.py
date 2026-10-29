@@ -21,8 +21,11 @@ ELEVENLABS_FEMALE = {
 }
 
 # ---- Cartesia ----
-# Simi (female). Id user se leni padti hai — guess nahi ki jaati.
-CARTESIA_FEMALE = set()
+# Voices API se gender=feminine + hi-IN accent wali. Id guess nahi ki jaati.
+CARTESIA_FEMALE = {
+    # "Skylar - Friendly Guide" (feminine, standard-hindi accent)
+    "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4",
+}
 
 # ---- Edge (Microsoft neural voices) ----
 # 'Swara' female hai (female prefix). Dono mode abhi Swara.

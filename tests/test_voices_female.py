@@ -75,7 +75,9 @@ check("jhooti/male id nahi", tts_female.is_allowed("elevenlabs", FAKE_MALE), Fal
 check("sunday ki id allowed", tts_female.is_allowed("elevenlabs", FAKE_OK["ELEVENLABS_VOICE_SUNDAY"]), True)
 check("prabh ki id allowed", tts_female.is_allowed("elevenlabs", FAKE_OK["ELEVENLABS_VOICE_PRABH"]), True)
 check("allowlist me 2 elevenlabs ids", len(tts_female.ELEVENLABS_FEMALE), 2)
-check("cartesia female list abhi khaali", len(tts_female.CARTESIA_FEMALE), 0)
+check("cartesia me 1 female id (Skylar)", len(tts_female.CARTESIA_FEMALE), 1)
+check("skylar allowed", tts_female.is_allowed(
+    "cartesia", "db6b0ed5-d5d3-463d-ae85-518a07d3c2b4"), True)
 check("cartesia id skip hogi", tts_female.is_allowed("cartesia", FAKE_CART), False)
 check("edge swara allowed", tts_female.is_allowed("edge", "hi-IN-SwaraNeural"), True)
 check("edge male nahi", tts_female.is_allowed("edge", "en-US-GuyNeural"), False)

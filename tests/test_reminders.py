@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 from desktop import app_loop  # noqa: E402
+import config_lines  # noqa: E402
 from server import hud_reminders  # noqa: E402
 from tests.datasafe import isolated_data  # noqa: E402
 from tools import reminders  # noqa: E402
@@ -71,12 +72,45 @@ def test_fire_once():
     app_loop.threading.Thread = FakeThread
     app_loop.playback.say = lambda line, mode=None, rate=None: spoken.append(line)
     app_loop.hud_reminders.broadcast = lambda: sent.append(1)
+    app_loop.config.quiet_now = lambda: False   # test apni ghadi par nahi
     loop = app_loop.AppLoop()
     loop._fire_reminders()
     check("bola", spoken, ["Sir, reminder: paani piyo"])
     check("HUD update", len(sent), 1)
     loop._fire_reminders()
     check("dobara nahi bola", spoken, ["Sir, reminder: paani piyo"])
+
+
+def test_quiet_hours():
+    print("QUIET: raat me reminder chup, subah bolega")
+    past("raat ka kaam")
+    spoken, sent = [], []
+    app_loop.playback.say = lambda line, mode=None, rate=None: spoken.append(line)
+    app_loop.hud_reminders.broadcast = lambda: sent.append(1)
+    app_loop.config.quiet_now = lambda: True
+    loop = app_loop.AppLoop()
+    loop._fire_reminders()
+    check("raat me chup", spoken, [])
+    check("pending rehta hai (HUD m=0)", [x["m"] for x in hud_reminders.due_soon()], [0])
+    app_loop.config.quiet_now = lambda: False
+    loop._fire_reminders()
+    check("subah bola", spoken, ["Sir, reminder: raat ka kaam"])
+    check("ab done", reminders.due(), [])
+
+
+def test_quiet_math():
+    print("QUIET MATH: 23-7 window")
+    config_lines.QUIET_HOURS = (23, 7)
+    check("22:59 khula", config_lines.quiet_now(datetime(2026, 1, 1, 22, 59)), False)
+    check("23:00 quiet", config_lines.quiet_now(datetime(2026, 1, 1, 23, 0)), True)
+    check("03:00 quiet", config_lines.quiet_now(datetime(2026, 1, 1, 3, 0)), True)
+    check("06:59 quiet", config_lines.quiet_now(datetime(2026, 1, 1, 6, 59)), True)
+    check("07:00 khula", config_lines.quiet_now(datetime(2026, 1, 1, 7, 0)), False)
+    config_lines.QUIET_HOURS = (9, 17)
+    check("din wali window bhi", config_lines.quiet_now(datetime(2026, 1, 1, 12, 0)), True)
+    config_lines.QUIET_HOURS = (0, 0)
+    check("0-0 = kabhi quiet nahi", config_lines.quiet_now(datetime(2026, 1, 1, 3, 0)), False)
+    config_lines.QUIET_HOURS = (23, 7)
 
 
 def test_ids_not_reused():
@@ -87,7 +121,8 @@ def test_ids_not_reused():
     check("teesra #3 (id reuse nahi)", reminders.add_reminder("c", in_minutes=5).startswith("Reminder set #3"), True)
 
 
-for fn in (test_add_and_due, test_due_and_mark, test_fire_once, test_ids_not_reused):
+for fn in (test_add_and_due, test_due_and_mark, test_fire_once, test_quiet_hours,
+           test_quiet_math, test_ids_not_reused):
     with isolated_data():
         fn()
 

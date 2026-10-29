@@ -28,6 +28,7 @@ Ye sirf constants hai — koi logic nahi, koi API key nahi.
 
 import config_env  # noqa: F401  (purane env naam pehle alias hote hain)
 import os
+from datetime import datetime
 
 # ---- ack beep (12-Oct) ------------------------------------------------------
 # "Ji, boliye" ~5 s leti thi (ElevenLabs 401 + edge + speaker), aur uske baad
@@ -66,3 +67,21 @@ SLEEP_FROM_TRAY = "SO JAAO"                # tray ka item
 # Isi 0.18 s ka kaam hai: mic settle + bolne ki pehli awaaz pakadna. Nahi mila
 # to normal raasta (ack + 1 s warm-up). `.env` ke `JARVIS_ACK_PEEK` se.
 COMMAND_ACK_PEEK_SECONDS = float(os.getenv("JARVIS_ACK_PEEK", "0.18"))
+
+# ---- Quiet hours (family care) -------------------------------------------
+# Raat me reminder **zor se nahi** bolta — Sir so rahe hote hain. Reminder
+# pending rehta hai (HUD par overdue dikhta hai) aur quiet hours khatam hone
+# par pehle tick me khud bolta hai. Isi tarah Endgame me Jarvis ne alarm
+# nahi bajaya tha. `(start, end)` 24h; start == end = kabhi quiet nahi.
+QUIET_HOURS = (23, 7)
+
+
+def quiet_now(now=None) -> bool:
+    """Is waqt chup rehna chahiye? Pure — test apni ghadi deta hai."""
+    start, end = QUIET_HOURS
+    if start == end:
+        return False
+    hour = (now or datetime.now()).hour
+    if start < end:
+        return start <= hour < end
+    return hour >= start or hour < end

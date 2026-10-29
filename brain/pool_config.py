@@ -68,6 +68,15 @@ POOL = (
        model=config.NVIDIA_MODEL, models=config.NVIDIA_MODELS),
 )
 
+# Offline last resort — laptop par hi chalta hai (Ollama). Internet band ho to
+# bhi Jarvis chalta rahe. Slow hai, is liye sirf sab fail hone par.
+if config.OLLAMA_ENABLED:
+    POOL = POOL + (
+        _p(name="ollama", timeout=90.0, retries=0, key=config.OLLAMA_KEY,
+           base_url=config.OLLAMA_BASE_URL,
+           model=config.OLLAMA_MODEL, models=(config.OLLAMA_MODEL,)),
+    )
+
 
 def by_name() -> dict:
     return {p["name"]: p for p in POOL}

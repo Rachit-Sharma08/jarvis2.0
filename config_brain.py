@@ -33,6 +33,15 @@ OPENROUTER_MODELS = (
     "google/gemma-4-31b-it:free",
 )
 
+# ---- Ollama (offline last resort) ----
+# Local model — internet band ho to bhi jawab. Models D:\ollama\models par
+# (`OLLAMA_MODELS`), is liye C: bharata nahi. Key nahi maangta; `OLLAMA_KEY`
+# sirf pool ke "key hai?" check ke liye hai.
+OLLAMA_ENABLED = os.getenv("JARVIS_OLLAMA", "1") == "1"
+OLLAMA_BASE_URL = os.getenv("JARVIS_OLLAMA_URL", "http://127.0.0.1:11434/v1")
+OLLAMA_MODEL = os.getenv("JARVIS_OLLAMA_MODEL", "qwen2.5:3b-instruct")
+OLLAMA_KEY = "local"
+
 # ---- Models ----
 
 # Live /models list par verify hua (Sept 2026). Purane naam 404 de rahe the.

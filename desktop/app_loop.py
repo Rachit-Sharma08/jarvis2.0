@@ -88,7 +88,13 @@ class AppLoop:
         reminder agle tick par dobara bolta. TTS fail ho to reminder chup ho
         jaata hai, par `logs/jarvis.log` me "reminder baj raha hai" line rehti
         hai (shortcut: awaaz fail par retry nahi, chahiye to yahan add karo).
+
+        Quiet hours me **kuch nahi** — reminder pending rehta
+        hai, HUD par overdue dikhta hai, aur subah pehle tick par khud bolta
+        hai (Endgame: alarm nahi bajta, par baat bhi nahi bhoole).
         """
+        if config.quiet_now():
+            return
         items = reminders.due()
         if not items or not reminders.mark_done([x.get('id') for x in items]):
             return
