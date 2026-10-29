@@ -1410,3 +1410,45 @@ green**, sab file `<200`.
   `test_directreply`, `test_persona_nocards` (budget 950). Suite **92/92
   GREEN**. ⚠️ `close_app("all")` test me kabhi mat chalao — opencode/Hermes
   terminal bhi band ho jayega.
+- **Personal memory — `data/profile.json` (29 Oct 2026)** — user ne bola Jarvis
+  "apna" lage. Naya `core/profile.py` (key-value JSON, `remember`/`forget`/
+  `load`) + `tools/aboutme.py` (`remember`/`forget` tools) + `brain/prompt.py`
+  me `[USER PROFILE]` block (har prompt me). Chat ki 12-turn memory
+  (`core/memory.py`) se **alag** — usme sirf last 12 turn, yahan permanent
+  facts. `remember`/`forget` **DIRECT_TOOLS** me hain (`core/directreply.py`)
+  — tool ka saaf Hinglish result hi final jawab, doosra LLM call nahi (warna
+  jawab English me aa jaata tha). **Live proof:** "aapka naam Rachit hai, aur
+  aap Delhi me rehte hain, Sir"; "Yaad rakh liya: test_color = laal" /
+  "Bhula diya: test_color". Test `test_profile.py`.
+- **Avengers-JARVIS persona (29 Oct 2026)** — `personas/jarvis.txt`: "Sir"
+  address, British wit, protocol bhasha, proactive warning. Ack bhi "Sir" ke
+  saath (`config_lines.ACK_ON_WAKE`). Budget `MAX_GROW=1680`.
+- **Dead code round 1 (29 Oct 2026)** — `core/memsum.py`, `core/summarizer.py`,
+  `tools/webhook.py` delete; `vision/gate.py` ka `set_capture`/`_capture`;
+  `wake/utterance.is_stop_command` + `STOP_WORD` (config_lines/config_wake/
+  config se bhi). `AGENTS.md` ki datasafe line ab `core.profile` likhti hai.
+- **Dead code round 2 (29 Oct 2026)** — `tools/notes.py`, `tools/pomodoro.py`,
+  `tools/rss.py` delete: `tools/__init__.py` me import the par `TOOL_FUNCS`
+  me registered **nahi** the (na LLM ko dikhte, na koi bulata). `datasafe.py`
+  ke unke path patches bhi gaye.
+- **Daily brief personal (29 Oct 2026)** — `tools/brief.py` ki pehli line
+  "DAILY BRIEF (time) - Good evening, Rachit Sir"; naam `profile.load()` se,
+  greeting time se, naam na ho to "Sir". Test `test_brief_uses_name`.
+- **5 SyntaxWarning gaye (29 Oct 2026)** — docstrings me Windows path
+  (`C:\Windows`, `D:\Python312`) regular string me the; `desktop/autostart.py`,
+  `desktop/launcher.py`, `vision/backend.py` + 2 test ka docstring ab `r"""`.
+  `compileall` 0 warning.
+- **Reminder ab sach me bajta hai (29 Oct 2026)** — pehle `add_reminder` sirf
+  save karta tha, time par koi bolta hi nahi tha. Naya
+  `tools/reminders.due()` + `mark_done(ids)`; `desktop/app_loop._fire_reminders()`
+  har ~10s chalta hai, reminder **ek hi baar** bolta hai (speaker thread par,
+  `_speak_all` se saari lines ek thread me), `mark_done` **bolne se pehle**
+  (warna TTS 10s+ le to dobara bolta). `server/hud_reminders.py` overdue ko
+  `m=0` par dikhata hai (pehle `w < now` skip). Id bug bhi fix: purana
+  `len(items)+1` clear ke baad wahi id de deta tha — ab `max(id)+1`.
+  Test `tests/test_reminders.py`. Suite **94/94**.
+- **Naya rule (reminder/profile):** reminder ka ek hi raasta —
+  `reminders.due()` + `mark_done()`; bolna sirf `app_loop._fire_reminders()`
+  se (kahin aur `playback.say` ka reminder loop mat banao). Profile padhna
+  sirf `core/profile.load()` se (naya JSON path hard-code mat karo), aur
+  `remember`/`forget` ko DIRECT_TOOLS me hi rakho.

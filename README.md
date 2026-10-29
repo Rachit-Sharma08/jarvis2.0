@@ -285,6 +285,14 @@ Assistant ek hi hai — **Jarvis**. Mode badalne ke liye kuch likhna nahi padta
 Beeche me gol orb aur uske neeche status dikhta hai: `IDLE` -> `THINKING` -> `SPEAKING` -> `IDLE`.
 Dayin taraf poori baat-chit rehti hai, neeche **ACTIVITY** box me har tool ka hisaab.
 
+**Jarvis aapko pehchanta hai.** Naam, sheher, pasand — jo aap bol kar batate ho
+("yaad rakho mujhe chai pasand hai") wo `data/profile.json` me rehta hai aur
+agle jawab me khud use hota hai. Bhulaana ho to "bhula do chai" bolo. Detail
+`TOOLS.md` ke "Personal memory" section me.
+
+**Reminder bolta hai:** "remind me in 10 minutes to call home" — time aane par
+Jarvis khud awaaz me yaad dilata hai (app chalu hona chahiye).
+
 ---
 
 ## Kaun si file kya karti hai

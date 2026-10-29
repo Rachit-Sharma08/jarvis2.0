@@ -55,11 +55,35 @@ OFF nahi hota (awaaz se sirf ALLOW nahi hota, tools bhi nahi).
 | `open_app` | Config ki list me se app | SAFE (list me) / ASK (nahi) |
 | `close_app` | App band karta hai (graceful; `name="all"` = saare khule app + browser tabs) | ASK |
 | `delete_to_trash` | File/folder **Recycle Bin** me bhejta hai | ASK |
+| `add_reminder` / `list_reminders` / `clear_reminder` | Reminder; time aane par Jarvis **khud bolta hai** | SAFE |
+| `add_todo` / `list_todos` / `done_todo` / `clear_todos` | Todo list (local JSON) | SAFE |
+| `remember` / `forget` | Aapke baare ki baat yaad rakhna / hataana (naam, sheher, pasand) | SAFE |
+| `daily_brief` | Brief: greeting + reminders + todos | SAFE |
+| `set_wake_alarm` / `alarm_status` | Subah ka wake alarm (Task Scheduler) | ASK / SAFE |
+| `play_media` / `media_control` | Gaana/video chalao, aage-pause | SAFE |
+| `open_url` / `focus_app` / `copy_text` / `get_clipboard` | Browser, window, clipboard | SAFE |
+| `kb_add` / `kb_search` | Local knowledge base | SAFE |
+| `web_search` | Internet search | SAFE |
+| `vscode_terminal` | VS Code me terminal | SAFE |
 
 - Delete **hamesha Recycle Bin** me jaata hai. Permanent delete ka koi tool hi nahi hai.
 - `read_file` binary file ya 20 KB se badi file refuse kar deta hai.
 - `run_command` me `KEY` / `TOKEN` / `SECRET` / `PASSWORD` wale environment variables
   bilkul nahi jaate. Sirf `PATH`, `TEMP`, `USERPROFILE` jaise normal variables milte hain.
+
+## Personal memory (`data/profile.json`)
+
+Jarvis aapke baare ki baat yaad rakhta hai — naam, sheher, pasand, routine.
+Ye sirf ek local file `data/profile.json` me rehti hai (key-value), aur **har
+prompt me** `[USER PROFILE]` block ban kar brain tak jaati hai (is liye "mera
+naam kya hai" ka jawab aata hai). Chat ki 12-turn memory (`core/memory.py`) se
+ye alag cheez hai.
+
+- Bolo: "yaad rakho mera favourite color laal hai" -> `remember` tool.
+- Hataana: "bhula do favourite color" -> `forget` tool.
+- Poori file mitani ho to app band karke `data/profile.json` delete kar do.
+- Ye text bhi brain ke through provider tak jaata hai (upar privacy warning
+  lagoo hai) — password/key/personal ID yahan **mat** likho.
 
 ## Coding ke niyam (naya tool ya route likhte waqt)
 
