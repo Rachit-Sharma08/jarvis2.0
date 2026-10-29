@@ -28,6 +28,7 @@ log = get_logger("tools.phone")
 _EXPLAIN = re.compile(r"['\"]explanation['\"]\s*:\s*['\"](.+?)['\"]\s*[,}]", re.S)
 _NO_DEVICE = ("no device", "device offline", "unauthorized", "device not found",
               "no devices", "adb: device")
+_KEYGUARD = ("keyguard", "is locked", "unlock")
 
 
 def _command(goal: str) -> list:
@@ -79,4 +80,6 @@ def phone_task(task: str = "") -> str:
     low = out.lower()
     if any(mark in low for mark in _NO_DEVICE):
         return "Phone connect nahi hai — USB ya wireless debugging on karo."
+    if any(mark in low for mark in _KEYGUARD):
+        return "Phone locked hai — pehle unlock karo, phir bolo."
     return "Phone kaam ka saaf jawab nahi mila (Artemis log dekho)."

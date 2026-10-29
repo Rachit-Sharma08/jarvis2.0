@@ -89,6 +89,10 @@ def main():
     phone._run = run
     check("bina jawab", "saaf jawab nahi mila" in phone.phone_task("call"), True)
 
+    run, _ = fake("Android secure keyguard is locked. Unlock the device manually")
+    phone._run = run
+    check("phone locked hai", "Phone locked hai" in phone.phone_task("battery batao"), True)
+
     called = []
     phone._run = lambda *a: called.append(a) or Res(OK_OUT)
     check("khaali task par sawaal", phone.phone_task(""),

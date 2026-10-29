@@ -1245,6 +1245,17 @@ Suite 75 = 69 pass + 6 jaane-pehchane fail (naya nahi). Push nahi hua — git
 ka saved credential alag account ka hai. Poora record docs/OVERNIGHT_REPORT.md.
 
 Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
+## Phone + screen (29-Oct-2026)
+
+- `tools/phone.py` `phone_task` -> Google Artemis + wireless ADB. Live E2E:
+  asli app se /chat -> LLM phone_task chuna -> Artemis run -> keyguard error ->
+  clean line ("Phone locked hai - pehle unlock karo"). Live proof: Settings +
+  battery 64%.
+- `tools/screen.py` `screen_look` -> `ffmpeg gdigrab` + OpenRouter VL. Live:
+  3.8s, "VS Code screen khula hai". PNG har raaste par delete, privacy warning.
+- Test: `tests/test_phone.py`, `tests/test_screen.py` (fake, asli adb/network
+  kabhi nahi). Suite: 97 green.
+
 ## Keys
 
 - `.env` me 6 brain/voice keys + voice ids (values kabhi commit nahi).
