@@ -154,6 +154,15 @@ def resolve_ask(tool: str, args: dict) -> tuple:
     if tool in ("remember", "forget"):
         # Sirf `data/profile.json` - koi path arg nahi, is liye likhna safe hai.
         return ALLOW, None
+    if tool == "phone_task":
+        # Phone owner ke haath me hai aur kaam wahin hota hai (PC par nahi).
+        # Voice se "call karo" chale bina card ke - owner ka faisla (29-Oct).
+        return ALLOW, None
+    if tool == "screen_look":
+        # User khud kehta hai "screen dekho" - uski apni screen hai. Par
+        # screenshot internet par jaata hai, is liye ASK base risk hai; cards
+        # band hone par (default) code allow karta hai.
+        return ALLOW, None
     if tool == "open_app":
         name = _short(args.get("name", ""))
         return DENY, f"'{name}' allowed apps ki list me nahi hai"

@@ -65,11 +65,38 @@ OFF nahi hota (awaaz se sirf ALLOW nahi hota, tools bhi nahi).
 | `kb_add` / `kb_search` | Local knowledge base | SAFE |
 | `web_search` | Internet search | SAFE |
 | `vscode_terminal` | VS Code me terminal | SAFE |
+| `phone_task` | Phone par kaam (call, WhatsApp, app, battery) — Google Artemis + wireless ADB | ASK (nocards: ALLOW) |
+| `screen_look` | Screen ka screenshot dekh kar jawab (OpenRouter vision) | ASK (nocards: ALLOW) |
 
 - Delete **hamesha Recycle Bin** me jaata hai. Permanent delete ka koi tool hi nahi hai.
 - `read_file` binary file ya 20 KB se badi file refuse kar deta hai.
 - `run_command` me `KEY` / `TOKEN` / `SECRET` / `PASSWORD` wale environment variables
   bilkul nahi jaate. Sirf `PATH`, `TEMP`, `USERPROFILE` jaise normal variables milte hain.
+
+## Phone (`phone_task`) — Google Artemis + ADB
+
+Jarvis phone ko **wireless debugging** se chalata hai (Google ka open-source Artemis
+`D:\artemis` me). Bolo: "phone par battery kitni hai", "Karun ko call karo",
+"WhatsApp me message bhejo".
+
+- Phone par **Wireless debugging ON** hona chahiye; IP/port badalte rehte hain, is liye
+  pehle `adb connect <ip>:<port>` karna padta hai (ek baar ka kaam).
+- Ek kaam **2-3 minute** le sakta hai — Artemis har step par screen dekhta hai.
+- Awaaz se chalta hai (card nahi), par kaam **phone par** hota hai: galat call/message
+  se bachne ke liye task saaf bolo.
+- Privacy: phone ka **screen + kaam ka text** Artemis ke model (OpenRouter, internet)
+  tak jaata hai. Password/OTP wali screen par kaam mat karwao.
+
+## Screen (`screen_look`) — "screen par kya hai"
+
+Bolo: "screen par kya khula hai", "ye error kya hai".
+
+- `ffmpeg` se ek screenshot, phir OpenRouter ka **vision model** (`nvidia/nemotron-3.5-super-vl:free`)
+  usko dekh kar 2 line ka Hinglish jawab deta hai. **Koi naya package nahi.**
+- PNG disk par sirf kaam ke dauraan rehti hai, uske baad turant delete.
+- **Privacy:** screenshot + sawaal internet par jaate hain. Screen par password/OTP
+  khula ho to ye tool mat chalao.
+- Model `.env` ke `JARVIS_SCREEN_MODEL` se badal sakta hai.
 
 ## Personal memory (`data/profile.json`)
 

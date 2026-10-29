@@ -5,7 +5,7 @@ wale args chhoot sakte hain (default value lag jaati hai). LLM ka JSON bhi isi
 ke hisaab se validate hota hai — koi extra field ya non-string chalega hi nahi.
 """
 
-from tools import aboutme, alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, media
+from tools import aboutme, alarm, apps, command, files, system, reminders, todo, quick, search as search_mod, kb, brief, media, phone, screen
 
 import config
 
@@ -54,6 +54,8 @@ TOOLS = {
     "daily_brief": brief.daily_brief,
     "set_wake_alarm": alarm.set_wake_alarm,
     "alarm_status": alarm.alarm_status,
+    "phone_task": phone.phone_task,
+    "screen_look": screen.screen_look,
 }
 
 TOOL_ARGS = {
@@ -89,12 +91,15 @@ TOOL_ARGS = {
     "daily_brief": (),
     "set_wake_alarm": ("at", "repeat_minutes"),
     "alarm_status": (),
+    "phone_task": ("task",),
+    "screen_look": (),
 }
 
 # Optional args: LLM na de to yahan wali default value lagti hai. `spec()` me
 # `url?` dikhta hai. Required args ke saath conflict nahi hota.
 TOOL_OPTIONAL = {
     "open_app": {"url": ""},
+    "screen_look": {"question": ""},
 }
 
 TOOL_SUMMARY = {
@@ -130,6 +135,8 @@ TOOL_SUMMARY = {
     "daily_brief": "daily brief dikhao (reminders+todos)",
     "set_wake_alarm": "uthne ka alarm set karo (at jaise '7:00 am')",
     "alarm_status": "abhi ka alarm batao",
+    "phone_task": "phone par kaam karo (call, message, app) - task me saaf bolo kya karna hai",
+    "screen_look": "screen dekho aur batao kya hai (question? = kya poochhna hai)",
 }
 
 def visible() -> list:

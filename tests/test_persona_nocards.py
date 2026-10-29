@@ -11,7 +11,7 @@ from datasafe import isolated_data
 
 FAILED = []
 BASE = 3256  # P-2b-2b se pehle naapa gaya prompt (tools ON, khaali memory)
-MAX_GROW = 2150  # P-2b-2b + E-1 (+106) + E-2 (+50); 28-Oct: media suite (play_media
+# Grow history (MAX_GROW neeche): P-2b-2b + E-1 (+106) + E-2 (+50); 28-Oct: media suite (play_media
 # + media_control + vscode_terminal - spec 3 line + rules 5 line) (+335);
 # 29-Oct: close_app name='all' (+142); personal profile (remember/forget spec
 # 2 line + rules 2 line) (+314); Avenger persona (Sir/protocol/profile lines) (+230);
@@ -19,6 +19,9 @@ MAX_GROW = 2150  # P-2b-2b + E-1 (+106) + E-2 (+50); 28-Oct: media suite (play_m
 # 29-Oct: parivaar/care persona (raat chup, "Pepper ko phone karu") (+280)
 # + search rule "link mat maango, web_search chalao" (+56)
 # + search rule strong ("PAKKA nahi pata" -> apni yaad se number/link nahi) (+140).
+# 29-Oct: phone_task (spec 1 line + rules 2 line) (+201); screen_look
+# (spec 1 line + rules 2 line) (+236).
+MAX_GROW = 2700
 
 
 def check(name, got, want):

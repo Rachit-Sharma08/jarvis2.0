@@ -79,8 +79,9 @@ prabh/
   config_tray.py      -> tray watchdog ki timing (taskbar me icon dikhta hai ya ^ me)
   config_name.py      -> assistant ka naam (ASSISTANT_NAME/DISPLAY_NAME) + wake shabd
                          (+ purane "sunday" shabd LEGACY_WAKE_PHRASES me, default band)
+  config_phone.py     -> ARTEMIS_DIR/ARTEMIS_PROFILE/PHONE_TIMEOUT_SECONDS (phone tool)
   gatekeeper/keeper.py, rules.py, patterns.py, paths.py, approvals.py, limiter.py, audit.py
-  tools/__init__.py, command.py, files.py, apps.py, system.py
+  tools/__init__.py, command.py, files.py, apps.py, system.py, phone.py (Artemis/ADB)
   server/app.py      -> GET /, POST /chat, CSP headers + Referrer-Policy
   server/security.py -> token + Origin + Host check + same-origin GET ka proof
   server/state.py    -> POORA server ka ek shared Engine (sab yahin se)
@@ -255,6 +256,21 @@ dono isi se guzarte hain. Engine me doosra raasta kabhi mat banao.
 - **Brain ka ek hi raasta**: `engine` → `brain.pool.ask()`. Provider list sirf `brain/pool_config.py` me
 badlo, engine ya brain me hard-code order mat likho.
 - **TTS provider ka ek hi raasta**: `voice/tts.py`. Naya provider wahin chain me judega.
+- **Phone ka ek hi raasta**: `tools/phone.py` ka `phone_task` → Artemis CLI
+  (`uv run artemis run "<kaam>"`), `shell=False` + list args. Naya `adb`/`subprocess`
+  call kahin aur mat likho. Ek kaam **2-3 min** leta hai, is liye ye `DIRECT_TOOLS`
+  me hai (doosra LLM call nahi) aur `nocards` ise ALLOW karta hai — awaaz se bina
+  card ke chalta hai (owner ka faisla). Phone ka screen + text OpenRouter tak
+  jaata hai, is liye password/OTP wali screen par kaam mat karwao.
+- **Ollama ke model D: par hain** (`OLLAMA_MODELS=D:\ollama\models`, user env var).
+  `ollama serve` tabhi D: se uthata hai jab wo naye env ke saath shuru ho — proof
+  `llama-server --model` ka **path** se lo, `ollama list` se nahi (wo purane server
+  par bhi wahi dikhata hai). C: ka `~/.ollama/models` (1.8 GB) hata diya gaya.
+- **Screen dekhna = `tools/screen.py`** (`screen_look`): `ffmpeg gdigrab` se ek
+  screenshot → OpenRouter ka VL model → 2 line Hinglish. Screenshot **disk par
+  na rahe** (`finally` me delete), aur har call par log me privacy warning. Ye
+  **camera wala `vision/` nahi** — wo face gate hai (insightface, abhi install
+  nahi) aur default OFF hai.
 - **Mic/speaker browser me**: page ke andar `getUserMedia` + `MediaRecorder` + audio playback
 ka raasta purana hai aur **badega nahi**. Phase 5 ke baad mic capture (wake + command) aur
 speaker playback **Python** me hota hai — `wake/audio.py` (sounddevice) se input,
@@ -1472,4 +1488,31 @@ green**, sab file `<200`.
   `config.yaml`: `web.search_backend: serpapi` + model
   `nvidia/nemotron-3-ultra-550b-a55b:free` provider `openrouter`.
   `hermes plugins enable web-serpapi` ke baad live search ok.
+- **Phone control (29 Oct 2026)** — `tools/phone.py` ka `phone_task` Google
+  **Artemis** CLI (`uv run artemis run "<kaam>" --profile flash`) ko bulata hai,
+  jo ADB se asli phone chalata hai (screen dekhta hai, tap/type karta hai).
+  `config_phone.py` = `ARTEMIS_DIR`/`ARTEMIS_PROFILE`/`PHONE_TIMEOUT_SECONDS`.
+  `TOOL_BASE_RISK` me **ASK**, par `nocards` allow karta hai (awaaz se bina card
+  chale) aur `DIRECT_TOOLS` me hai (doosra LLM call nahi). Artemis `.env` me
+  `OPEN_ROUTER_API_KEY` + `artemis.jsonc` me default provider openrouter
+  (`nvidia/nemotron-3.5-super-vl:free`, fallback `google/gemma-4-31b-it:free`).
+  Live proof: Settings khula, battery **64%** bataya. Phone wireless debugging
+  (`192.168.1.4:32923`) par paired. Test `test_phone.py` (fake `_run`, asli
+  phone kabhi nahi).
+- **Screen dekhna (29 Oct 2026)** — `tools/screen.py` ka `screen_look`:
+  `ffmpeg gdigrab` se screenshot → OpenRouter vL model → 2 line Hinglish; PNG
+  `finally` me delete, log me privacy warning. `config_vision.py` me
+  `SCREEN_MODEL`/`SCREEN_MAX_WIDTH`/`SCREEN_TIMEOUT_SECONDS`/`FFMPEG_EXE`.
+  Live proof 3.8s: "VS Code (Visual Studio Code) screen khula hai."
+  Test `test_screen.py` (fake `_grab`/`_ask`).
+- **Ollama C: -> D: (29 Oct 2026)** — asli bug: `ollama serve` purane env ke
+  saath chala tha, is liye `llama-server` model **C:** se utha raha tha bhale hi
+  D: par copy thi. Fix: server restart + C: ka `~/.ollama/models` (1,841 MB)
+  delete. Proof `llama-server --model D:\ollama\models\blobs\...`. C: free
+  17.6 → **19.4 GB**. `ollama list` par bharosa mat karo — path dekho.
+- **PC hang ka pehla hissa (29 Oct 2026)** — naapa: RAM 15.7 GB me free 2 GB,
+  297 processes, Chrome 19 proc = 2.86 GB, Code 15 proc = 2.84 GB. Ollama ka
+  loaded model 2 GB + **3 stale `start_jarvis.bat` cmd shells**. Fix: `ollama
+  stop` + stale shells kill → free 2.3 → **4.4 GB**. App ka ek hi instance
+  (port 8000, PID 19372). Baaki (Chrome/VSCode) owner ka faisla hai.
 

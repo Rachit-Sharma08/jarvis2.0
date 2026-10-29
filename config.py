@@ -77,8 +77,9 @@ from config_hud import (  # noqa: E402
 )
 # ---- Computer vision (15-Oct) — owner pehchan, DEFAULT OFF ----
 from config_vision import (  # noqa: E402
-    CAMERA_HEIGHT, CAMERA_INDEX, CAMERA_WIDTH, ENROLL_SAMPLES, NEEDS_CAMERA,
-    NEEDS_ENROLL, NOT_OWNER, TOO_FAST, VISION_ENABLED, VISION_THRESHOLD,
+    CAMERA_HEIGHT, CAMERA_INDEX, CAMERA_WIDTH, ENROLL_SAMPLES, FFMPEG_EXE,
+    NEEDS_CAMERA, NEEDS_ENROLL, NOT_OWNER, SCREEN_MAX_WIDTH, SCREEN_MODEL,
+    SCREEN_TIMEOUT_SECONDS, TOO_FAST, VISION_ENABLED, VISION_THRESHOLD,
     state as vision_state,
 )
 from config_desktop import (  # noqa: E402
@@ -152,6 +153,9 @@ PERSONA_FILES = {"sunday": "jarvis.txt", "prabh": "prabh.txt"}
 
 from config_cdp import (  # noqa: E402
     CALL_ASK_FIRST, CDP_HOST, CDP_PORT, WHATSAPP_WEB,
+)
+from config_phone import (  # noqa: E402
+    ARTEMIS_DIR, ARTEMIS_PROFILE, PHONE_TIMEOUT_SECONDS,
 )
 from config_tools import (  # noqa: E402
     ALARM_TOOL_ENABLED, ALLOWED_APPS, ALWAYS_ASK, ASK, BLOCKED, BLOCKED_ROOTS,

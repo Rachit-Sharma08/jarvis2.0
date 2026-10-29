@@ -62,6 +62,18 @@ CAMERA_HEIGHT = int(os.getenv("JARVIS_VISION_HEIGHT", "480") or 480)
 # wali explanation se utna hi fayda, aur battery zyada).
 ENROLL_SAMPLES = int(os.getenv("JARVIS_VISION_SAMPLES", "15") or 15)
 
+# ---- screen dekho (screen_look) ----
+# Ye camera nahi — **screen ka screenshot**. On-demand tool hai (flag nahi):
+# sirf jab user bole "screen par kya hai". Screen content internet (OpenRouter)
+# par jaata hai, is liye `tools/screen.py` har call par log me warning likhta hai.
+SCREEN_MODEL = (os.getenv("JARVIS_SCREEN_MODEL", "").strip()
+                or "nvidia/nemotron-3.5-super-vl:free")
+# Screenshot ki chaudai (token kam rakhne ke liye). 1280 par text padha jaata hai.
+SCREEN_MAX_WIDTH = int(os.getenv("JARVIS_SCREEN_WIDTH", "1280") or 1280)
+SCREEN_TIMEOUT_SECONDS = int(os.getenv("JARVIS_SCREEN_TIMEOUT", "60") or 60)
+# ffmpeg (winget wala full build) — PATH par hai, is liye sirf naam.
+FFMPEG_EXE = os.getenv("JARVIS_FFMPEG", "ffmpeg").strip() or "ffmpeg"
+
 # ---- guard ki wajah ----
 # Ye line HUD par aur log me dikhti hai. Chhoti rakhi hai (clip_answer ke saath).
 # Awaaz se ALLOW kabhi nahi — bilkul gatekeeper card jaisa.

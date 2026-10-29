@@ -57,6 +57,9 @@ TOOL_BASE_RISK = {
     # Risky hai (PC ki timing badalta hai) is liye **ASK** — kaam card se.
     "set_wake_alarm": ASK,
     "alarm_status": SAFE,
+    # Phone (29-Oct): Artemis ADB se asli phone. ASK par `nocards` allow karta hai.
+    "phone_task": ASK,
+    "screen_look": ASK,
 }
 
 # Jarvis ke andar wala alarm tool — **DEFAULT OFF**. Sirf is par tool LLM ko
