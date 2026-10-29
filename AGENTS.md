@@ -340,6 +340,9 @@ hua rule → yahan record badlo · nayi key → sirf **naam** · nayi rule → s
 
 ## 8. NAYI RULE (har prompt me update karo)
 
+- **Commit message me kisi ki personal info nahi** — na user ka naam, na gender (male/female/
+  ladka/ladki), na shehar/age/phone/email. Sirf kaam ka saaf Hinglish/English vivaran, file
+  names aur behaviour. Message file se bhejo (`git commit -F file`) taaki shell quote na tootey.
 - Tool ka feature bana rahe ho to: pehle `gatekeeper/rules.py` me uska risk, phir `tools/`, phir
 `engine.run_tool()` — is order me. Engine me bypass mat chhodna.
 - Naya UI output (card, activity, log) banao to `textContent` + `mask()` dono lagana hai.
