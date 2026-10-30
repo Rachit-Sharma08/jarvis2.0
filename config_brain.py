@@ -47,7 +47,9 @@ OLLAMA_KEY = "local"
 # Live /models list par verify hua (Sept 2026). Purane naam 404 de rahe the.
 GROQ_MODEL = "openai/gpt-oss-120b"
 GROQ_MODELS = (GROQ_MODEL, "openai/gpt-oss-20b")
-GROQ_STT_MODEL = "whisper-large-v3-turbo"
+# Turbo ki accuracy Hinglish par kam thi (`'ku?'`, `'Tee. Tee.'`). `large-v3`
+# dheema hai par shabd pehchanta hai — `STT_TIMEOUT_SECONDS` (6 s) kaafi hai.
+GROQ_STT_MODEL = "whisper-large-v3"
 GEMINI_MODEL = "gemini-3.5-flash"
 GEMINI_MODELS = (GEMINI_MODEL, "gemini-flash-latest")
 
