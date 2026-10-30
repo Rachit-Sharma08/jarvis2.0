@@ -32,6 +32,11 @@ badla — model, resampler, AutoGain aur language hint teeno saaf nikle (synthet
 - `tests/test_media_pause.py` (9 check): jodi, dobara key nahi, flag off, blocked
   par kuch nahi, crash par bhi play. (`tests/test_media.py` pehle se
   `tools/media.py` ka hai, is liye naam alag rakha.)
+- **Telegram owner chat set (30 Oct, shaam):** `.env` me `JARVIS_TELEGRAM_CHAT`
+  (value kabhi commit/log me nahi), app restart par `owner chat set: True`.
+  Ab phone se seedha command chalega; bina id ke bot sirf apni id batata tha.
+  Ek trap pakda: `.env` sirf `config.py` load karta hai, is liye `config_telegram`
+  akela import karo to token/chat id khaali milte hain — pehle `import config`.
 
 ---
 

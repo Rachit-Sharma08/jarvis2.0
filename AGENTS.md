@@ -1195,6 +1195,27 @@ Source `D:\SystemConfig\Startup-helper\SystemConfig.bat` se byte-identical
 
 ---
 
+## 8.1.11 TELEGRAM OWNER CHAT + `.env` LOAD KA TRAP (30 Oct 2026)
+
+- **`.env` sirf `config.py` load karta hai** (`load_dotenv`, line ~34). Koi bhi
+  `config_*.py` **akela** import karo to `os.getenv` khaali milega. 30-Oct ko
+  yahi phansa: `import config_telegram` seedha kiya to token/chat id dono blank
+  the, aur API call `bot/` (bina token) par 404/10054 de rahi thi. **Sahi raasta:
+  `import config` pehle**, phir `config_telegram`. App me `server/telegram_bot.py`
+  khud `import config` upar karta hai, is liye wahan theek chalta hai.
+- **Owner chat id `.env` me hi** (`JARVIS_TELEGRAM_CHAT`), value kabhi commit/
+  log/report me nahi — report me sirf "set hai" + last4. Bot bina id ke sirf
+  **apni chat id** batata hai (allowlist khaali = koi command nahi), ye
+  jaan-boojh kar hai: bot internet par khula hai.
+- **`config_telegram` bhi `import config_env` karta hai** (baaki `config_*.py`
+  jaisa) taaki purane `PRABH_*` naam alias ho jayein — `.env` load nahi karta,
+  ye sirf naam ka kaam hai.
+- **Bot ka proof do jagah:** app log me `telegram bot chalu (owner chat set: True)`
+  aur `bot.owner(<id>)` True/False. Asli message bhej kar phone par confirm karo —
+  id galat ho to Telegram `400 chat not found` deta hai.
+
+---
+
 ## 8.1.10 SUNNE ME ASLI WAJAH: BACKGROUND MEDIA (30 Oct 2026)
 
 - **"Sun nahi raha" ka pehla shak STT par mat daalo — pehle `logs/prabh.log` /
@@ -1594,4 +1615,13 @@ green**, sab file `<200`.
   — jisme ye bhi: naya test likhne se pehle `git ls-files tests` dekh lo
   (`test_media.py` pehle se `tools/media.py` ka tha, `write` se overwrite ho
   gaya tha, `git checkout` se wapas kiya).
+- **Telegram owner chat set + `.env` load ka trap (30 Oct 2026)** — owner chat id
+  `.env` me daali (`JARVIS_TELEGRAM_CHAT`, value kabhi commit/report me nahi) aur
+  app restart; log ab `telegram bot chalu (owner chat set: True)`. `bot.owner()`
+  ka check: apna id True, doosra id False, khaali False — aur ek asli message
+  bhej kar phone par proof. **Asli galti jo pakdi:** `config_telegram` akela
+  import karne par token/chat id khaali milte hain, kyunki `.env` sirf
+  `config.py` load karta hai — `import config` pehle karna zaroori. Saath me
+  `config_telegram` me `import config_env` (purane `PRABH_*` alias ke liye, baaki
+  `config_*.py` jaisa). Suite **99/99 green**. Naya rule section **8.1.11**.
 

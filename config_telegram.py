@@ -8,6 +8,7 @@ Ye jaan-boojh kar hai: bot internet par khula hota hai, bina allowlist ke koi
 bhi PC chala sakta tha.
 """
 
+import config_env  # noqa: F401  (purane PRABH_* naam pehle alias hote hain)
 import os
 
 TOKEN = os.getenv("JARVIS_TELEGRAM_TOKEN", "").strip()
