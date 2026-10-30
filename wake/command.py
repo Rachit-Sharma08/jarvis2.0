@@ -58,13 +58,15 @@ log = get_logger("wake_command")
 
 
 def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
-        on_sleep=None) -> str:
+        on_sleep=None, on_heard=None) -> str:
     """Wake ke baad ka poora command. -> kya hua (log + test ke liye).
 
     `mic` aur `stop` `wake/session.py` ke `_fire()` se aate hain — kahin aur se
-    mic nahi milta (mic ka ek hi owner `wake/audio.py` hai). Baaki chaar callback
+    mic nahi milta (mic ka ek hi owner `wake/audio.py` hai). Baaki paanch callback
     `desktop/callbacks.py` deta hai: `allowed` (mute/lock), `on_confirm` (HUD
-    kholo), `on_busy` (HUD ka WAKE pill) aur `on_sleep` ("so jao" — battery)."""
+    kholo), `on_busy` (HUD ka WAKE pill), `on_sleep` ("so jao" — battery) aur
+    `on_heard` (**asli text mila** — tabhi HUD kholo; pehle wo "Jarvis" ke har
+    false hit par khulti thi, jaise YouTube me naam aa jaaye)."""
     from wake import worker as wake_worker
 
     stop = stop or listen._STOP
@@ -150,6 +152,8 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
             return "sleep"
 
         # 5. Shared ENGINE — wahi object jo /chat aur /hud/quick use karte hain.
+        # Pehle HUD (sirf ab — sach me kuch suna gaya, koi false wake nahi).
+        _safe(on_heard)
         at = stage()
         answer, asked, failed = ask.ask(
             text, "voice%d" % int(time.time() * 1000), on_confirm, stop)
