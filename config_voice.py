@@ -52,6 +52,12 @@ STT_LOCAL_DEADLINE_SECONDS = float(
 # "en" = Hinglish Latin me rehti hai (Devanagari nahi) aur language detection
 # ka ~5 s bachta hai. "hi" jaan-boojh kar nahi — romanized Hinglish bigaadta hai.
 STT_LANGUAGE = os.getenv("JARVIS_STT_LANG", "en").strip()
+# Whisper ko hint: ye Hinglish hai (English akshar, Hindi shabd). Bina hint ke
+# wo Hindi ko Devanagari me likh deta hai aur naam galat sunta hai — `prompt`
+# sirf style sikhata hai, `language=` nahi bhejte (wo romanized text bigaadta hai).
+STT_PROMPT = os.getenv("JARVIS_STT_PROMPT", "").strip() or (
+    "Haan Sir, bataiye. WhatsApp kholo, time kya hua, aaj ka mausam kaisa hai, "
+    "screen par kya hai, reminder laga do.")
 
 
 def stt_deadline() -> float:
