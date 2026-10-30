@@ -98,6 +98,30 @@ def script_ok(text: str) -> str:
     return ""
 
 
+# Whisper ka kachra: TV/YouTube ya shor par "okay okay okay", "Tee. Tee." jaisa
+# text. Ye brain tak jaata tha aur Jarvis bekaar jawab deta tha.
+FILLER_WORDS = frozenset((
+    "okay", "ok", "tee", "thank", "thanks", "bye", "so", "you", "the",
+    "music", "hmm", "uh", "um", "ah", "oh", "yeah", "yes", "no",
+))
+MIN_LETTERS = 3
+
+
+def is_garbage(text: str) -> str:
+    """Shor ka kachra? ('' = theek, warna reason)."""
+    norm = _normal(text)
+    if not norm:
+        return "khaali"
+    if len(OTHER_LETTER_RE.findall(norm)) < MIN_LETTERS:
+        return "bahut chhota text"
+    tokens = norm.split()
+    if len(tokens) >= 2 and len(set(tokens)) == 1:
+        word = tokens[0]
+        if word in FILLER_WORDS or (len(tokens) >= 3 and len(word) <= 5):
+            return f"ek hi shabd repeat: {word!r}"
+    return ""
+
+
 def guard_text(text: str) -> str:
     """Poora text guard. '' = chalane layak, warna reason."""
     if not (text or "").strip():
@@ -105,4 +129,7 @@ def guard_text(text: str) -> str:
     silence = is_silence_phrase(text)
     if silence:
         return "khamoshi ka phrase"
-    return script_ok(text)
+    bad = script_ok(text)
+    if bad:
+        return bad
+    return is_garbage(text)
