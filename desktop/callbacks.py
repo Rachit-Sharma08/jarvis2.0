@@ -90,28 +90,37 @@ def _sleep(app=None) -> None:
     sleep_mod.enter(app)
 
 
+def _open_hud(app=None) -> None:
+    """HUD kholo — sirf jab sach me command suna gaya (`on_heard`).
+
+    Pehle `on_wake` par khulti thi, is liye YouTube/shirt ka "Jarvis" bhi window
+    pop kar deta tha (user ki shikayat). Ab ek hi raasta: `command.run` text
+    milne par `on_heard` bhejta hai."""
+    hud = getattr(app, "hud", None)
+    if hud is not None:
+        hud.open()
+    STATE.set_hud(True)
+
+
 def on_wake(phrase: str, mic=None, stop=None, _app=None) -> None:
-    """Wake mila — Step 2c: HUD + poori command.
+    """Wake mila — Step 2c: poori command (HUD `on_heard` par khulega).
 
     Step 1 me yahan sirf HUD khulta tha. Ab `wake/command.py` poori flow chalata
     hai: "Ji, boliye" -> mic suno -> Groq STT -> shared ENGINE -> jawab ki awaaz.
 
-    `mic` aur `stop` `wake/session.py` ke `_fire()` se aate hain. Chaar callback
-    (`allowed`, `on_confirm`, `on_busy`, `on_sleep`) yahin se jaate hain — `wake/`
-    ko `desktop/` ka import nahi karna padta.
+    `mic` aur `stop` `wake/session.py` ke `_fire()` se aate hain. Paanch callback
+    (`allowed`, `on_confirm`, `on_busy`, `on_sleep`, `on_heard`) yahin se jaate
+    hain — `wake/` ko `desktop/` ka import nahi karna padta.
 
     **Sleep me bhi yahi raasta hai:** pehle `asleep` hatta hai (jaag gaya), phir
-    HUD khulta hai aur command chalta hai. Is liye "Jarvis" bolte hi app poori
-    tarah uth jaata hai — mic to waise bhi sun raha tha."""
+    command chalta hai. Is liye "Jarvis" bolte hi app poori tarah uth jaata hai —
+    mic to waise bhi sun raha tha."""
     log.info("WAKE HIT: %r", phrase)
     sleep_mod.wake_up(_app)
-    hud = getattr(_app, "hud", None)
-    if hud is not None:
-        hud.open()
-    STATE.set_hud(True)
     command.run(mic, stop, allowed=allowed,
                 on_confirm=lambda: on_hotkey(_app), on_busy=_busy,
-                on_sleep=lambda: _sleep(_app))
+                on_sleep=lambda: _sleep(_app),
+                on_heard=lambda: _open_hud(_app))
 
 
 def on_hotkey(app=None) -> None:
