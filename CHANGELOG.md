@@ -1256,6 +1256,21 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>
 - Test: `tests/test_phone.py`, `tests/test_screen.py` (fake, asli adb/network
   kabhi nahi). Suite: 97 green.
 
+## 30 Oct 2026 — sunna theek, HUD sirf sach me sunne par, Telegram
+
+- `voice/stt_guard.is_garbage()` — filler-only kachra (`'okay okay okay'`,
+  `'Tee. Tee.'`, `'ku'`) engine tak pahunchta hi nahi. Logs se pakda.
+- STT: `whisper-large-v3` (turbo nahi) + `config.STT_PROMPT` Hinglish hint +
+  `temperature=0` — teeno ek saath.
+- `COMMAND_MAX_SECONDS` 30 -> 15; max-hit par `capture()` `None` = background
+  maan kar chhoda (YouTube ki awaaz command nahi banti).
+- HUD ab `on_heard` par khulta hai (brain se pehle), wake par nahi — false
+  wake par window nahi khulti.
+- `config_telegram.py` + `server/telegram_bot.py` — phone se Telegram par
+  likho/voice note bhejo, kaam is PC par hota hai. Owner-only, long-poll
+  daemon thread, koi webhook/public port nahi. `desktop/app.py` se start/stop.
+- Test: `tests/test_telegram.py` (fake, koi asli Telegram/brain nahi).
+
 ## Keys
 
 - `.env` me 6 brain/voice keys + voice ids (values kabhi commit nahi).

@@ -865,6 +865,37 @@ nahi, apni purani soch ki galti** ho sakta hai. Test padho — phir decide
 karo production badalna hai ya test. Har baar production "theek hai" bolna
 galat hota hai (waise bhi raat me do jagah aisa hi hua).
 
+## 8.1.9 SUNNA, HUD AUR TELEGRAM KE NIYAM (30 Oct 2026)
+
+- **STT ka kachra `voice/stt_guard.is_garbage()` me roka jaata hai — ek hi
+  choke point `guard_text()`.** `logs/jarvis.log` me engine tak `'okay okay
+  okay'`, `'Tee. Tee.'`, `'ku'` pahunch rahe the, aur brain unka jawab bana
+  raha tha. Rule: chhote filler-only text (3 akshar se kam, ya wahi shabd
+  baar-baar) reject. Naya reject-word add karna ho to `FILLER_WORDS` me.
+- **`GROQ_STT_MODEL` ab `whisper-large-v3` hai** (turbo nahi) + `config.STT_PROMPT`
+  (Hinglish hint) + `temperature=0`. Ye teen ek saath kaam karte hain —
+  sirf model badalna kaafi nahi.
+- **`COMMAND_MAX_SECONDS` 30 se 15 hai, aur max-hit par `capture()` `None`
+  deta hai.** Background/YouTube ki awaaz 30 s tak "command" ban jaati thi.
+  `None` = background maan kar chhoda (log me ek line), brain chalta hi nahi.
+- **HUD command sach me sunne ke baad khulta hai — `on_heard` par, wake par nahi.**
+  `wake/command.py` brain se **pehle** `on_heard()` bulata hai;
+  `desktop/callbacks.py` ka `on_wake()` sirf `allowed()` ka faisla karta hai.
+  False wake = koi window nahi (pehle har "Jarvis" par nayi window khulti thi).
+  Test ka fake (`tests/hudhelp.FakeCommand`) bhi `on_heard` bulata hai — naye
+  callback ko fake me jodna zaroori hai, warna test chup-chaap kuch bhi pass karega.
+- **Telegram ka ek hi raasta `server/telegram_bot.py`.** Wahi `server.state.ENGINE`
+  (naya `Engine()` kabhi nahi), daemon thread me long-poll (`getUpdates`,
+  koi webhook/public port nahi), owner-only gate `config_telegram.CHAT_ID`.
+  Khaali allowlist = **koi command nahi**; ajnabi ko sirf uski chat id jaati hai.
+  App band = bot band. ASK card ka button Telegram par nahi hai, is liye card
+  timeout par khud DENY hota hai (awaaz se ALLOW kabhi nahi).
+- **`config_telegram.py` `config.py` me re-export nahi hota** — `config.py`
+  200-line ke kareeb hai, is liye consumer seedha import karta hai (wahi
+  pattern `config_vision.py` ka hai). Naya config part bana to `config.py`
+  chhota rakhna ho to isi tarah.
+- **Token sirf `.env` me** (`JARVIS_TELEGRAM_TOKEN`), `.env.example` me sirf naam.
+
 ## 8.2 WINDOWS TRAY / REGISTRY KE PAKKAUREY NIYAM (2 Oct 2026)
 
 - **Tray list me app ka naam nahi, EXE ka naam dikhta hai.** Venv ka `python.exe` sirf

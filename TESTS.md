@@ -209,6 +209,7 @@ Runner sirf hai; saare checks char helper me hain (har file `<200` lines):
 | `hud_check_api.py` | weather `_parse` mock + crash-safe, stats shape/cache, `/hud/*` security + CSP, `/hud/quick` extra-field 422, gatekeeper no-bypass, **ek shared Engine** |
 | `test_phone.py` | **Phone ka dhaancha** (koi asli adb nahi) — `_run`/`_command` fake: argv list + `shell=False` + `--profile`, jawab ka `explanation` nikalna, har raasta ek saaf line (phone connect nahi / timeout / uv nahi / bina jawab / khaali task), registry + ASK + `nocards` ALLOW + `DIRECT_TOOLS` + prompt rule |
 | `test_screen.py` | **Screen dekhna** (`_grab`/`_ask` fake) — `ffmpeg gdigrab` ka shape (`-frames:v 1`, scale width config se, `shell=False`), `_one_line` (newline + 400 char), har error ka saaf jawab (ffmpeg nahi / timeout / grab fail / key nahi / HTTP 429 / net down / khaali jawab), temp PNG **har raaste par delete**, registry + ASK + `nocards` ALLOW + `DIRECT_TOOLS` |
+| `test_telegram.py` | **Phone se Telegram** (`_call`/`ask`/`voice_text` fake, koi asli Telegram/brain nahi) — owner-only gate (ajnabi ko sirf apni chat id, khaali allowlist = koi command nahi), text + voice note ka raasta, khaali message par brain nahi, error par saaf jawab, lamba jawab `TELEGRAM_MAX_CHARS` tukdon me, token na ho to `start()` False |
 
 ### Playwright helper (`hudserve.py` + `hudcheck_bar.py` + `test_hud_gold.py`)
 
