@@ -143,12 +143,20 @@ def test_command_normal_text_not_sleep():
 
 
 def test_on_wake_wakes_from_sleep():
-    """So raha hai aur 'Jarvis' bola -> pehle flag hatta hai, phir HUD + command."""
+    """So raha hai aur 'Jarvis' bola -> pehle flag hatta hai, phir command.
+
+    HUD `on_heard` par khulti hai (false wake par nahi), is liye fake command
+    bhi wahi callback chalata hai."""
     app, said = FakeApp(), []
+
+    def fake_run(*_a, **kw):
+        said.append("RAN")
+        (kw.get("on_heard") or (lambda: None))()
+
     STATE.set_asleep(True)
     with patch(playback, "say", lambda text, stop=None: said.append(text)), \
             patch(config, "COMMAND_WARMUP_SECONDS", 0), \
-            patch(cb.command, "run", lambda *a, **k: said.append("RAN")):
+            patch(cb.command, "run", fake_run):
         cb.on_wake("jarvis", mic=object(), stop=threading.Event(), _app=app)
     check("jaag gaya", STATE.asleep(), False)
     check("HUD khula", app.hud.opened, 1)
