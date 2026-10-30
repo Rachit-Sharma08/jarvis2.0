@@ -359,6 +359,15 @@ hua rule → yahan record badlo · nayi key → sirf **naam** · nayi rule → s
 - **Commit message me kisi ki personal info nahi** — na user ka naam, na gender (male/female/
   ladka/ladki), na shehar/age/phone/email. Sirf kaam ka saaf Hinglish/English vivaran, file
   names aur behaviour. Message file se bhejo (`git commit -F file`) taaki shell quote na tootey.
+- **Commit is hisaab se ki contribution apne aap saaf lage (jhooth nahi):** ek logical kaam =
+  ek commit, aur green test ke baad **usi din push** — din bhar ka saara kaam ek bade commit me
+  dher mat banao. Commit ka time **asli** ho: kabhi `--date`/`GIT_COMMITTER_DATE` se purani date
+  par commit mat karo, aur khaali "contribution" commit mat banao (graph jhootha ban jaata hai aur
+  history gandi hoti hai). Doosri taraf, ek hi kaam ko 20 micro-commits me mat todo — sirf itne
+  commit jitne sach me alag logical unit hain. GitHub sirf **`main`** par (ya merge hue PR me) gin-ta
+  hai, is liye chhote kaam seedha `main` par, bada kaam branch par — par merge se pehle test green
+  aur message conventional (`fix(voice): ...`, `feat(telegram): ...`). Roz thoda-thoda asli kaam =
+  graph khud bhar jaata hai; uske liye koi trick nahi.
 - Tool ka feature bana rahe ho to: pehle `gatekeeper/rules.py` me uska risk, phir `tools/`, phir
 `engine.run_tool()` — is order me. Engine me bypass mat chhodna.
 - Naya UI output (card, activity, log) banao to `textContent` + `mask()` dono lagana hai.
