@@ -94,13 +94,19 @@ class FakeRun:
 
 
 class FakeCommand:
-    """`wake/command.run` ka nakli - mic/STT/brain kabhi nahi."""
+    """`wake/command.run` ka nakli - mic/STT/brain kabhi nahi.
 
-    def __init__(self):
+    `heard=True` par asli `on_heard` callback bhi chalata hai (jaise asli run
+    valid text milne par karta hai), warna HUD kabhi na khulti."""
+
+    def __init__(self, heard=True):
         self.calls = 0
+        self.heard = heard
 
-    def run(self, mic, stop, **_kw):
+    def run(self, mic, stop, **kw):
         self.calls += 1
+        if self.heard:
+            (kw.get("on_heard") or (lambda: None))()
         return 1
 
 

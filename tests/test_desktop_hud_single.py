@@ -87,9 +87,27 @@ def test_hotkey_same_window():
         check("browser 1 hi baar chala", desk.spawns, 1)
 
 
+def test_false_wake_no_window():
+    """Asli shikayat (29-Oct): YouTube/chatter me "Jarvis" aa jaane par HUD pop
+    ho jaati thi. Ab window sirf tab khulti hai jab command sach me suni gayi ho
+    (`on_heard`; pehle `on_wake` par khulti thi)."""
+    print("FALSE WAKE (kuch suna nahi) -> koi window nahi")
+    desk = FakeDesktop()
+    app = FakeApp(make_hud(desk))
+    with patched():
+        for _ in range(3):
+            wake(app, FakeCommand(heard=False))
+        check("3 false wake par koi window nahi", len(desk.windows), 0)
+        check("browser chala hi nahi", desk.spawns, 0)
+        wake(app, FakeCommand())
+        check("asli command par khuli", len(desk.windows), 1)
+        check("browser 1 hi baar", desk.spawns, 1)
+
+
 with patched():
-    for fn in (test_ten_wakes_one_window, test_old_bug_cannot_come_back,
-               test_other_process, test_hotkey_same_window):
+    for fn in (test_ten_wakes_one_window, test_false_wake_no_window,
+               test_old_bug_cannot_come_back, test_other_process,
+               test_hotkey_same_window):
         fn()
 
 finish("HUD ek hi window - 10 wake par bhi sirf 1.")
