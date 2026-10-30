@@ -889,7 +889,8 @@ galat hota hai (waise bhi raat me do jagah aisa hi hua).
   koi webhook/public port nahi), owner-only gate `config_telegram.CHAT_ID`.
   Khaali allowlist = **koi command nahi**; ajnabi ko sirf uski chat id jaati hai.
   App band = bot band. ASK card ka button Telegram par nahi hai, is liye card
-  timeout par khud DENY hota hai (awaaz se ALLOW kabhi nahi).
+  timeout par khud DENY hota hai (awaaz se ALLOW kabhi nahi). Restart par purane
+  message dobara nahi chalte — `_next_offset()` aakhri id ke baad se shuru karta hai.
 - **`config_telegram.py` `config.py` me re-export nahi hota** — `config.py`
   200-line ke kareeb hai, is liye consumer seedha import karta hai (wahi
   pattern `config_vision.py` ka hai). Naya config part bana to `config.py`

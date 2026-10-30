@@ -116,4 +116,12 @@ with patch(config_telegram, "CHAT_ID", "77"):
     check("owner alag id", bot.owner(78), False)
 check("token khaali par bot nahi", bot.start(), False)
 
+print("PURANE MESSAGE DOBARA NAHI")
+with patch(bot, "_call", lambda *_a, **_k: {"result": [{"update_id": 5}]}):
+    check("aakhri id ke baad se shuru", bot._next_offset(), 6)
+with patch(bot, "_call", lambda *_a, **_k: {"result": []}):
+    check("koi update nahi = 0", bot._next_offset(), 0)
+with patch(bot, "_call", lambda *_a, **_k: (_ for _ in ()).throw(OSError("net"))):
+    check("net gira to 0 (phir try karega)", bot._next_offset(), 0)
+
 finish("Telegram bot: owner-only, text/voice, error, lamba jawab.")

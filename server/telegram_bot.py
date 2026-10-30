@@ -107,9 +107,21 @@ def handle(update: dict, reply=None) -> str:
         return "error"
 
 
+def _next_offset() -> int:
+    """Purane update dobara na chalein (Telegram 24 ghante tak rakhta hai).
+
+    Warna app restart par kal ke messages phir se execute ho jaate hain."""
+    try:
+        data = _call("getUpdates", {"offset": -1, "limit": 1}, timeout=10)
+    except Exception:
+        return 0
+    ids = [int(u.get("update_id", 0)) for u in (data or {}).get("result") or []]
+    return max(ids) + 1 if ids else 0
+
+
 def _loop() -> None:
     """Long-poll: naya message aate hi handle; network girre to 5 s baad phir."""
-    offset = 0
+    offset = _next_offset()
     while not _stop.is_set():
         try:
             data = _call("getUpdates",
