@@ -168,7 +168,7 @@ class TestSilenceDefault(unittest.TestCase):
         """Sirf **end** ki chuppi — beech ka hangover aur min/max waise hi."""
         check("hangover", config.COMMAND_HANGOVER_SECONDS, 0.4)
         check("min", config.COMMAND_MIN_SECONDS, 0.6)
-        check("max", config.COMMAND_MAX_SECONDS, 30)
+        check("max", config.COMMAND_MAX_SECONDS, 15)
         check("pre-roll", config.COMMAND_PRE_ROLL_SECONDS, 0.6)
 
 

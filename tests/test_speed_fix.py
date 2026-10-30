@@ -89,7 +89,7 @@ class TestSilenceWindow(unittest.TestCase):
         """Sirf **end** ki chuppi badli — beech ka 0.4 s hangover aur 30 s max
         waise hi hain, warna beech ka vaakya kat jaata."""
         check("hangover", config.COMMAND_HANGOVER_SECONDS, 0.4)
-        check("max seconds", config.COMMAND_MAX_SECONDS, 30)
+        check("max seconds", config.COMMAND_MAX_SECONDS, 15)
         check("min seconds", config.COMMAND_MIN_SECONDS, 0.6)
 
     def test_env_can_override(self):

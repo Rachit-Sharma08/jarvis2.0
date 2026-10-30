@@ -67,7 +67,10 @@ MIC_OPEN_RETRY_SECONDS = float(os.getenv("JARVIS_MIC_RETRY", "1.2"))
 # seedha wake ke total me judta hai. 0.7 s ek normal sentence-gap se ab bhi
 # lamba hai, is liye beech ka vaakya kat-ta nahi. `.env` ke `JARVIS_CMD_SILENCE`
 # se badalte ho — **wo raasta bilkul waisa hi hai.**
-COMMAND_MAX_SECONDS = 30           # wake ke baad itni der suno (safety limit)
+# 30 -> **15** (29-Oct): 30 s tak TV/YouTube ki awaaz sun kar transcript kachra
+# aata tha (`logs/jarvis.log` me `1000 chunk = 30000ms`). Ab max hit = shor, aur
+# `wake/utterance.py` usse chhod deta hai ("phir se boliye").
+COMMAND_MAX_SECONDS = 15           # wake ke baad itni der suno (safety limit)
 COMMAND_MIN_SECONDS = 0.6    # itni ASLI awaaz chahiye, khamoshi ginti nahi
 COMMAND_END_SILENCE_SECONDS = float(os.getenv("JARVIS_CMD_SILENCE", "0.7"))
 COMMAND_HANGOVER_SECONDS = 0.4     # beech ka chhota ruk na kaato (wake se chhota)
