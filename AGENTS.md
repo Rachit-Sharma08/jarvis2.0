@@ -1195,6 +1195,37 @@ Source `D:\SystemConfig\Startup-helper\SystemConfig.bat` se byte-identical
 
 ---
 
+## 8.1.10 SUNNE ME ASLI WAJAH: BACKGROUND MEDIA (30 Oct 2026)
+
+- **"Sun nahi raha" ka pehla shak STT par mat daalo — pehle `logs/prabh.log` /
+  `logs/jarvis.log` ki `command capture:` line padho.** 30-Oct ko 25 capture me
+  se 13 baar `1000 chunk = 30000ms` tha (matlab VAD ko lagatar awaaz mili,
+  khamoshi kabhi nahi) aur ek transcript film ka dialogue tha. Ye **background
+  ka gaana/video** hi tha — model bilkul theek tha. Naapa bhi gaya: app band
+  karke mic ka sample `peak_rms=0.0008` (room silence), jabki kharab captures
+  0.10–0.82. **Clean test audio par model perfect nikla** (Hinglish/Hindi/English,
+  `auto`/`hi`/`en` sab wahi) — is liye STT me kuch badla hi nahi.
+- **Command ke waqt media pause apne aap** — `desktop/media.py`, config
+  `JARVIS_MEDIA_PAUSE` (default 1). Windows ka media key
+  (`VK_MEDIA_PLAY_PAUSE`) jata hai, jawab ke baad wapas play. **Koi naya package
+  nahi.**
+- **Key sirf tab bhejo jab aapne khud pause kiya ho (`_paused`).** Bina guard ke
+  user ka paused gaana chal padta, aur command ke baad dobara pause ho jaata.
+  Play sirf pause karne ke baad — shuru me hi play bhejna wahi nuksan karta hai.
+- **Pause `try` ke andar, play `finally` me.** Beech me crash/mic fail ho to bhi
+  gaana wapas chalna chahiye; blocked (mute/lock) aur `no-mic` par media bilkul
+  nahi chhuna (return hook se pehle hota hai).
+- **`on_media` bhi wahi callback style hai** (`True`/`False`), kyunki `wake/` ka
+  `desktop/` import nahi karna (niyam). Test me `_send_key` fake — asli media
+  key kabhi mat bhejo (chalta hua gaana band ho jayega).
+- **Test file ka naam `test_media_pause.py` hai, `test_media.py` nahi** —
+  `tests/test_media.py` pehle se `tools/media.py` (YouTube play) ka hai. Naya
+  test likhne se pehle `git ls-files tests | grep -i media` chala lo, warna kisi
+  ka committed test chup-chaap ud jata hai (30-Oct ko yahi hua, `write` se
+  overwrite ho gaya tha).
+
+---
+
 ## CHANGE HISTORY
 
 Poora record → **`CHANGELOG.md`**. Saali line:
@@ -1547,4 +1578,20 @@ green**, sab file `<200`.
   loaded model 2 GB + **3 stale `start_jarvis.bat` cmd shells**. Fix: `ollama
   stop` + stale shells kill → free 2.3 → **4.4 GB**. App ka ek hi instance
   (port 8000, PID 19372). Baaki (Chrome/VSCode) owner ka faisla hai.
+- **Sunne ki asli wajah + media pause (30 Oct 2026)** — user: "maine command boli
+  ese par esne suni nhi". Pehle naapa (audio kahin save nahi): clean Hinglish /
+  Hindi / English par Groq `whisper-large-v3` perfect, `language="hi"` se koi
+  farq nahi, resampler + AutoGain bhi theek (5% tak dheemi awaaz par bhi sahi),
+  high-pass 100/150/250 Hz se koi labh nahi. **Asli evidence log se:** 25 capture
+  me 13 baar `1000 chunk = 30000ms` (lagatar awaaz) + ek film-dialogue
+  transcript; app band karke mic sample `peak_rms=0.0008` (room silence).
+  Matlab laptop ka built-in mic **background ka gaana/video** sun raha tha. Fix:
+  `desktop/media.py` (Windows media key se command ke waqt pause, jawab ke baad
+  play, `_paused` guard, `JARVIS_MEDIA_PAUSE` default 1), `wake/command.py` ka
+  `on_media` hook (pause `try` me, play `finally` me), `desktop/callbacks.py`
+  `media.for_command`, `tests/test_media_pause.py` (9 check). **STT me kuch nahi
+  badla** (model/lang/prompt sab pehle se theek the). Naya rule section **8.1.10**
+  — jisme ye bhi: naya test likhne se pehle `git ls-files tests` dekh lo
+  (`test_media.py` pehle se `tools/media.py` ka tha, `write` se overwrite ho
+  gaya tha, `git checkout` se wapas kiya).
 

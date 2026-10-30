@@ -94,7 +94,7 @@ def engine_say(confirm=False):
 
 def talk(allowed=None, heard="aaj ka din kya hai", out=None, confirm=False,
          mic_chunks=None, on_confirm=None, on_sleep=None, beep=None,
-         capture=None):
+         capture=None, on_media=None):
     """Poora `command.run` - sab fake ke saath. -> (result, spy, hub, engine).
 
     `heard` = STT ka text (jo user ne bola). Jawab engine se aata hai.
@@ -122,7 +122,7 @@ def talk(allowed=None, heard="aaj ka din kya hai", out=None, confirm=False,
             patch(ask, "HUB", hub), \
             patch("server.state", "ENGINE", engine):
         got = command.run(mic, stop, allowed=allowed, on_confirm=on_confirm,
-                          on_sleep=on_sleep)
+                          on_sleep=on_sleep, on_media=on_media)
     return got, said, hub, engine
 
 

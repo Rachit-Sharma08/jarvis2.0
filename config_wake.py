@@ -71,6 +71,13 @@ MIC_OPEN_RETRY_SECONDS = float(os.getenv("JARVIS_MIC_RETRY", "1.2"))
 # aata tha (`logs/jarvis.log` me `1000 chunk = 30000ms`). Ab max hit = shor, aur
 # `wake/utterance.py` usse chhod deta hai ("phir se boliye").
 COMMAND_MAX_SECONDS = 15           # wake ke baad itni der suno (safety limit)
+# Command ke waqt system media pause (30-Oct). Laptop ka built-in mic speaker ki
+# awaaz bhi sunta hai, aur gaana/video chalta ho to Whisper usi ko command
+# samajh leta hai (`1000 chunk = 30000ms` + film ka dialogue transcript).
+# Platform ka media key bhejte hain (koi naya package nahi); jawab ke baad wapas
+# play. `JARVIS_MEDIA_PAUSE=0` se band.
+MEDIA_PAUSE = os.getenv("JARVIS_MEDIA_PAUSE", "1").strip().lower() not in (
+    "0", "off", "false", "no")
 COMMAND_MIN_SECONDS = 0.6    # itni ASLI awaaz chahiye, khamoshi ginti nahi
 COMMAND_END_SILENCE_SECONDS = float(os.getenv("JARVIS_CMD_SILENCE", "0.7"))
 COMMAND_HANGOVER_SECONDS = 0.4     # beech ka chhota ruk na kaato (wake se chhota)

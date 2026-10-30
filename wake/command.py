@@ -58,15 +58,16 @@ log = get_logger("wake_command")
 
 
 def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
-        on_sleep=None, on_heard=None) -> str:
+        on_sleep=None, on_heard=None, on_media=None) -> str:
     """Wake ke baad ka poora command. -> kya hua (log + test ke liye).
 
     `mic` aur `stop` `wake/session.py` ke `_fire()` se aate hain — kahin aur se
-    mic nahi milta (mic ka ek hi owner `wake/audio.py` hai). Baaki paanch callback
+    mic nahi milta (mic ka ek hi owner `wake/audio.py` hai). Baaki chhe callback
     `desktop/callbacks.py` deta hai: `allowed` (mute/lock), `on_confirm` (HUD
-    kholo), `on_busy` (HUD ka WAKE pill), `on_sleep` ("so jao" — battery) aur
+    kholo), `on_busy` (HUD ka WAKE pill), `on_sleep` ("so jao" — battery),
     `on_heard` (**asli text mila** — tabhi HUD kholo; pehle wo "Jarvis" ke har
-    false hit par khulti thi, jaise YouTube me naam aa jaaye)."""
+    false hit par khulti thi, jaise YouTube me naam aa jaaye) aur `on_media`
+    (command ke waqt gaana/video pause — laptop ka mic usi ko sun leta tha)."""
     from wake import worker as wake_worker
 
     stop = stop or listen._STOP
@@ -84,6 +85,10 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
     _safe(on_busy, True)
     HUB.publish({"type": "status", "value": "listening"})
     try:
+        # Media (gaana/video) pause — warna laptop ka mic usi ko command sun leta
+        # hai. `finally` me wapas play. Callback hi ise karta hai, is liye `wake/`
+        # ko `desktop/` ka import nahi karna padta.
+        _safe(on_media, True)
         # 1. Purana audio phenko (wake shabd ki goonj + pichli TTS), phir 0.18 s
         #    suno — kya user bol hi raha hai? Agar haan to "Ji, boliye" **nahi**
         #    bolte (pehle hamari awaaz uske upar chadh jaati thi), aur usi chhote
@@ -178,6 +183,8 @@ def run(mic=None, stop=None, allowed=None, on_confirm=None, on_busy=None,
         listen.drain(mic, stop)
         if held:
             wake_worker.release_from_command()
+        # Media wapas play — jawab bol chuke, ab gaana chalta rahe.
+        _safe(on_media, False)
         # Jawab ke baad follow-up window (KAAM 5, **DEFAULT OFF**). Release ke
         # BAAD — warna KAAM 2 ka tail guard nahi lage aur apni awaaz follow-up ban jaati.
         wake_worker.mark_hot()

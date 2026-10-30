@@ -6,6 +6,35 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Sunna: background media hi asli wajah thi (30 Oct 2026)
+
+User ki shikayat: "maine command boli par isne suni nahi". Pehle **naapa**, phir
+badla — model, resampler, AutoGain aur language hint teeno saaf nikle (synthetic
++ asli mic ke test, audio kahin save nahi).
+
+- **Sabse bada sabak (do baar galat raasta):** pehle maine socha STT model kharab
+  hai. Clean Hinglish/Hindi/English WAV par Groq `whisper-large-v3` **perfect**
+  tha — `auto`, `hi`, `en` teeno me wahi text. `language="hi"` se koi farq nahi
+  (aur `hi` shor me Devanagari kachra deta hai), is liye STT me kuch nahi badla.
+- **Asli evidence `logs/jarvis.log` se:** 25 capture me se 13 baar
+  `1000 chunk = 30000ms` (lagatar awaaz, khamoshi kabhi nahi) + ek transcript
+  film ka dialogue (`'No, brother, leave the anger of my mother...'`). App band
+  karke 8 s mic sample: room silence ka `peak_rms=0.0008` — matlab itni tez awaaz
+  **background ka gaana/video** hi thi. User ne confirm kiya: gaana "kabhi kabhi"
+  chalta hai, mic laptop ka built-in hai.
+- **Fix:** `desktop/media.py` — command ke waqt Windows ka media key
+  (`VK_MEDIA_PLAY_PAUSE`) se pause, jawab ke baad wapas play.
+  `wake/command.py` ka naya `on_media` hook (pause `try` ke shuru me, play
+  `finally` me), `desktop/callbacks.py` `media.for_command` deta hai.
+  `config_wake.MEDIA_PAUSE` (`JARVIS_MEDIA_PAUSE=1`, `0` se band), `config.py`
+  re-export. **Koi naya package nahi.** Key sirf tab jaati hai jab humne khud
+  pause kiya ho (`_paused`) — warna user ka paused gaana chal padta.
+- `tests/test_media_pause.py` (9 check): jodi, dobara key nahi, flag off, blocked
+  par kuch nahi, crash par bhi play. (`tests/test_media.py` pehle se
+  `tools/media.py` ka hai, is liye naam alag rakha.)
+
+---
+
 ## Size niyam ka safai + voice-test raaz (28 Oct 2026)
 
 26-Oct ka adhoora voice-test (3D heart) phir se chalaya. Do sach nikle:

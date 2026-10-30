@@ -13,6 +13,7 @@ Test me inhe seedha call kiya ja sakta hai (asli tray/hotkey/wake nahi chalti).
 
 import config
 from desktop import lockwatch
+from desktop import media
 from desktop import sleep as sleep_mod
 from desktop.state import STATE
 from gatekeeper import keeper
@@ -120,7 +121,8 @@ def on_wake(phrase: str, mic=None, stop=None, _app=None) -> None:
     command.run(mic, stop, allowed=allowed,
                 on_confirm=lambda: on_hotkey(_app), on_busy=_busy,
                 on_sleep=lambda: _sleep(_app),
-                on_heard=lambda: _open_hud(_app))
+                on_heard=lambda: _open_hud(_app),
+                on_media=media.for_command)
 
 
 def on_hotkey(app=None) -> None:
