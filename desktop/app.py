@@ -141,6 +141,8 @@ class SundayApp(app_loop.AppLoop):   # naam Step 1 me user-facing hua, class id 
         if self._start_wake():
             STATE.set_mic(config.TRAY_LISTENING, "wake word sun raha hai")
         self.hotkey.start()
+        from server import telegram_bot      # late: ENGINE server ke baad bane
+        telegram_bot.start()
 
     def _start_wake(self) -> bool:
         """Wake word worker (Step 1) — sirf **sunta** hai, kuch bolta nahi.
@@ -156,6 +158,8 @@ class SundayApp(app_loop.AppLoop):   # naam Step 1 me user-facing hua, class id 
 
     def _shutdown(self) -> None:
         log.info("band ho raha hai (code=%s)", self._code)
+        from server import telegram_bot
+        telegram_bot.stop()
         wake_worker.stop()
         self.hotkey.stop()
         tray_watch.stop()
