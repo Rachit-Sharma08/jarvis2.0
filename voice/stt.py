@@ -37,6 +37,11 @@ def _transcribe(audio: bytes) -> str:
     reply = _client().audio.transcriptions.create(
         file=("mic.wav", io.BytesIO(audio)),
         model=config.GROQ_STT_MODEL,
+        # Hinglish hint + `temperature=0` (29-Oct): bina hint ke turbo model
+        # "ku?" / "Tee. Tee." jaisa kachra deta tha. `language` jaan-boojh kar
+        # nahi bhejte — romaanized text bigadta hai (upar wali line).
+        prompt=config.STT_PROMPT,
+        temperature=0,
     )
     return (reply.text or "").strip()
 
