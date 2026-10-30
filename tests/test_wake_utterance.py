@@ -85,18 +85,16 @@ def test_capture_too_short():
 
 
 def test_capture_max_seconds():
-    show("capture: COMMAND_MAX_SECONDS par hi kaat-ta hai (safety limit)")
+    show("capture: COMMAND_MAX_SECONDS bhar gaya -> None (background, STT par nahi)")
     from tests.wakehelp import FakeMic
 
-    # FakeMic ki queue sirf 400 chunk rakh sakti hai, is liye asli 30s (1000
+    # FakeMic ki queue sirf 400 chunk rakh sakti hai, is liye asli 15 s (500
     # chunk) preload nahi ho sakta. Window chhota karke wahi niyam test karte
-    # hain: 1.5 s = 50 chunk, aur mic poori der bolta rahe.
+    # hain: 1.5 s bhar gaya = lagatar awaaz = TV/shor, command nahi.
     mic = FakeMic([loud(1) for _ in range(400)])
     with window(COMMAND_MAX_SECONDS=1.5):
         got = utterance.capture(mic)
-    truthy("mila", got)
-    if got:
-        check("1.5s = 50 chunk par hi ruka", len(got), 50)
+    check("max bharne par background maana", got, None)
 
 
 def test_capture_stop_event():

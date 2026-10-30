@@ -92,6 +92,14 @@ def capture(mic, stop=None) -> list:
         if quiet >= quiet_n:
             break
 
+    # Max hit = 15 s tak lagatar "awaaz". Asli command itna lamba nahi hota —
+    # ye TV/YouTube/fan hai (log: `1000 chunk = 30000ms`, transcript kachra).
+    # Aise audio ko STT par bhejne se behtar hai "phir se boliye".
+    if seen >= max_n:
+        log.info("command capture: %ds tak awaaz - background maan kar chhoda",
+                 int(config.COMMAND_MAX_SECONDS))
+        return None
+
     # Sirf **awaaz** ginti hai — aakhir ki khamoshi ko "0.6s bola" na samjho.
     # `peak_rms`/`clip` sirf **number** hain (audio save nahi hoti) — inhi se
     # pata chalta hai ki mic tez hai (clip) ya dheere, aur STT ne kyun bakwas
