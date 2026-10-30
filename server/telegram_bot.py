@@ -59,14 +59,16 @@ def owner(chat_id) -> bool:
 
 
 def ask(text: str) -> str:
-    """ENGINE se ek jawab — aakhri `assistant` message."""
-    async def run():
-        out = ""
-        async for ev in engine().handle(text, "tg%d" % int(time.time() * 1000)):
-            if ev.get("type") == "message" and ev.get("role") == "assistant":
-                out = ev.get("text") or out
-        return out
-    return asyncio.run(run())
+    """ENGINE se ek jawab — aakhri `assistant` message.
+
+    `Engine.handle()` **sync generator** hai (jaise `wake/ask.py` me). `async for`
+    par ye tootta hai — is liye seedha loop; ye thread pehle se daemon hai.
+    """
+    out = ""
+    for ev in engine().handle(text, "tg%d" % int(time.time() * 1000)):
+        if ev.get("type") == "message" and ev.get("role") == "assistant":
+            out = ev.get("text") or out
+    return out
 
 
 def voice_text(file_id: str, duration) -> str:

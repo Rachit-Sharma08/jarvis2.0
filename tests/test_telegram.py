@@ -124,4 +124,15 @@ with patch(bot, "_call", lambda *_a, **_k: {"result": []}):
 with patch(bot, "_call", lambda *_a, **_k: (_ for _ in ()).throw(OSError("net"))):
     check("net gira to 0 (phir try karega)", bot._next_offset(), 0)
 
+print("ENGINE KA RAASTA (sync generator)")
+class FakeEngine:
+    def handle(self, text, rid=""):
+        yield {"type": "status", "state": "thinking"}
+        yield {"type": "message", "role": "user", "text": text}
+        yield {"type": "message", "role": "assistant", "text": "aa gaya Sir"}
+
+
+with patch(bot, "engine", lambda: FakeEngine()):
+    check("sync generator se jawab mila", bot.ask("time kya hua"), "aa gaya Sir")
+
 finish("Telegram bot: owner-only, text/voice, error, lamba jawab.")
