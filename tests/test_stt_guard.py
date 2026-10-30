@@ -12,7 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 from voice.stt_guard import (MIN_DURATION_MS, bad_duration, guard_text,
-                              is_silence_phrase, script_ok)
+                              is_garbage, is_silence_phrase, script_ok)
 
 FAILED = []
 
@@ -76,6 +76,15 @@ check("galat script reject", bool(guard_text("こんにちは元気ですか")),
 check("normal hindi jaare", guard_text("namaste, prabh"), "")
 check("normal devanagari jaare", guard_text("नमस्ते, आज मौसम कैसा है"), "")
 check("command jaari", guard_text("desktop ka folder khol do"), "")
+
+print("SHOR KA KACHRA (29-Oct, logs se)")
+# `logs/jarvis.log` me engine tak ye pahuncha tha: brain inka jawab banata tha.
+for text in ("okay okay okay", "Tee. Tee.", "ku", "no no no", "the the the",
+             "      "):
+    check(f"reject: {text.strip()[:22]!r}", bool(is_garbage(text)), True)
+for text in ("haan haan", "namaste prabh", "aaj mausam kaisa hai",
+             "desktop ka folder khol do", "time kya hua"):
+    check(f"chalte: {text[:24]}", is_garbage(text), "")
 
 print()
 if FAILED:
