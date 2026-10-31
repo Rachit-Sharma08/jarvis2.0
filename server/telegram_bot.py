@@ -24,6 +24,7 @@ import urllib.request
 
 import config
 import config_telegram
+from core import multitask
 from log_setup import get_logger
 from server.state import engine
 from voice import stt
@@ -65,7 +66,7 @@ def ask(text: str) -> str:
     par ye tootta hai — is liye seedha loop; ye thread pehle se daemon hai.
     """
     out = ""
-    for ev in engine().handle(text, "tg%d" % int(time.time() * 1000)):
+    for ev in multitask.run(engine(), text, "tg%d" % int(time.time() * 1000)):
         if ev.get("type") == "message" and ev.get("role") == "assistant":
             out = ev.get("text") or out
     return out

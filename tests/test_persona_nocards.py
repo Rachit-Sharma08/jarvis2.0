@@ -21,7 +21,9 @@ BASE = 3256  # P-2b-2b se pehle naapa gaya prompt (tools ON, khaali memory)
 # + search rule strong ("PAKKA nahi pata" -> apni yaad se number/link nahi) (+140).
 # 29-Oct: phone_task (spec 1 line + rules 2 line) (+201); screen_look
 # (spec 1 line + rules 2 line) (+236).
-MAX_GROW = 2700
+# 30-Oct: multi-task rules (kaunsa pehle mat poochho, missing detail par bhi
+# kaam, "X baje" = add_reminder, tool ke baad agla kaam) (+435).
+MAX_GROW = 3200
 
 
 def check(name, got, want):

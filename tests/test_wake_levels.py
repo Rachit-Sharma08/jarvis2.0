@@ -26,6 +26,8 @@ from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 import numpy as np
 
+import os
+os.environ["JARVIS_CMD_SILENCE"] = "0.7"   # .env ka value test ko na badle
 import config
 import config_wake
 from log_setup import ascii_text, get_logger

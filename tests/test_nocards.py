@@ -17,6 +17,7 @@ from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
 import config
 from gatekeeper import keeper, nocards
+config.TRUST_ALL = False   # .env JARVIS_TRUST=1 ho to DENY ka test bekaar ho jaata
 
 TEMP = OUTSIDE = None
 

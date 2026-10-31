@@ -18,6 +18,7 @@ chalata, warna jawab do baar bolta. Typed message ka raasta badalta nahi.
 """
 
 import config
+from core import multitask
 from gatekeeper.audit import mask
 from log_setup import get_logger
 from server.hub import HUB
@@ -139,7 +140,7 @@ def ask(text: str, rid: str, on_confirm=None, stop=None) -> tuple:
 
     stop = stop or listen._STOP
     answer, asked, failed = "", False, False
-    for event in shared_engine().handle(text, rid):
+    for event in multitask.run(shared_engine(), text, rid):
         event["via"] = "voice"
         HUB.publish(event)
         kind = event.get("type")

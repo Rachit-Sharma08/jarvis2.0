@@ -11,6 +11,7 @@ from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 import config
 from brain import health, pool, router
 from brain.prompt import build
+from datasafe import isolated_data
 
 FAILED = []
 
@@ -185,10 +186,11 @@ def test_stopwatch():
     check("stage list me", watch.stages[0][0], "groq")
 
 
-for fn in (test_models_configured, test_classify, test_permanent_model, test_ten_min_skip,
-           test_tools_off_prompt, test_one_combined_message, test_router_skips_resting,
-           test_stopwatch):
-    fn()
+with isolated_data():   # asli data/memory.json prompt me na aaye
+    for fn in (test_models_configured, test_classify, test_permanent_model, test_ten_min_skip,
+               test_tools_off_prompt, test_one_combined_message, test_router_skips_resting,
+               test_stopwatch):
+        fn()
 
 print("FAIL:", FAILED if FAILED else "koi nahi")
 sys.exit(1 if FAILED else 0)

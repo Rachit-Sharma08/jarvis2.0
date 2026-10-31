@@ -20,12 +20,13 @@ from core import turnguard
 DIRECT_TOOLS = frozenset({
     "get_time_date", "open_app", "open_website", "open_url", "write_file",
     "delete_to_trash", "add_todo", "add_reminder", "copy_text", "focus_app",
-    "remember", "forget", "phone_task", "screen_look",
+    "remember", "forget", "phone_task", "screen_look", "vscode_terminal",
+    "play_media", "media_control",
 })
 
 # In shabdon wale command me ek se zyada kaam ho sakta hai — multi-step chain
 # hai, is liye purana raasta (dobara LLM call) hi sahi hai.
-MULTI_WORDS = (" aur ", " phir ", " fir ", " uske baad", " baad me",
+MULTI_WORDS = (" aur ", " or ", " ya ", " phir ", " fir ", " uske baad", " baad me",
                " then ", " and ", ",", ";")
 
 DENY_LINE = "Ye nahi kar sakta: %s."

@@ -20,6 +20,9 @@ import config
 from gatekeeper import nocards, paths
 from tools import files as files_mod
 
+# `.env` me JARVIS_TRUST=1 ho to path-hardening ka DENY dikhta hi nahi.
+config.TRUST_ALL = False
+
 TEMP = None
 OUTSIDE = None
 

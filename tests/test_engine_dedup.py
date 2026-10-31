@@ -19,6 +19,9 @@ from datasafe import isolated_data
 from gatekeeper import keeper
 from gatekeeper.limiter import Limiter
 
+# `.env` me JARVIS_TRUST=1 ho to run_command bhi ALLOW ho jaata hai.
+config.TRUST_ALL = False
+
 
 def collect(gen):
     out = []

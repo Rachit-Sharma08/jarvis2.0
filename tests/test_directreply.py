@@ -64,7 +64,8 @@ def test_direct_single_step():
 
 def test_direct_deny_no_lie():
     print("DIRECT: DENY par asli wajah")
-    events, calls, tools = run("explorer band karo", [act("close_app", name="explorer")])
+    with mock.patch.object(config, "TRUST_ALL", False):   # trust mode me sab ALLOW hai
+        events, calls, tools = run("explorer band karo", [act("close_app", name="explorer")])
     check("tool chala hi nahi", tools, [])
     check("LLM sirf 1 baar", calls, 1)
     text = last_answer(events)
@@ -81,6 +82,15 @@ def test_multi_step_old_path():
          "dono ho gaye"])
     check("dono tool chale", tools, ["open_app", "open_website"])
     check("LLM 3 baar (purana raasta)", calls, 3)
+
+
+def test_multi_or_old_path():
+    print("PURANA: 'or' wali multi-step command")
+    events, calls, tools = run(
+        "brave kholo or gaana chala",
+        [act("open_app", name="brave"), act("play_media", query="song"), "dono ho gaye"])
+    check("dono tool chale", tools, ["open_app", "play_media"])
+    check("LLM 3 baar", calls, 3)
 
 
 def test_other_tool_old_path():
@@ -121,8 +131,8 @@ def test_remember_direct():
 
 
 for fn in (test_direct_single_step, test_direct_deny_no_lie, test_multi_step_old_path,
-           test_other_tool_old_path, test_flag_off_old_path, test_tool_error_direct,
-           test_remember_direct):
+           test_multi_or_old_path, test_other_tool_old_path, test_flag_off_old_path,
+           test_tool_error_direct, test_remember_direct):
     with isolated_data():
         fn()
 

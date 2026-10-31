@@ -148,6 +148,7 @@ def test_female_chain_order():
 
 def test_sunday_can_use_default():
     print("SUNDAY CHAIN")
+    os.environ.pop("CARTESIA_VOICE_SUNDAY", None)   # .env me id ho to asli cartesia chalega
     audio, provider = run_with({"elevenlabs"}, mode="sunday")
     check("sunday: cartesia id nahi hai to edge", provider, "edge")
     # Round 2: Sunday ki awaaz bhi Swara (dono mode same).

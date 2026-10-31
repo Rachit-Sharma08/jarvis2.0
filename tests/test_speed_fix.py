@@ -31,6 +31,8 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 from tests import logsafe  # noqa: E402,F401  (test ka apna log)
 
+import os
+os.environ["JARVIS_CMD_SILENCE"] = "0.7"   # .env ka value test ko na badle
 import config
 from core import timing
 from wake import listen

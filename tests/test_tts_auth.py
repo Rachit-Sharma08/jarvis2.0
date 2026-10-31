@@ -165,7 +165,9 @@ class TestMissingKey(unittest.TestCase):
         edge = FakeProvider()
         fake = {"elevenlabs": eleven, "cartesia": FakeProvider(), "edge": edge}
         saved = os.environ.get("ELEVENLABS_VOICE_SUNDAY")
+        cart = os.environ.get("CARTESIA_VOICE_SUNDAY")
         os.environ["ELEVENLABS_VOICE_SUNDAY"] = "JBFqnCBsd6RMkjVDRZzb"
+        os.environ["CARTESIA_VOICE_SUNDAY"] = ""   # .env me id ho to edge tak nahi pahunchta
         try:
             check("voice id sach me set tha",
                   config.voice_for("elevenlabs", "sunday"), "JBFqnCBsd6RMkjVDRZzb")
@@ -177,6 +179,10 @@ class TestMissingKey(unittest.TestCase):
                 os.environ.pop("ELEVENLABS_VOICE_SUNDAY", None)
             else:
                 os.environ["ELEVENLABS_VOICE_SUNDAY"] = saved
+            if cart is None:
+                os.environ.pop("CARTESIA_VOICE_SUNDAY", None)
+            else:
+                os.environ["CARTESIA_VOICE_SUNDAY"] = cart
         check("seedha edge", provider, "edge")
         check("elevenlabs provider 0 baar", len(eleven.calls), 0)
         check("audio mila", len(audio) > 0, True)

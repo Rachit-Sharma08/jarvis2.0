@@ -117,9 +117,9 @@ try:
         check(f"{mode}: sirf ek call", len(calls), 1)
         check(f"{mode}: audio mila", bool(audio), True)
 
-    print("SPEAK — male id par elevenlabs chalta hi nahi")
+    print("SPEAK - male id par elevenlabs chalta hi nahi")
     calls.clear()
-    put(ELEVENLABS_VOICE_SUNDAY=FAKE_MALE)
+    put(ELEVENLABS_VOICE_SUNDAY=FAKE_MALE, CARTESIA_VOICE_SUNDAY="")
     audio, used = run(tts.speak("namaste", "sunday"))
     check("allowlist ke bahar = edge", used, "edge")
     check("elevenlabs bilkul call nahi hua", "elevenlabs" not in [c[0] for c in calls], True)
