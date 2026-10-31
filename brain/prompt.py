@@ -139,7 +139,8 @@ def parse_action(reply: str) -> tuple:
     required = set(TOOL_ARGS[name])
     optional = set(TOOL_OPTIONAL.get(name, {}))
     if not required <= set(args) or set(args) - required - optional:
-        return "bad", f"{name} ke args sirf ye ho sakte hain: {sorted(required | optional)}"
+        return "bad", (f"{name} ke args: {sorted(required | optional)}; "
+                       f"tumne bheja: {sorted(args)}")
 
     for key, value in args.items():
         if isinstance(value, (int, float, bool)):

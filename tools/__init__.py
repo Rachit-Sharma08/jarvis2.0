@@ -72,24 +72,24 @@ TOOL_ARGS = {
     "media_control": ("action",),
     "close_app": ("name",),
     "delete_to_trash": ("path",),
-    "add_reminder": ("text", "at", "in_minutes"),
+    "add_reminder": ("text",),
     "list_reminders": (),
     "clear_reminder": ("id",),
     "add_todo": ("text",),
     "list_todos": (),
     "done_todo": ("id",),
     "clear_todos": (),
-    "web_search": ("query", "num"),
+    "web_search": ("query",),
     "copy_text": ("text",),
     "get_clipboard": (),
     "open_url": ("url",),
     "focus_app": ("name",),
-    "kb_add": ("text", "filename"),
+    "kb_add": ("text",),
     "kb_search": ("query",),
     "remember": ("key", "value"),
     "forget": ("key",),
     "daily_brief": (),
-    "set_wake_alarm": ("at", "repeat_minutes"),
+    "set_wake_alarm": ("at",),
     "alarm_status": (),
     "phone_task": ("task",),
     "screen_look": (),
@@ -100,6 +100,12 @@ TOOL_ARGS = {
 TOOL_OPTIONAL = {
     "open_app": {"url": ""},
     "screen_look": {"question": ""},
+    # "9 baje yaad dilana" me model sirf text+at bhejta hai. Pehle in_minutes
+    # required tha, is liye sahi JSON bhi reject hota tha (31-Oct live bug).
+    "add_reminder": {"at": "", "in_minutes": ""},
+    "web_search": {"num": "5"},
+    "kb_add": {"filename": "note.txt"},
+    "set_wake_alarm": {"repeat_minutes": "15"},
 }
 
 TOOL_SUMMARY = {

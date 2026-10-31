@@ -36,6 +36,10 @@ BAD_JSON = [
     ('{"action": "open_app", "args": {"name": "brave", "bogus": "1"}}', "bad"),
     ('{"action": "play_media", "args": {"query": "mahabharat"}}', "tool"),
     ('{"action": "media_control", "args": {"action": "forward"}}', "tool"),
+    # 31-Oct live bug: model text+at bhejta hai, in_minutes chhod deta hai.
+    ('{"action": "add_reminder", "args": {"text": "call home", "at": "9:00"}}', "tool"),
+    ('{"action": "web_search", "args": {"query": "coldplay"}}', "tool"),
+    ('{"action": "add_reminder", "args": {"at": "9:00"}}', "bad"),
 ]
 
 

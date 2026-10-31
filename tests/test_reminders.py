@@ -16,6 +16,8 @@ from desktop import app_loop  # noqa: E402
 import config_lines  # noqa: E402
 from server import hud_reminders  # noqa: E402
 from tests.datasafe import isolated_data  # noqa: E402
+from brain import prompt  # noqa: E402
+import tools  # noqa: E402
 from tools import reminders  # noqa: E402
 
 FAILED = []
@@ -121,8 +123,16 @@ def test_ids_not_reused():
     check("teesra #3 (id reuse nahi)", reminders.add_reminder("c", in_minutes=5).startswith("Reminder set #3"), True)
 
 
+def test_llm_optional_args():
+    print("ARGS: model sirf text+at bheje to bhi chalna chahiye (31-Oct live bug)")
+    kind, payload = prompt.parse_action(
+        '{"action": "add_reminder", "args": {"text": "call home", "at": "9:00"}}')
+    check("parse hua", kind, "tool")
+    check("tool chala", tools.execute(*payload).startswith("Reminder set #1"), True)
+
+
 for fn in (test_add_and_due, test_due_and_mark, test_fire_once, test_quiet_hours,
-           test_quiet_math, test_ids_not_reused):
+           test_quiet_math, test_ids_not_reused, test_llm_optional_args):
     with isolated_data():
         fn()
 
