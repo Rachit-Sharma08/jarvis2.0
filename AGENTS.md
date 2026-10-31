@@ -1256,6 +1256,25 @@ Source `D:\SystemConfig\Startup-helper\SystemConfig.bat` se byte-identical
 
 ---
 
+## 8.1.13 DATASET EXPORT KE NIYAM (31 Oct 2026)
+
+- **Dataset ka ek hi raasta `tools/export_dataset.py`** (`python -m
+  tools.export_dataset`). Output `data/export/train.jsonl` + `eval.jsonl`
+  (80/20, `data/` gitignored). Koi network call nahi — sirf local files.
+- **`actions.log` me user ka vaakya hota hi nahi** (sirf tool + args + decision),
+  is liye tool-wale example ki `instruction` args ke text se banti hai. Asli
+  user text sirf memory turns me hai (wahan `tool: null`).
+- **`result_ok` ka ek hi matlab: `decision == "allow"`.** actions.log tool ka
+  asli output nahi likhta (wo engine ke paas hi rehta hai), is liye "output
+  theek tha" ka koi signal dataset me nahi hai.
+- **Naya drop rule `DROP_TOOLS` / `SECRET_WORDS` / `PROFILE_WORDS` me daalo,
+  aur `tests/test_export_dataset.py` me ek check.** Filhaal phone, screen,
+  read_file, remember/forget, password/OTP wale shabd aur profile.json hatt-te
+  hain (poori entry, sirf field nahi).
+- **Split hash par, dedupe ke PEHLE.** `_bucket()` sha256 se 20% eval chunta
+  hai; duplicate pehle hat jaate hain is liye eval train me kabhi nahi milta.
+  Test isi ko pin karta hai (overlap 0 + dobara chalane par same files).
+
 ## CHANGE HISTORY
 
 Poora record → **`CHANGELOG.md`**. Saali line:
@@ -1633,6 +1652,14 @@ green**, sab file `<200`.
   `config.py` load karta hai — `import config` pehle karna zaroori. Saath me
   `config_telegram` me `import config_env` (purane `PRABH_*` alias ke liye, baaki
   `config_*.py` jaisa). Suite **99/99 green**. Naya rule section **8.1.11**.
+- **Dataset export (31 Oct 2026)** — naya `tools/export_dataset.py`
+  (`python -m tools.export_dataset`): `logs/actions.log` + memory user turns
+  se `data/export/train.jsonl` (80%) + `eval.jsonl` (20%), har text
+  `audit.mask()` se, phone/screen/read_file/OTP-password/profile.json entries
+  poori hatti hain, duplicate ek hi baar. Split sha256 par deterministic
+  (dedupe ke baad), is liye eval train me nahi. Live run: **40 example
+  (34 train + 6 eval, 29 tool-wale)**. Test `tests/test_export_dataset.py`.
+  Naya rule section **8.1.13**.
 
 ## 8.1.12 MULTI-TASK MESSAGE KE NIYAM (31 Oct 2026)
 

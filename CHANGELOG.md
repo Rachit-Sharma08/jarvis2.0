@@ -6,6 +6,20 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Dataset export: masked train/eval (31 Oct 2026)
+
+- Naya `tools/export_dataset.py` (`python -m tools.export_dataset`) —
+  `logs/actions.log` + memory ke user turns se `data/export/train.jsonl` (80%)
+  aur `eval.jsonl` (20%). Example: `instruction`, `tool` (ya null), `args`,
+  `result_ok`. Har text `gatekeeper.audit.mask()` se.
+- Poori entry hatti hai: `phone_task`, `screen_look`, `read_file`,
+  `remember`/`forget`, password/OTP wale shabd, `profile.json`. Duplicate
+  (same instruction+tool+args) ek hi baar.
+- Split sha256 par deterministic — dedupe ke baad, is liye eval train me nahi.
+  Aakhir me summary print (total, train/eval, tool-wale, per-tool count).
+- `tools/export_dataset.py` me koi naya package nahi, koi network call nahi.
+- Test: `tests/test_export_dataset.py` (isolated_data, fake actions.log).
+
 ## Ek message me kai kaam (31 Oct 2026)
 
 User ka message: "vs code khol, terminal khol, opencode chala, 7 baje mummy ko call,
