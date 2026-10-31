@@ -1634,3 +1634,27 @@ green**, sab file `<200`.
   `config_telegram` me `import config_env` (purane `PRABH_*` alias ke liye, baaki
   `config_*.py` jaisa). Suite **99/99 green**. Naya rule section **8.1.11**.
 
+## 8.1.12 MULTI-TASK MESSAGE KE NIYAM (31 Oct 2026)
+
+- **Message todna model ka kaam nahi — `core/multitask.py` ka.** Voice
+  (`wake/ask.py`) aur Telegram (`server/telegram_bot.py`) dono
+  `multitask.run(engine, text, rid)` se guzarte hain: `split()` ` aur / or / ya /
+  phir / fir / then / , / ;` par todta hai (`MAX_TASKS = 6`), har tukda apna
+  engine turn (`rid-1`, `rid-2`), aur >1 jawab hone par aakhir me ek joda hua
+  assistant message. `/chat` aur `/ws` ka streaming raasta waisa hi hai.
+- **Model se planning mat karwao.** Live 30-Oct: 6 kaam wale message par model ne
+  "kaunsa pehle?" poochha, ya ek tool ke baad "sab ho gaya" bol diya. Prompt me
+  rule add hue (kaunsa pehle mat poochho, missing detail par bhi kaam, "X baje"
+  = `add_reminder`, tool ke baad agla kaam) — par **bharosa splitter par**.
+- **Har sub-task alag brain call hai:** 6 kaam = 6 call, Groq free tier par 429
+  aa sakta hai (10 min cooldown). Isi liye `MAX_TASKS` 6 hai.
+- **`DIRECT_TOOLS` me `vscode_terminal` / `play_media` / `media_control` bhi** —
+  inka tool-result hi final jawab, doosra LLM call nahi.
+- **Naya test `tests/test_multitask.py`** (pure, fake engine). Voice/Telegram ka
+  call badle to wahi test badlo.
+- **Tests ko `.env` drift se immune rakho:** `JARVIS_TRUST=1` ho to nocards/dedup
+  `config.TRUST_ALL = False` pin karte hain; cartesia voice id ho to voice tests
+  `os.environ` pin karte hain; `JARVIS_CMD_SILENCE` ho to wake_levels/speed_fix
+  import se pehle `0.7` pin karte hain. Warna suite jhoothi red dikhati hai.
+
+

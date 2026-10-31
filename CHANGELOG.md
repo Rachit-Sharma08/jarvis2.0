@@ -6,6 +6,31 @@ ek kaam ka group. Doc ka detail `BRAIN.md`, `TOOLS.md`, `VOICE.md`, `TESTS.md`,
 
 ---
 
+## Ek message me kai kaam (31 Oct 2026)
+
+User ka message: "vs code khol, terminal khol, opencode chala, 7 baje mummy ko call,
+YouTube par gaana chala" — Jarvis ne poochha "kaunsa pehle?", ya ek tool ke baad
+"sab ho gaya" bol diya. Model par bharosa karna galat raasta tha.
+
+- **Todna code ka kaam hai, model ka nahi.** Naya `core/multitask.py`: `split()`
+  ` aur / or / ya / phir / fir / then / , / ;` par todta hai (`MAX_TASKS = 6`),
+  `run()` har tukde ko apna engine turn (`rid-1`, `rid-2`) deta hai aur >1 jawab
+  par aakhir me ek joda hua message. Voice (`wake/ask.py`) aur Telegram
+  (`server/telegram_bot.py`) dono isi se guzarte hain. `/chat` aur `/ws` ka
+  streaming raasta waisa hi.
+- **Asli message par naapa:** 5 saaf hisse — `vs code khol` · `terminal khol` ·
+  `opencode chala` · `7 baje mummy ko call` · `YouTube par gaana chala`.
+- **Prompt me 4 rule** (`brain/prompt.py`): "kaunsa pehle?" mat poochho, missing
+  detail par sensible default lo, "X baje call/yaad dilana" = `add_reminder`,
+  tool ke baad agla kaam karo phir jawab do.
+- `core/directreply.py`: `MULTI_WORDS` me ` or `/` ya `, aur `DIRECT_TOOLS` me
+  `vscode_terminal` / `play_media` / `media_control` (tool ka result hi jawab).
+- `tests/test_multitask.py` (pure, fake engine). 8 test file me `.env` drift pin
+  (TRUST_ALL / cartesia voice id / CMD_SILENCE) taaki suite jhoothi red na ho.
+  Suite **100/100 green**.
+
+---
+
 ## Sunna: background media hi asli wajah thi (30 Oct 2026)
 
 User ki shikayat: "maine command boli par isne suni nahi". Pehle **naapa**, phir
