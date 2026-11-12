@@ -1279,6 +1279,15 @@ Source `D:\SystemConfig\Startup-helper\SystemConfig.bat` se byte-identical
 
 Poora record → **`CHANGELOG.md`**. Saali line:
 
+- **Repo PUBLIC + README photo/Telegram (12 Nov 2026)** — repo `Rachit-Sharma08/jarvis2.0`
+  PRIVATE → **PUBLIC** (`gh repo edit --visibility public`). README me asli HUD screenshot
+  (`docs/images/hud.png` — Edge headless `--screenshot` se li gayi, `PrintWindow` Edge
+  hardware-acceleration ki wajah se kaali aati hai) + naya **"Phone se control (Telegram
+  bot)"** section (BotFather setup, owner-only gate, voice note) + test count 89 → 101.
+  Verify: `--doctor` sab OK, suite **101/101 green**, live `/chat` jawab aaya, telegram
+  token+chat set, git me koi secret/personal data nahi (`.env`/`logs`/`data`/`backup` sab
+  gitignored — public karne se pehle check).
+
 - **Phase 1-2** — Skeleton, brain (Groq→Gemini), personas, mode switch, engine+events, FastAPI (`/chat`,
 `/ws`), HUD UI, suraksha (127.0.0.1, Origin+Host, per-start token), voice (`stt.py`, TTS chain,
 `/stt`+`/tts`, mic UI, 500 char), tests.
