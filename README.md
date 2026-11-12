@@ -1,7 +1,10 @@
 # Jarvis
 
+![Jarvis HUD](docs/images/hud.png)
+
 > **Ye ek local personal app hai, sirf is PC par chalta hai.** Ye web app nahi hai —
-> doosre PC, phone ya internet se koi ise khol nahi sakta.
+> doosre PC, phone ya internet se koi ise khol nahi sakta. (Phone se control sirf
+> **Telegram bot** ke through hai — niche "Phone se control" section.)
 
 Ye ek hi AI assistant hai — **Jarvis**: Hinglish, chhote aur saaf jawab, seedha tone
 ("sir", pehle haalat phir salah, bakwaas nahi).
@@ -220,7 +223,7 @@ liye app chalte hue bhi chala sakte ho.
 
 ## 3. Test
 
-Saare 89 suites ek loop me:
+Saare 101 suites ek loop me:
 
 ```powershell
 cd D:\Projects\jarvis\jarvis2.0
@@ -295,6 +298,53 @@ Jarvis khud awaaz me yaad dilata hai (app chalu hona chahiye).
 
 ---
 
+## Phone se control (Telegram bot)
+
+Jarvis ka apna Telegram bot hai — phone se message bhejo, jawab PC par kaam karta
+hua wapas aata hai. **Text dono** chalta hai: likha hua message, ya **voice note**
+(bolo, Groq STT se text banta hai, phir wahi brain + tools).
+
+```
+Aap (phone)  ->  Telegram bot  ->  Jarvis PC par kaam karta hai
+              <-  jawab text ke roop me wapas
+```
+
+### Ek baar setup karna hai
+
+1. Telegram me **@BotFather** ko `/newbot` bhejo — ek **token** milega
+   (wo secret hai, kahin share mat karo).
+2. App ko apne Telegram account se ek message bhejo. Bot chat id bata dega
+   (chat id na ho to bot koi command nahi chalta — sirf khud apni id batata hai,
+   ye jaan-boojh kar hai: bina allowlist ke koi bhi PC chala sakta tha).
+3. `.env` me dono daalo:
+
+```
+JARVIS_TELEGRAM_TOKEN=apna_bot_token
+JARVIS_TELEGRAM_CHAT=apni_chat_id
+```
+
+4. App restart karo. Log me `telegram bot chalu (owner chat set: True)` aana
+   chahiye:
+
+```powershell
+Get-Content D:\Projects\jarvis\jarvis2.0\logs\jarvis.log -Tail 20 | Select-String telegram
+```
+
+### Kaise chalta hai
+
+- **App chalu hona chahiye** — bot app ke andar hi chalta hai, app band to bot band.
+- Sirf **owner chat** chalti hai (`JARVIS_TELEGRAM_CHAT`); doosre ko sirf uski
+  chat id dikhata hai.
+- Jawab **3500 character** tak aata hai (Telegram ki 4096 ki limit se neeche).
+- Tool confirm card Telegram par nahi dikhta — tool wale kaam PC ke HUD par hi
+  confirm hote hain; phone se sirf baat-chit aur poochhna chalta hai.
+- Purane message restart par **dobara nahi** chalte (Telegram 24 ghante tak
+  rakhta hai, offset se bacha jaata hai).
+
+Iska code: `server/telegram_bot.py` (ek hi raasta) + `config_telegram.py`.
+
+---
+
 ## Kaun si file kya karti hai
 
 | File | Kaam |
@@ -326,6 +376,7 @@ Jarvis khud awaaz me yaad dilata hai (app chalu hona chahiye).
 | `core/sysstats.py` | `psutil` se CPU/RAM/battery/disk/network |
 | `server/weather.py` | Open-Meteo fetch + 15 minute cache |
 | `server/tool_routes.py`, `server/voice_routes.py` | `/tool/confirm`, `/tools/*`, `POST /stt`, `POST /tts` |
+| `server/telegram_bot.py`, `config_telegram.py` | Phone se Telegram bot (owner-only, long-poll, text + voice) |
 | `voice/*.py` | STT/TTS providers (details [VOICE.md](VOICE.md)) |
 | `ui/index.html`, `ui/app.js` | 3-column HUD markup + chat/WebSocket glue |
 | `ui/hud_base.css`, `hud_left.css`, `hud_center.css`, `hud_right.css`, `hud_bottom.css` | HUD ka look, har file ka ek kaam |
